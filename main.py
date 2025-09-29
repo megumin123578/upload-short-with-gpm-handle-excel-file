@@ -1,16 +1,14 @@
 import os
-import itertools
+
 import datetime
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
-import csv
-
+from module import list_group_csvs, read_channels_from_csv, normalize_lines, assign_pairs
 from hyperparameter import (
     APP_TITLE,
     GROUPS_DIR,
-    CHANNEL_HEADER_HINTS,
     OUTPUT_DIR,
-    HAS_TKCAL,  # True/False: có tkcalendar hay không
+    HAS_TKCAL,
 )
 
 from openpyxl import Workbook
@@ -18,111 +16,17 @@ from openpyxl.utils import get_column_letter
 from openpyxl.styles import Font
 
 
-# -----------------------------
-# Helpers
-# -----------------------------
-def list_group_csvs(groups_dir: str):
-    if not os.path.isdir(groups_dir):
-        return []
-    files = []
-    for name in os.listdir(groups_dir):
-        p = os.path.join(groups_dir, name)
-        nl = name.lower()
-        if os.path.isfile(p) and nl.endswith(".csv"):
-            if "__assignments_" in nl or nl.startswith("assignments_"):
-                continue
-            files.append(name)
-    return sorted(files)
 
 
-def read_channels_from_csv(csv_path: str):
-    channels = []
-    if not os.path.isfile(csv_path):
-        return channels
-    with open(csv_path, "r", encoding="utf-8-sig", newline="") as f:
-        rows = list(csv.reader(f))
-    if not rows:
-        return channels
-
-    header = [c.strip() for c in rows[0]] if rows and rows[0] else []
-    col_idx = None
-    if header:
-        lower_header = [h.lower() for h in header]
-        for hint in CHANNEL_HEADER_HINTS:
-            if hint in lower_header:
-                col_idx = lower_header.index(hint)
-                break
-
-    start_row = 1 if col_idx is not None else 0
-    for row in rows[start_row:]:
-        if not row:
-            continue
-        if col_idx is not None and col_idx < len(row):
-            v = (row[col_idx] or "").strip()
-            if v:
-                channels.append(v)
-        else:
-            first = next((c.strip() for c in row if c and c.strip()), "")
-            if first:
-                channels.append(first)
-    return channels
-
-
-def normalize_lines(s: str):
-    return [ln.strip() for ln in s.splitlines() if ln.strip()]
-
-
-def assign_pairs(channels, titles, descs, mode="titles"):
-    """
-    mode = "titles": số dòng = len(titles); kênh & mô tả chạy vòng.
-    mode = "channels": số dòng = len(channels); tiêu đề & mô tả chạy vòng.
-    """
-    if not channels:
-        raise ValueError("No channels found in selected CSV.")
-    if not titles:
-        raise ValueError("No titles provided.")
-
-    if len(descs) <= 1:
-        desc_cycle = itertools.cycle([descs[0] if descs else ""])
-    else:
-        desc_cycle = itertools.cycle(descs)
-
-    if mode == "titles":
-        ch_cycle = itertools.cycle(channels)
-        out = []
-        for title in titles:
-            ch = next(ch_cycle)
-            d = next(desc_cycle)
-            out.append((ch, title, d))
-        return out
-    else:  # mode == "channels"
-        title_cycle = itertools.cycle(titles)
-        out = []
-        for ch in channels:
-            t = next(title_cycle)
-            d = next(desc_cycle)
-            out.append((ch, t, d))
-        return out
-
-
-# -----------------------------
-# App
-# -----------------------------
 class App(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title(APP_TITLE)
-        try:
-            self.state("zoomed")  # Windows
-        except Exception:
-            try:
-                self.attributes("-zoomed", True)  # Linux
-            except Exception:
-                pass
+        self.state("zoomed") 
         self.minsize(880, 580)
 
         self.group_file_var = tk.StringVar(value="")
-        self.mode_var = tk.StringVar(value="titles")  # "titles" (Repeat) hoặc "channels" (No Repeat)
+        self.mode_var = tk.StringVar(value="titles") 
         self.status_var = tk.StringVar(value="Ready.")
 
         # Cache & state
@@ -189,8 +93,6 @@ class App(tk.Tk):
             self.date_entry.insert(0, date_str)
             self.date_entry.pack(side=tk.LEFT, padx=(6, 16))
 
-        ttk.Button(frm3, text="Apply Date to ALL", command=self._apply_date_all).pack(side=tk.LEFT, padx=(0, 16))
-
         ttk.Label(frm3, text="Publish time:").pack(side=tk.LEFT)
         sp_h = tk.Spinbox(frm3, from_=0, to=23, width=3, format="%02.0f", textvariable=self.time_h_var)
         sp_h.pack(side=tk.LEFT, padx=(6, 2))
@@ -202,7 +104,8 @@ class App(tk.Tk):
         sp_step = tk.Spinbox(frm3, from_=0, to=1440, increment=5, width=5, textvariable=self.step_min_var)
         sp_step.pack(side=tk.LEFT, padx=(6, 12))
 
-        ttk.Button(frm3, text="Apply Time (+step) to ALL", command=self._apply_time_all).pack(side=tk.LEFT)
+        ttk.Button(frm3, text="Apply Datetime to all", command=self._apply_date_time_all).pack(side=tk.LEFT, padx=(12, 0))
+
 
     # ---------- Inputs ----------
     def _build_inputs(self):
@@ -231,7 +134,7 @@ class App(tk.Tk):
         frm = ttk.Frame(self, padding=10)
         frm.pack(fill=tk.BOTH, expand=True)
 
-        cols = ("channel", "title", "description", "publish_date", "publish_time")
+        cols = ("channel", "directory", "title", "description", "publish_date", "publish_time")
         self.tree = ttk.Treeview(frm, columns=cols, show="headings", height=12)
         for col in cols:
             self.tree.heading(col, text=col.capitalize())
@@ -245,6 +148,8 @@ class App(tk.Tk):
                 self.tree.column(col, width=120, anchor="w")
             elif col == "publish_time":
                 self.tree.column(col, width=100, anchor="w")
+            elif col == "directory":
+                self.tree.column(col, width=240, anchor="w")
 
         vsb = ttk.Scrollbar(frm, orient="vertical", command=self.tree.yview)
         self.tree.configure(yscroll=vsb.set)
@@ -323,8 +228,9 @@ class App(tk.Tk):
         extended = []
         for ch, t, d in assignments:
             pd, pt = "", ""
-            self.tree.insert("", tk.END, values=(ch, t, d, pd, pt))
-            extended.append((ch, t, d, pd, pt))
+            directory = ""
+            self.tree.insert("", tk.END, values=(ch, directory, t, d, pd, pt))
+            extended.append((ch, directory, t, d, pd, pt))
 
         self._last_assignments = extended
         if mode == "titles":
@@ -349,7 +255,7 @@ class App(tk.Tk):
             ws = wb.active
             ws.title = "Assignments"
 
-            headers = ["group_file", "channel", "title", "description", "publish_date", "publish_time", "mode"]
+            headers = ["group_file", "channel", "directory", "title", "description", "publish_date", "publish_time", "mode"]
             ws.append(headers)
             for col_idx, h in enumerate(headers, start=1):
                 cell = ws.cell(row=1, column=col_idx)
@@ -358,8 +264,9 @@ class App(tk.Tk):
             mode_val = self.mode_var.get()
             group_file_shown = self.group_file_var.get()
 
-            for ch, t, d, pd, pt in self._last_assignments:
-                ws.append([group_file_shown, ch, t, d, pd, pt, mode_val])
+            for ch, directory, t, d, pd, pt in self._last_assignments:
+                ws.append([group_file_shown, ch, directory, t, d, pd, pt, mode_val])
+
 
             # Auto width (approx)
             desc_idx = headers.index("description") + 1
@@ -395,8 +302,8 @@ class App(tk.Tk):
         if not self._last_assignments:
             messagebox.showwarning("Nothing to copy", "Click Preview first.")
             return
-        header = "channel\ttitle\tdescription\tpublish_date\tpublish_time\n"
-        body = "\n".join(f"{ch}\t{t}\t{d}\t{pd}\t{pt}" for ch, t, d, pd, pt in self._last_assignments)
+        header = "channel\tdirectory\ttitle\tdescription\tpublish_date\tpublish_time\n"
+        body = "\n".join(f"{ch}\t{directory}\t{t}\t{d}\t{pd}\t{pt}" for ch, directory, t, d, pd, pt in self._last_assignments)
         tsv = header + body
         self.clipboard_clear()
         self.clipboard_append(tsv)
@@ -418,9 +325,9 @@ class App(tk.Tk):
 
     def _edit_row_dialog(self, item_id, index):
         vals = list(self.tree.item(item_id, "values"))
-        if len(vals) < 5:
-            vals = list(vals) + [""] * (5 - len(vals))
-        ch_cur, title_cur, desc_cur, pd_cur, pt_cur = vals
+        if len(vals) < 6:
+            vals = list(vals) + [""] * (6 - len(vals))
+            ch_cur, dir_cur, title_cur, desc_cur, pd_cur, pt_cur = vals
 
         win = tk.Toplevel(self)
         win.title("Edit row")
@@ -435,25 +342,34 @@ class App(tk.Tk):
         ent_ch.grid(row=0, column=1, sticky="we")
         ent_ch.insert(0, ch_cur)
 
-        ttk.Label(frm, text="Title:").grid(row=1, column=0, sticky="e", padx=6, pady=4)
+        ttk.Label(frm, text="Directory:").grid(row=1, column=0, sticky="e", padx=6, pady=4)
+        ent_dir = ttk.Entry(frm, width=60)
+        ent_dir.grid(row=1, column=1, sticky="we")
+        ent_dir.insert(0, dir_cur)
+
+        ttk.Label(frm, text="Title:").grid(row=2, column=0, sticky="e", padx=6, pady=4)
         ent_title = ttk.Entry(frm, width=60)
-        ent_title.grid(row=1, column=1, sticky="we")
+        ent_title.grid(row=2, column=1, sticky="we")
         ent_title.insert(0, title_cur)
 
-        ttk.Label(frm, text="Description:").grid(row=2, column=0, sticky="ne", padx=6, pady=4)
+        ttk.Label(frm, text="Description:").grid(row=3, column=0, sticky="ne", padx=6, pady=4)
         txt_desc = tk.Text(frm, width=60, height=6, wrap=tk.WORD)
-        txt_desc.grid(row=2, column=1, sticky="we")
+        txt_desc.grid(row=3, column=1, sticky="we")
         txt_desc.insert("1.0", desc_cur)
 
-        ttk.Label(frm, text="Publish date (YYYY-MM-DD):").grid(row=3, column=0, sticky="e", padx=6, pady=4)
+        ttk.Label(frm, text="Publish date (YYYY-MM-DD):").grid(row=4, column=0, sticky="e", padx=6, pady=4)
         ent_pd = ttk.Entry(frm, width=20)
-        ent_pd.grid(row=3, column=1, sticky="w")
+        ent_pd.grid(row=4, column=1, sticky="w")
         ent_pd.insert(0, pd_cur)
 
-        ttk.Label(frm, text="Publish time (HH:MM):").grid(row=4, column=0, sticky="e", padx=6, pady=4)
+        ttk.Label(frm, text="Publish time (HH:MM):").grid(row=5, column=0, sticky="e", padx=6, pady=4)
         ent_pt = ttk.Entry(frm, width=20)
-        ent_pt.grid(row=4, column=1, sticky="w")
+        ent_pt.grid(row=5, column=1, sticky="w")
         ent_pt.insert(0, pt_cur)
+
+
+        
+
 
         frm.columnconfigure(1, weight=1)
 
@@ -476,6 +392,7 @@ class App(tk.Tk):
                 return False
 
         def on_save():
+            directory = ent_dir.get().strip()
             ch = ent_ch.get().strip()
             t = ent_title.get().strip()
             d = txt_desc.get("1.0", tk.END).strip()
@@ -492,7 +409,7 @@ class App(tk.Tk):
                 messagebox.showerror("Invalid time", "Publish time phải dạng HH:MM (24h) hoặc để trống.")
                 return
 
-            new_vals = (ch, t, d, pd, pt)
+            new_vals = (ch,directory, t, d, pd, pt)
             self.tree.item(item_id, values=new_vals)
 
             if 0 <= index < len(self._last_assignments):
@@ -511,8 +428,8 @@ class App(tk.Tk):
         ent_title.focus_set()
 
     # ---------- Apply date/time to ALL ----------
-    def _apply_date_all(self):
-        # lấy date_str từ widget
+    def _apply_date_time_all(self):
+    # --- Lấy ngày ---
         if hasattr(self.date_entry, "get_date"):
             try:
                 d = self.date_entry.get_date()
@@ -528,19 +445,7 @@ class App(tk.Tk):
             messagebox.showerror("Invalid date", "Định dạng ngày phải là YYYY-MM-DD.")
             return
 
-        ids = self.tree.get_children()
-        for i, iid in enumerate(ids):
-            vals = list(self.tree.item(iid, "values"))
-            vals += [""] * max(0, 5 - len(vals))
-            ch, t, desc, pd, pt = vals
-            new_vals = (ch, t, desc, date_str, pt)
-            self.tree.item(iid, values=new_vals)
-            if self._last_assignments and i < len(self._last_assignments):
-                self._last_assignments[i] = new_vals
-
-        self._set_status(f"Set publish_date='{date_str}' cho {len(ids)} dòng.")
-
-    def _apply_time_all(self):
+        # --- Lấy giờ phút ---
         hh = self.time_h_var.get().strip()
         mm = self.time_m_var.get().strip()
         step = self.step_min_var.get()
@@ -570,14 +475,16 @@ class App(tk.Tk):
             time_str = f"{tm.hour:02d}:{tm.minute:02d}"
 
             vals = list(self.tree.item(iid, "values"))
-            vals += [""] * max(0, 5 - len(vals))
-            ch, t, desc, pd, pt = vals
-            new_vals = (ch, t, desc, pd, time_str)
+            vals += [""] * max(0, 6 - len(vals))
+            ch, directory, t, desc, _, _ = vals
+            new_vals = (ch, directory, t, desc, date_str, time_str)
+
             self.tree.item(iid, values=new_vals)
             if self._last_assignments and i < len(self._last_assignments):
-                self._last_assignments[i] = new_vals
+                self._last_assignments[i] = new_vals    
 
-        self._set_status(f"Set publish_time từ {hh}:{mm} với step {step} phút cho {len(ids)} dòng.")
+        self._set_status(f"Set publish_date='{date_str}', publish_time bắt đầu từ {hh}:{mm} với step {step} phút cho {len(ids)} dòng.")
+
 
 
 if __name__ == "__main__":
