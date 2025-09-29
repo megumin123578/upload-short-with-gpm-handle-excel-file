@@ -17,9 +17,6 @@ from openpyxl.styles import Font
 
 from random_vids import get_random_unused_mp4
 
-
-
-
 class App(tk.Tk):
     def __init__(self):
         super().__init__()
@@ -261,19 +258,21 @@ class App(tk.Tk):
             messagebox.showwarning("Nothing to save", "Click Preview first.")
             return
 
+        # Lấy tên giống group: group.csv -> group.xlsx
         base = os.path.splitext(self.group_file_var.get().strip())[0] or "group"
-        ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        out_name = f"{base}__assignments_{ts}.xlsx"
+        out_name = f"{base}.xlsx"
 
         os.makedirs(OUTPUT_DIR, exist_ok=True)
         out_path = os.path.join(OUTPUT_DIR, out_name)
+        existed = os.path.exists(out_path)
 
         try:
             wb = Workbook()
             ws = wb.active
             ws.title = "Assignments"
 
-            headers = ["group_file", "channel", "directory", "title", "description", "publish_date", "publish_time", "mode"]
+            headers = ["group_file", "channel", "directory", "title", "description",
+                       "publish_date", "publish_time", "mode"]
             ws.append(headers)
             for col_idx, h in enumerate(headers, start=1):
                 cell = ws.cell(row=1, column=col_idx)
@@ -285,13 +284,13 @@ class App(tk.Tk):
             for ch, directory, t, d, pd, pt in self._last_assignments:
                 ws.append([group_file_shown, ch, directory, t, d, pd, pt, mode_val])
 
-
             # Auto width (approx)
             desc_idx = headers.index("description") + 1
             for col_idx in range(1, ws.max_column + 1):
                 col_letter = get_column_letter(col_idx)
                 max_len = 0
-                for row in ws.iter_rows(min_row=1, max_row=ws.max_row, min_col=col_idx, max_col=col_idx):
+                for row in ws.iter_rows(min_row=1, max_row=ws.max_row,
+                                        min_col=col_idx, max_col=col_idx):
                     val = row[0].value
                     if val is None:
                         continue
@@ -309,12 +308,26 @@ class App(tk.Tk):
             ws.auto_filter.ref = ws.dimensions
             ws.freeze_panes = "A2"
 
+            # Ghi đè nếu tồn tại
+            if existed:
+                try:
+                    os.remove(out_path)  # tránh lỗi “file in use” do Windows lock
+                except PermissionError:
+                    messagebox.showerror(
+                        "File is open",
+                        f"Không thể ghi đè vì file đang mở:\n{out_path}\nĐóng file rồi thử lại."
+                    )
+                    return
+
             wb.save(out_path)
 
-            self._set_status(f"Saved Excel: {out_path}")
-            messagebox.showinfo("Saved", f"Exported Excel:\n{out_path}")
+            self._set_status(f"Saved Excel: {out_path}" + (" (overwritten)" if existed else ""))
+            messagebox.showinfo("Saved",
+                                f"Exported Excel:\n{out_path}\n" +
+                                ("(Ghi đè file cũ)" if existed else ""))
         except Exception as e:
             messagebox.showerror("Error", f"Failed to save Excel:\n{e}")
+
 
     def _copy_tsv(self):
         if not self._last_assignments:
@@ -355,7 +368,7 @@ class App(tk.Tk):
         frm = ttk.Frame(win, padding=10)
         frm.pack(fill=tk.BOTH, expand=True)
 
-        ttk.Label(frm, text="Channel:").grid(row=0, column=0, sticky="e", padx=6, pady=4)
+        ttk.Label(frm, text="Profile:").grid(row=0, column=0, sticky="e", padx=6, pady=4)
         ent_ch = ttk.Entry(frm, width=60)
         ent_ch.grid(row=0, column=1, sticky="we")
         ent_ch.insert(0, ch_cur)

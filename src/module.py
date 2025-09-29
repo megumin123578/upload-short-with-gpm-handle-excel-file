@@ -99,5 +99,3 @@ def load_group_dirs(config_path="src/config_dir") -> dict:
             path = path.strip().replace("\\", "/")  # normalize
             group_to_dir[name] = os.path.abspath(path)
     return group_to_dir
-
-print(load_group_dirs())  # For debugging
