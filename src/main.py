@@ -3,7 +3,7 @@ import os
 import datetime
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
-from module import list_group_csvs, read_channels_from_csv, normalize_lines, assign_pairs
+from module import list_group_csvs, read_channels_from_csv, normalize_lines, assign_pairs, load_group_dirs
 from hyperparameter import (
     APP_TITLE,
     GROUPS_DIR,
@@ -14,6 +14,8 @@ from hyperparameter import (
 from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
 from openpyxl.styles import Font
+
+from random_vids import get_random_unused_mp4
 
 
 
@@ -94,11 +96,15 @@ class App(tk.Tk):
             self.date_entry.pack(side=tk.LEFT, padx=(6, 16))
 
         ttk.Label(frm3, text="Publish time:").pack(side=tk.LEFT)
-        sp_h = tk.Spinbox(frm3, from_=0, to=23, width=3, format="%02.0f", textvariable=self.time_h_var)
-        sp_h.pack(side=tk.LEFT, padx=(6, 2))
+
+        hours = [f"{i:02d}" for i in range(24)]
+        minutes = [f"{i:02d}" for i in range(0, 60, 5)]
+
+        cb_h = ttk.Combobox(frm3, values=hours, width=3, textvariable=self.time_h_var, state="readonly")
+        cb_h.pack(side=tk.LEFT, padx=(6, 2))
         ttk.Label(frm3, text=":").pack(side=tk.LEFT)
-        sp_m = tk.Spinbox(frm3, from_=0, to=59, width=3, format="%02.0f", textvariable=self.time_m_var)
-        sp_m.pack(side=tk.LEFT, padx=(2, 12))
+        cb_m = ttk.Combobox(frm3, values=minutes, width=3, textvariable=self.time_m_var, state="normal")
+        cb_m.pack(side=tk.LEFT, padx=(2, 12))
 
         ttk.Label(frm3, text="Step (min):").pack(side=tk.LEFT)
         sp_step = tk.Spinbox(frm3, from_=0, to=1440, increment=5, width=5, textvariable=self.step_min_var)
@@ -224,11 +230,22 @@ class App(tk.Tk):
             messagebox.showerror("Error", str(e))
             return
 
+        # --- Tìm thư mục video từ config_dir.txt ---
+        group_dirs = load_group_dirs()  # {group.csv: folder_path}
+        folder_path = group_dirs.get(group_file)
+        used_paths = set()
+
         self.tree.delete(*self.tree.get_children())
         extended = []
+
         for ch, t, d in assignments:
             pd, pt = "", ""
-            directory = ""
+            if folder_path and os.path.isdir(folder_path):
+                directory = get_random_unused_mp4(folder_path, used_paths)
+                if directory:
+                    used_paths.add(directory)
+            else:
+                directory = ""
             self.tree.insert("", tk.END, values=(ch, directory, t, d, pd, pt))
             extended.append((ch, directory, t, d, pd, pt))
 
@@ -237,6 +254,7 @@ class App(tk.Tk):
             self._set_status(f"Previewed {len(assignments)} rows (title-driven; channels cycle if needed).")
         else:
             self._set_status(f"Previewed {len(assignments)} rows (channel-driven).")
+
 
     def _save_excel(self):
         if not self._last_assignments:

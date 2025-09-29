@@ -85,3 +85,19 @@ def assign_pairs(channels, titles, descs, mode="titles"):
             d = next(desc_cycle)
             out.append((ch, t, d))
         return out
+    
+def load_group_dirs(config_path="src/config_dir") -> dict:
+    group_to_dir = {}
+    if not os.path.isfile(config_path):
+        return group_to_dir
+    with open(config_path, "r", encoding="utf-8") as f:
+        for line in f:
+            if ":" not in line:
+                continue
+            name, path = line.strip().split(":", 1)
+            name = name.strip()
+            path = path.strip().replace("\\", "/")  # normalize
+            group_to_dir[name] = os.path.abspath(path)
+    return group_to_dir
+
+print(load_group_dirs())  # For debugging
