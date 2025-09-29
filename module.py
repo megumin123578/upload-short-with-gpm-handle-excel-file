@@ -4,23 +4,12 @@ import datetime
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 import csv
-
-from hyperparameter import (
-    APP_TITLE,
-    GROUPS_DIR,
-    CHANNEL_HEADER_HINTS,
-    OUTPUT_DIR,
-    HAS_TKCAL,  # True/False: có tkcalendar hay không
-)
-
+from hyperparameter import APP_TITLE, GROUPS_DIR, CHANNEL_HEADER_HINTS, OUTPUT_DIR, HAS_TKCAL
 from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
 from openpyxl.styles import Font
+from tkcalendar import DateEntry
 
-
-# -----------------------------
-# Helpers
-# -----------------------------
 def list_group_csvs(groups_dir: str):
     if not os.path.isdir(groups_dir):
         return []
@@ -34,7 +23,6 @@ def list_group_csvs(groups_dir: str):
             files.append(name)
     return sorted(files)
 
-
 def read_channels_from_csv(csv_path: str):
     channels = []
     if not os.path.isfile(csv_path):
@@ -43,7 +31,6 @@ def read_channels_from_csv(csv_path: str):
         rows = list(csv.reader(f))
     if not rows:
         return channels
-
     header = [c.strip() for c in rows[0]] if rows and rows[0] else []
     col_idx = None
     if header:
@@ -52,7 +39,6 @@ def read_channels_from_csv(csv_path: str):
             if hint in lower_header:
                 col_idx = lower_header.index(hint)
                 break
-
     start_row = 1 if col_idx is not None else 0
     for row in rows[start_row:]:
         if not row:
@@ -67,10 +53,8 @@ def read_channels_from_csv(csv_path: str):
                 channels.append(first)
     return channels
 
-
 def normalize_lines(s: str):
     return [ln.strip() for ln in s.splitlines() if ln.strip()]
-
 
 def assign_pairs(channels, titles, descs, mode="titles"):
     """
@@ -90,7 +74,7 @@ def assign_pairs(channels, titles, descs, mode="titles"):
     if mode == "titles":
         ch_cycle = itertools.cycle(channels)
         out = []
-        for title in titles:
+        for i, title in enumerate(titles):
             ch = next(ch_cycle)
             d = next(desc_cycle)
             out.append((ch, title, d))
@@ -104,37 +88,18 @@ def assign_pairs(channels, titles, descs, mode="titles"):
             out.append((ch, t, d))
         return out
 
-
-# -----------------------------
-# App
-# -----------------------------
 class App(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title(APP_TITLE)
-        try:
-            self.state("zoomed")  # Windows
-        except Exception:
-            try:
-                self.attributes("-zoomed", True)  # Linux
-            except Exception:
-                pass
+        self.state("zoomed")
         self.minsize(880, 580)
 
         self.group_file_var = tk.StringVar(value="")
-        self.mode_var = tk.StringVar(value="titles")  # "titles" (Repeat) hoặc "channels" (No Repeat)
+        self.mode_var = tk.StringVar(value="titles")  # "titles" (mặc định) hoặc "channels"
         self.status_var = tk.StringVar(value="Ready.")
-
-        # Cache & state
         self._channels_cache = []
-        self._last_assignments = None  # list[(channel, title, desc, publish_date, publish_time)]
-
-        # Date/Time header controls state
-        self.date_entry = None  # sẽ gán widget trong _build_header
-        now = datetime.datetime.now()
-        self.time_h_var = tk.StringVar(value=f"{now.hour:02d}")
-        self.time_m_var = tk.StringVar(value=f"{now.minute:02d}")
-        self.step_min_var = tk.IntVar(value=15)  # bước phút để dàn times
+        self._last_assignments = None
 
         self._build_header()
         self._build_inputs()
@@ -142,7 +107,6 @@ class App(tk.Tk):
         self._build_footer()
         self._refresh_group_files()
 
-    # ---------- Header ----------
     def _build_header(self):
         frm = ttk.Frame(self, padding=(10, 10, 10, 0))
         frm.pack(fill=tk.X)
@@ -157,6 +121,9 @@ class App(tk.Tk):
 
         self.channel_count_lbl = ttk.Label(frm, text="0 channels")
         self.channel_count_lbl.grid(row=0, column=4, sticky="w", padx=(12, 0))
+        ttk.Button(frm, text="📅 Date", width=8, command=self._pick_date_for_selection).grid(row=0, column=5, padx=4)
+        ttk.Button(frm, text="⏰ Time", width=8, command=self._pick_time_for_selection).grid(row=0, column=6, padx=4)
+
         frm.columnconfigure(1, weight=1)
 
         # Distribution mode
@@ -165,46 +132,7 @@ class App(tk.Tk):
         ttk.Label(frm2, text="Distribution mode:").pack(side=tk.LEFT)
         ttk.Radiobutton(frm2, text="Repeat", variable=self.mode_var, value="titles").pack(side=tk.LEFT, padx=(8, 0))
         ttk.Radiobutton(frm2, text="No Repeat", variable=self.mode_var, value="channels").pack(side=tk.LEFT, padx=(8, 0))
-
-        # Date/Time controls (apply to ALL rows)
-        frm3 = ttk.Frame(self, padding=(10, 6, 10, 0))
-        frm3.pack(fill=tk.X)
-
-        ttk.Label(frm3, text="Publish date:").pack(side=tk.LEFT)
-
-        if HAS_TKCAL:
-            try:
-                from tkcalendar import DateEntry  # lazy import
-                self.date_entry = DateEntry(frm3, date_pattern="yyyy-mm-dd")
-                self.date_entry.set_date(datetime.date.today())
-                self.date_entry.pack(side=tk.LEFT, padx=(6, 16))
-            except Exception:
-                date_str = datetime.date.today().strftime("%Y-%m-%d")
-                self.date_entry = ttk.Entry(frm3, width=12)
-                self.date_entry.insert(0, date_str)
-                self.date_entry.pack(side=tk.LEFT, padx=(6, 16))
-        else:
-            date_str = datetime.date.today().strftime("%Y-%m-%d")
-            self.date_entry = ttk.Entry(frm3, width=12)
-            self.date_entry.insert(0, date_str)
-            self.date_entry.pack(side=tk.LEFT, padx=(6, 16))
-
-        ttk.Button(frm3, text="Apply Date to ALL", command=self._apply_date_all).pack(side=tk.LEFT, padx=(0, 16))
-
-        ttk.Label(frm3, text="Publish time:").pack(side=tk.LEFT)
-        sp_h = tk.Spinbox(frm3, from_=0, to=23, width=3, format="%02.0f", textvariable=self.time_h_var)
-        sp_h.pack(side=tk.LEFT, padx=(6, 2))
-        ttk.Label(frm3, text=":").pack(side=tk.LEFT)
-        sp_m = tk.Spinbox(frm3, from_=0, to=59, width=3, format="%02.0f", textvariable=self.time_m_var)
-        sp_m.pack(side=tk.LEFT, padx=(2, 12))
-
-        ttk.Label(frm3, text="Step (min):").pack(side=tk.LEFT)
-        sp_step = tk.Spinbox(frm3, from_=0, to=1440, increment=5, width=5, textvariable=self.step_min_var)
-        sp_step.pack(side=tk.LEFT, padx=(6, 12))
-
-        ttk.Button(frm3, text="Apply Time (+step) to ALL", command=self._apply_time_all).pack(side=tk.LEFT)
-
-    # ---------- Inputs ----------
+        frm.columnconfigure(1, weight=1) 
     def _build_inputs(self):
         frm = ttk.Frame(self, padding=10)
         frm.pack(fill=tk.BOTH, expand=True)
@@ -226,11 +154,11 @@ class App(tk.Tk):
         ttk.Button(btns, text="Preview Distribution", command=self._preview).pack(side=tk.LEFT)
         ttk.Button(btns, text="Clear Inputs", command=self._clear_inputs).pack(side=tk.LEFT, padx=6)
 
-    # ---------- Preview / Tree ----------
     def _build_preview(self):
         frm = ttk.Frame(self, padding=10)
         frm.pack(fill=tk.BOTH, expand=True)
 
+        # THAY đổi: thêm 2 cột publish_date, publish_time
         cols = ("channel", "title", "description", "publish_date", "publish_time")
         self.tree = ttk.Treeview(frm, columns=cols, show="headings", height=12)
         for col in cols:
@@ -252,20 +180,32 @@ class App(tk.Tk):
         self.tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         vsb.pack(side=tk.LEFT, fill=tk.Y)
 
-        # Double-click edit row
+        # BIND double-click để mở hộp sửa hàng
         self.tree.bind("<Double-1>", self._on_tree_double_click)
 
         btns = ttk.Frame(self, padding=(10, 0, 10, 10))
         btns.pack(fill=tk.X)
+
+        # nếu trước đó em đã đổi nút này thành Save Excel
         ttk.Button(btns, text="Save Excel", command=self._save_excel).pack(side=tk.LEFT)
         ttk.Button(btns, text="Copy TSV", command=self._copy_tsv).pack(side=tk.LEFT, padx=6)
+
+        btns = ttk.Frame(self, padding=(10, 0, 10, 10))
+        btns.pack(fill=tk.X)
+
+        ttk.Button(btns, text="Save Excel", command=self._save_excel).pack(side=tk.LEFT)
+        ttk.Button(btns, text="Copy TSV", command=self._copy_tsv).pack(side=tk.LEFT, padx=6)
+
+        # THÊM 2 NÚT CHỌN DATE/TIME
+
+
+
 
     def _build_footer(self):
         bar = ttk.Frame(self, relief=tk.SUNKEN, padding=6)
         bar.pack(fill=tk.X, side=tk.BOTTOM)
         ttk.Label(bar, textvariable=self.status_var).pack(side=tk.LEFT)
 
-    # ---------- Actions ----------
     def _refresh_group_files(self):
         files = list_group_csvs(GROUPS_DIR)
         self.group_combo["values"] = files
@@ -322,11 +262,13 @@ class App(tk.Tk):
         self.tree.delete(*self.tree.get_children())
         extended = []
         for ch, t, d in assignments:
-            pd, pt = "", ""
+            pd, pt = "", "" 
             self.tree.insert("", tk.END, values=(ch, t, d, pd, pt))
             extended.append((ch, t, d, pd, pt))
 
+
         self._last_assignments = extended
+
         if mode == "titles":
             self._set_status(f"Previewed {len(assignments)} rows (title-driven; channels cycle if needed).")
         else:
@@ -349,6 +291,7 @@ class App(tk.Tk):
             ws = wb.active
             ws.title = "Assignments"
 
+            # THAY: thêm 2 cột publish_date, publish_time
             headers = ["group_file", "channel", "title", "description", "publish_date", "publish_time", "mode"]
             ws.append(headers)
             for col_idx, h in enumerate(headers, start=1):
@@ -358,23 +301,26 @@ class App(tk.Tk):
             mode_val = self.mode_var.get()
             group_file_shown = self.group_file_var.get()
 
+            # Ghi từng dòng
             for ch, t, d, pd, pt in self._last_assignments:
                 ws.append([group_file_shown, ch, t, d, pd, pt, mode_val])
 
-            # Auto width (approx)
+            # Auto-fit tương đối
             desc_idx = headers.index("description") + 1
             for col_idx in range(1, ws.max_column + 1):
                 col_letter = get_column_letter(col_idx)
                 max_len = 0
-                for row in ws.iter_rows(min_row=1, max_row=ws.max_row, min_col=col_idx, max_col=col_idx):
+                for row in ws.iter_rows(min_row=1, max_row=ws.max_row,
+                                        min_col=col_idx, max_col=col_idx):
                     val = row[0].value
                     if val is None:
                         continue
                     s = str(val)
                     if col_idx == desc_idx:
-                        s = s[:120]
+                        s = s[:120]  # tránh quá rộng
                     max_len = max(max_len, len(s))
 
+                # Gán width hợp lý
                 header_name = headers[col_idx - 1]
                 if header_name in ("publish_date", "publish_time"):
                     ws.column_dimensions[col_letter].width = max(12, min(max_len + 2, 18))
@@ -395,6 +341,7 @@ class App(tk.Tk):
         if not self._last_assignments:
             messagebox.showwarning("Nothing to copy", "Click Preview first.")
             return
+        # channel, title, description, publish_date, publish_time
         header = "channel\ttitle\tdescription\tpublish_date\tpublish_time\n"
         body = "\n".join(f"{ch}\t{t}\t{d}\t{pd}\t{pt}" for ch, t, d, pd, pt in self._last_assignments)
         tsv = header + body
@@ -402,23 +349,26 @@ class App(tk.Tk):
         self.clipboard_append(tsv)
         self._set_status("Assignments copied to clipboard as TSV.")
 
+
     def _set_status(self, msg: str):
         self.status_var.set(msg)
 
-    # ---------- Edit row (double-click) ----------
     def _on_tree_double_click(self, event):
+        # Xác định item được click (bỏ qua nếu click vào header/trống)
         region = self.tree.identify("region", event.x, event.y)
         if region != "cell":
             return
         item_id = self.tree.identify_row(event.y)
         if not item_id:
             return
-        index = self.tree.index(item_id)
+        index = self.tree.index(item_id)  # vị trí trong tree (0-based)
         self._edit_row_dialog(item_id, index)
 
     def _edit_row_dialog(self, item_id, index):
+        # Lấy giá trị hiện có
         vals = list(self.tree.item(item_id, "values"))
         if len(vals) < 5:
+            # đảm bảo đủ 5 trường
             vals = list(vals) + [""] * (5 - len(vals))
         ch_cur, title_cur, desc_cur, pd_cur, pt_cur = vals
 
@@ -430,26 +380,31 @@ class App(tk.Tk):
         frm = ttk.Frame(win, padding=10)
         frm.pack(fill=tk.BOTH, expand=True)
 
+        # Channel
         ttk.Label(frm, text="Channel:").grid(row=0, column=0, sticky="e", padx=6, pady=4)
         ent_ch = ttk.Entry(frm, width=60)
         ent_ch.grid(row=0, column=1, sticky="we")
         ent_ch.insert(0, ch_cur)
 
+        # Title
         ttk.Label(frm, text="Title:").grid(row=1, column=0, sticky="e", padx=6, pady=4)
         ent_title = ttk.Entry(frm, width=60)
         ent_title.grid(row=1, column=1, sticky="we")
         ent_title.insert(0, title_cur)
 
+        # Description (Text nhiều dòng)
         ttk.Label(frm, text="Description:").grid(row=2, column=0, sticky="ne", padx=6, pady=4)
         txt_desc = tk.Text(frm, width=60, height=6, wrap=tk.WORD)
         txt_desc.grid(row=2, column=1, sticky="we")
         txt_desc.insert("1.0", desc_cur)
 
+        # Publish date (YYYY-MM-DD)
         ttk.Label(frm, text="Publish date (YYYY-MM-DD):").grid(row=3, column=0, sticky="e", padx=6, pady=4)
         ent_pd = ttk.Entry(frm, width=20)
         ent_pd.grid(row=3, column=1, sticky="w")
         ent_pd.insert(0, pd_cur)
 
+        # Publish time (HH:MM, 24h)
         ttk.Label(frm, text="Publish time (HH:MM):").grid(row=4, column=0, sticky="e", padx=6, pady=4)
         ent_pt = ttk.Entry(frm, width=20)
         ent_pt.grid(row=4, column=1, sticky="w")
@@ -459,7 +414,7 @@ class App(tk.Tk):
 
         def is_valid_date(s: str) -> bool:
             if not s.strip():
-                return True
+                return True  # cho phép bỏ trống
             try:
                 datetime.datetime.strptime(s.strip(), "%Y-%m-%d")
                 return True
@@ -492,10 +447,13 @@ class App(tk.Tk):
                 messagebox.showerror("Invalid time", "Publish time phải dạng HH:MM (24h) hoặc để trống.")
                 return
 
+            # Cập nhật Treeview
             new_vals = (ch, t, d, pd, pt)
             self.tree.item(item_id, values=new_vals)
 
+            # Cập nhật _last_assignments tương ứng
             if 0 <= index < len(self._last_assignments):
+                # _last_assignments: (ch, t, d, pd, pt)
                 self._last_assignments[index] = new_vals
 
             self._set_status(f"Updated row {index+1}.")
@@ -506,80 +464,129 @@ class App(tk.Tk):
         ttk.Button(btns, text="Save", command=on_save).pack(side=tk.LEFT)
         ttk.Button(btns, text="Cancel", command=win.destroy).pack(side=tk.LEFT, padx=6)
 
+        # Enter để lưu
         win.bind("<Return>", lambda e: on_save())
+        # ESC để hủy
         win.bind("<Escape>", lambda e: win.destroy())
+
+        # Đặt focus
         ent_title.focus_set()
 
-    # ---------- Apply date/time to ALL ----------
-    def _apply_date_all(self):
-        # lấy date_str từ widget
-        if hasattr(self.date_entry, "get_date"):
-            try:
-                d = self.date_entry.get_date()
-                date_str = d.strftime("%Y-%m-%d")
-            except Exception:
-                date_str = str(self.date_entry.get()).strip()
+    def _pick_date_for_selection(self):
+        top = tk.Toplevel(self)
+        top.title("Pick date for all rows")
+        top.transient(self)
+        top.grab_set()
+
+        frm = ttk.Frame(top, padding=10)
+        frm.pack(fill=tk.BOTH, expand=True)
+
+        today = datetime.date.today()
+
+        if HAS_TKCAL:
+            ttk.Label(frm, text="Chọn ngày:").grid(row=0, column=0, sticky="e", padx=4, pady=4)
+            date_widget = DateEntry(frm, date_pattern="yyyy-mm-dd")
+            date_widget.set_date(today)
+            date_widget.grid(row=0, column=1, sticky="w")
         else:
-            date_str = str(self.date_entry.get()).strip()
+            ttk.Label(frm, text="YYYY-MM-DD:").grid(row=0, column=0, sticky="e", padx=4, pady=4)
+            date_widget = ttk.Entry(frm, width=14)
+            date_widget.insert(0, today.strftime("%Y-%m-%d"))
+            date_widget.grid(row=0, column=1, sticky="w")
 
-        try:
-            datetime.datetime.strptime(date_str, "%Y-%m-%d")
-        except ValueError:
-            messagebox.showerror("Invalid date", "Định dạng ngày phải là YYYY-MM-DD.")
-            return
+        def ok():
+            if HAS_TKCAL:
+                d = date_widget.get_date()
+                date_str = d.strftime("%Y-%m-%d")
+            else:
+                date_str = date_widget.get().strip()
+                try:
+                    datetime.datetime.strptime(date_str, "%Y-%m-%d")
+                except ValueError:
+                    messagebox.showerror("Invalid date", "Định dạng ngày phải là YYYY-MM-DD.")
+                    return
 
-        ids = self.tree.get_children()
-        for i, iid in enumerate(ids):
-            vals = list(self.tree.item(iid, "values"))
-            vals += [""] * max(0, 5 - len(vals))
-            ch, t, desc, pd, pt = vals
-            new_vals = (ch, t, desc, date_str, pt)
-            self.tree.item(iid, values=new_vals)
-            if self._last_assignments and i < len(self._last_assignments):
-                self._last_assignments[i] = new_vals
+            count = 0
+            for iid in self.tree.get_children():
+                idx = self.tree.index(iid)
+                vals = list(self.tree.item(iid, "values"))
+                vals += [""] * max(0, 5 - len(vals))
+                ch, t, desc, pd, pt = vals
+                new_vals = (ch, t, desc, date_str, pt)
+                self.tree.item(iid, values=new_vals)
+                if self._last_assignments and 0 <= idx < len(self._last_assignments):
+                    self._last_assignments[idx] = new_vals
+                count += 1
 
-        self._set_status(f"Set publish_date='{date_str}' cho {len(ids)} dòng.")
+            self._set_status(f"Set publish_date='{date_str}' cho toàn bộ {count} dòng.")
+            top.destroy()
 
-    def _apply_time_all(self):
-        hh = self.time_h_var.get().strip()
-        mm = self.time_m_var.get().strip()
-        step = self.step_min_var.get()
-
-        if not (hh.isdigit() and mm.isdigit()):
-            messagebox.showerror("Invalid time", "Giờ/Phút phải là số.")
-            return
-        h, m = int(hh), int(mm)
-        if not (0 <= h <= 23 and 0 <= m <= 59):
-            messagebox.showerror("Invalid time", "Giờ phải 00-23, phút 00-59.")
-            return
-
-        try:
-            step = int(step)
-        except Exception:
-            messagebox.showerror("Invalid step", "Step (min) phải là số nguyên.")
-            return
-        if step < 0:
-            messagebox.showerror("Invalid step", "Step (min) không được âm.")
-            return
-
-        base_dt = datetime.datetime(2000, 1, 1, h, m)
-        ids = self.tree.get_children()
-
-        for i, iid in enumerate(ids):
-            tm = (base_dt + datetime.timedelta(minutes=i * step)).time()
-            time_str = f"{tm.hour:02d}:{tm.minute:02d}"
-
-            vals = list(self.tree.item(iid, "values"))
-            vals += [""] * max(0, 5 - len(vals))
-            ch, t, desc, pd, pt = vals
-            new_vals = (ch, t, desc, pd, time_str)
-            self.tree.item(iid, values=new_vals)
-            if self._last_assignments and i < len(self._last_assignments):
-                self._last_assignments[i] = new_vals
-
-        self._set_status(f"Set publish_time từ {hh}:{mm} với step {step} phút cho {len(ids)} dòng.")
+        btns = ttk.Frame(top, padding=(0, 8))
+        btns.pack(fill=tk.X)
+        ttk.Button(btns, text="OK", command=ok).pack(side=tk.LEFT)
+        ttk.Button(btns, text="Cancel", command=top.destroy).pack(side=tk.LEFT, padx=6)
 
 
-if __name__ == "__main__":
-    app = App()
-    app.mainloop()
+
+    def _pick_time_for_selection(self):
+        top = tk.Toplevel(self)
+        top.title("Pick time for all rows")
+        top.transient(self)
+        top.grab_set()
+
+        frm = ttk.Frame(top, padding=10)
+        frm.pack(fill=tk.BOTH, expand=True)
+
+        now = datetime.datetime.now()
+
+        ttk.Label(frm, text="Giờ (00-23):").grid(row=0, column=0, sticky="e", padx=4, pady=4)
+        sp_h = tk.Spinbox(frm, from_=0, to=23, width=5, format="%02.0f")
+        sp_h.delete(0, tk.END); sp_h.insert(0, f"{now.hour:02d}")
+        sp_h.grid(row=0, column=1, sticky="w")
+
+        ttk.Label(frm, text="Phút (00-59):").grid(row=1, column=0, sticky="e", padx=4, pady=4)
+        sp_m = tk.Spinbox(frm, from_=0, to=59, width=5, format="%02.0f")
+        sp_m.delete(0, tk.END); sp_m.insert(0, f"{now.minute:02d}")
+        sp_m.grid(row=1, column=1, sticky="w")
+
+        ttk.Label(frm, text="Step (phút):").grid(row=2, column=0, sticky="e", padx=4, pady=4)
+        step_entry = ttk.Entry(frm, width=5)
+        step_entry.insert(0, "0")  # 0 = giữ nguyên, >0 = tăng dần
+        step_entry.grid(row=2, column=1, sticky="w")
+
+        def ok():
+            try:
+                h = int(sp_h.get())
+                m = int(sp_m.get())
+                step = int(step_entry.get())
+                assert 0 <= h < 24 and 0 <= m < 60 and step >= 0
+            except:
+                messagebox.showerror("Invalid input", "Vui lòng nhập giờ (0–23), phút (0–59), và step ≥ 0.")
+                return
+
+            base_time = datetime.datetime(2000, 1, 1, h, m)
+            count = 0
+
+            for i, iid in enumerate(self.tree.get_children()):
+                idx = self.tree.index(iid)
+                t_cur = base_time + datetime.timedelta(minutes=step * i)
+                time_str = t_cur.strftime("%H:%M")
+
+                vals = list(self.tree.item(iid, "values"))
+                vals += [""] * max(0, 5 - len(vals))
+                ch, t, desc, pd, pt = vals
+                new_vals = (ch, t, desc, pd, time_str)
+                self.tree.item(iid, values=new_vals)
+                if self._last_assignments and 0 <= idx < len(self._last_assignments):
+                    self._last_assignments[idx] = new_vals
+                count += 1
+
+            self._set_status(f"Set publish_time cho toàn bộ {count} dòng, bắt đầu từ {h:02d}:{m:02d}, step={step} phút.")
+            top.destroy()
+
+        btns = ttk.Frame(top, padding=(0, 8))
+        btns.pack(fill=tk.X)
+        ttk.Button(btns, text="OK", command=ok).pack(side=tk.LEFT)
+        ttk.Button(btns, text="Cancel", command=top.destroy).pack(side=tk.LEFT, padx=6)
+
+
