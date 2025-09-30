@@ -11,15 +11,18 @@ from hyperparameter import (
     HAS_TKCAL,
 )
 
+import ttkbootstrap as ttkb
+from ttkbootstrap.constants import *
+
 from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
 from openpyxl.styles import Font
 
 from random_vids import get_random_unused_mp4
 
-class App(tk.Tk):
+class App(ttkb.Window): 
     def __init__(self):
-        super().__init__()
+        super().__init__(themename="cyborg")
         self.title(APP_TITLE)
         self.state("zoomed") 
         self.minsize(880, 580)
@@ -54,9 +57,6 @@ class App(tk.Tk):
         self.group_combo = ttk.Combobox(frm, textvariable=self.group_file_var, state="readonly", width=48)
         self.group_combo.grid(row=0, column=1, sticky="w", padx=6)
         self.group_combo.bind("<<ComboboxSelected>>", lambda e: self._load_channels())
-
-        ttk.Button(frm, text="Refresh", command=self._refresh_group_files).grid(row=0, column=2, padx=4)
-        ttk.Button(frm, text="Open group folder", command=self._open_group_dir).grid(row=0, column=3, padx=4)
 
         self.channel_count_lbl = ttk.Label(frm, text="0 channels")
         self.channel_count_lbl.grid(row=0, column=4, sticky="w", padx=(12, 0))
@@ -172,6 +172,8 @@ class App(tk.Tk):
         bar = ttk.Frame(self, relief=tk.SUNKEN, padding=6)
         bar.pack(fill=tk.X, side=tk.BOTTOM)
         ttk.Label(bar, textvariable=self.status_var).pack(side=tk.LEFT)
+        ttk.Button(bar, text="Combine", command=self._combine_excels).pack(side=tk.RIGHT)
+
 
     # ---------- Actions ----------
     def _refresh_group_files(self):
@@ -186,12 +188,6 @@ class App(tk.Tk):
         if cur not in files:
             self.group_file_var.set(files[0])
         self._load_channels()
-
-    def _open_group_dir(self):
-        if os.path.isdir(GROUPS_DIR):
-            filedialog.askopenfilename(initialdir=GROUPS_DIR, title="(Read-only) group folder")
-        else:
-            messagebox.showwarning("Missing folder", f"'group' folder not found at:\n{GROUPS_DIR}")
 
     def _load_channels(self):
         name = self.group_file_var.get().strip()
@@ -257,8 +253,6 @@ class App(tk.Tk):
         if not self._last_assignments:
             messagebox.showwarning("Nothing to save", "Click Preview first.")
             return
-
-        # Lấy tên giống group: group.csv -> group.xlsx
         base = os.path.splitext(self.group_file_var.get().strip())[0] or "group"
         out_name = f"{base}.xlsx"
 
@@ -271,18 +265,16 @@ class App(tk.Tk):
             ws = wb.active
             ws.title = "Assignments"
 
-            headers = ["group_file", "channel", "directory", "title", "description",
-                       "publish_date", "publish_time", "mode"]
+            # chỉ 6 cột, bỏ group_file và mode/status
+            headers = ["channel", "directory", "title", "description", "publish_date", "publish_time"]
             ws.append(headers)
             for col_idx, h in enumerate(headers, start=1):
                 cell = ws.cell(row=1, column=col_idx)
                 cell.font = Font(bold=True)
 
-            mode_val = self.mode_var.get()
-            group_file_shown = self.group_file_var.get()
-
+            # ghi dữ liệu từ preview
             for ch, directory, t, d, pd, pt in self._last_assignments:
-                ws.append([group_file_shown, ch, directory, t, d, pd, pt, mode_val])
+                ws.append([ch, directory, t, d, pd, pt])
 
             # Auto width (approx)
             desc_idx = headers.index("description") + 1
@@ -311,11 +303,11 @@ class App(tk.Tk):
             # Ghi đè nếu tồn tại
             if existed:
                 try:
-                    os.remove(out_path)  # tránh lỗi “file in use” do Windows lock
+                    os.remove(out_path)
                 except PermissionError:
                     messagebox.showerror(
                         "File is open",
-                        f"Không thể ghi đè vì file đang mở:\n{out_path}\nĐóng file rồi thử lại."
+                        f"Can't write to file when file is opening:\n{out_path}\nPlz close file."
                     )
                     return
 
@@ -323,8 +315,7 @@ class App(tk.Tk):
 
             self._set_status(f"Saved Excel: {out_path}" + (" (overwritten)" if existed else ""))
             messagebox.showinfo("Saved",
-                                f"Exported Excel:\n{out_path}\n" +
-                                ("(Ghi đè file cũ)" if existed else ""))
+                               "Save successfully!")
         except Exception as e:
             messagebox.showerror("Error", f"Failed to save Excel:\n{e}")
 
@@ -515,6 +506,82 @@ class App(tk.Tk):
                 self._last_assignments[i] = new_vals    
 
         self._set_status(f"Set publish_date='{date_str}', publish_time bắt đầu từ {hh}:{mm} với step {step} phút cho {len(ids)} dòng.")
+
+    def _combine_excels(self):
+        import glob
+        import os
+        from openpyxl import load_workbook, Workbook
+        from tkinter import messagebox
+
+        input_dir = r"E:\auto upload with gpm\upload"
+        output_file = r"E:\uploadshort_project\upload short\upload.xlsx"
+
+        pattern = os.path.join(input_dir, "*.xlsx")
+        files = glob.glob(pattern)
+
+        if not files:
+            messagebox.showwarning("No files", f"Không tìm thấy file Excel nào trong:\n{input_dir}")
+            return
+
+        wb_out = Workbook()
+        ws_out = wb_out.active
+        ws_out.title = "Combined"
+
+        header_written = False
+        row_idx = 1
+
+        for file in files:
+            try:
+                wb = load_workbook(file)
+                ws = wb.active
+
+                max_row = ws.max_row
+                max_col = ws.max_column
+
+                if not header_written:
+                    for col in range(1, max_col + 1):
+                        ws_out.cell(row=1, column=col).value = ws.cell(row=1, column=col).value
+                    header_written = True
+                    row_idx += 1
+
+                for r in range(2, max_row + 1):
+                    for c in range(1, max_col + 1):
+                        ws_out.cell(row=row_idx, column=c).value = ws.cell(row=r, column=c).value
+                    row_idx += 1
+
+            except Exception as e:
+                messagebox.showerror("Error", f"Lỗi khi đọc {file}:\n{e}")
+                return
+
+        try:
+            os.makedirs(os.path.dirname(output_file), exist_ok=True)
+            if os.path.exists(output_file):
+                os.remove(output_file)
+            wb_out.save(output_file)
+
+            #delete data after combine
+            for file in files:
+                try:
+                    wb = load_workbook(file)
+                    ws = wb.active
+
+                    max_row = ws.max_row
+                    max_col = ws.max_column
+
+                    for row in ws.iter_rows(min_row=2, max_row=max_row, max_col=max_col):
+                        for cell in row:
+                            cell.value = None
+
+                    wb.save(file)
+
+                except Exception as e:
+                    messagebox.showwarning("Warning", f"Không thể xóa dữ liệu trong file:\n{file}\n{e}")
+
+            messagebox.showinfo("Done", f"Đã gộp và lưu vào:\n{output_file}")
+            self._set_status(f"Combined {len(files)} files → {output_file}")
+
+        except Exception as e:
+            messagebox.showerror("Error", f"Lỗi khi lưu file:\n{e}")
 
 
 
