@@ -3,6 +3,10 @@ import itertools
 from hyperparameter import CHANNEL_HEADER_HINTS
 import os
 import csv
+
+
+USED_LOG_FILE = "log.txt"
+
 def list_group_csvs(groups_dir: str):
     if not os.path.isdir(groups_dir):
         return []
@@ -99,3 +103,10 @@ def load_group_dirs(config_path="src/config_dir") -> dict:
             path = path.strip().replace("\\", "/")  # normalize
             group_to_dir[name] = os.path.abspath(path)
     return group_to_dir
+
+
+def load_used_videos():
+    if not os.path.exists(USED_LOG_FILE):
+        return set()
+    with open(USED_LOG_FILE, "r", encoding="utf-8") as f:
+        return set(line.strip() for line in f if line.strip())

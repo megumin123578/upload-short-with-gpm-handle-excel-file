@@ -3,7 +3,7 @@ import os
 import datetime
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
-from module import list_group_csvs, read_channels_from_csv, normalize_lines, assign_pairs, load_group_dirs
+from module import list_group_csvs, read_channels_from_csv, normalize_lines, assign_pairs, load_group_dirs, load_used_videos
 from hyperparameter import (
     APP_TITLE,
     GROUPS_DIR,
@@ -40,7 +40,7 @@ class App(ttkb.Window):
         now = datetime.datetime.now()
         self.time_h_var = tk.StringVar(value=f"{now.hour:02d}")
         self.time_m_var = tk.StringVar(value=f"{now.minute:02d}")
-        self.step_min_var = tk.IntVar(value=15)  # bước phút để dàn times
+        self.step_min_var = tk.IntVar(value=0) 
 
         self._build_header()
         self._build_inputs()
@@ -78,16 +78,23 @@ class App(ttkb.Window):
         if HAS_TKCAL:
             try:
                 from tkcalendar import DateEntry  # lazy import
-                self.date_entry = DateEntry(frm3, date_pattern="yyyy-mm-dd")
+                self.date_entry = DateEntry(
+                    frm3,
+                    date_pattern="dd/mm/yyyy",
+                    width=12,
+                    background="lightblue",
+                    foreground="black",
+                    borderwidth=2
+                )
                 self.date_entry.set_date(datetime.date.today())
                 self.date_entry.pack(side=tk.LEFT, padx=(6, 16))
             except Exception:
-                date_str = datetime.date.today().strftime("%Y-%m-%d")
+                date_str = datetime.date.today().strftime("%d-%m-%Y")
                 self.date_entry = ttk.Entry(frm3, width=12)
                 self.date_entry.insert(0, date_str)
                 self.date_entry.pack(side=tk.LEFT, padx=(6, 16))
         else:
-            date_str = datetime.date.today().strftime("%Y-%m-%d")
+            date_str = datetime.date.today().strftime("%d-%m-%Y")
             self.date_entry = ttk.Entry(frm3, width=12)
             self.date_entry.insert(0, date_str)
             self.date_entry.pack(side=tk.LEFT, padx=(6, 16))
@@ -223,24 +230,26 @@ class App(ttkb.Window):
             messagebox.showerror("Error", str(e))
             return
 
-        # --- Tìm thư mục video từ config_dir.txt ---
         group_dirs = load_group_dirs()  # {group.csv: folder_path}
         folder_path = group_dirs.get(group_file)
-        used_paths = set()
 
+        used_paths = load_used_videos()   # load from log.txt
+        session_used = set()              # avoid duplicate in preview session
         self.tree.delete(*self.tree.get_children())
         extended = []
 
         for ch, t, d in assignments:
             pd, pt = "", ""
             if folder_path and os.path.isdir(folder_path):
-                directory = get_random_unused_mp4(folder_path, used_paths)
+                directory = get_random_unused_mp4(folder_path, used_paths | session_used)
                 if directory:
-                    used_paths.add(directory)
+                    session_used.add(directory)
             else:
                 directory = ""
+
             self.tree.insert("", tk.END, values=(ch, directory, t, d, pd, pt))
             extended.append((ch, directory, t, d, pd, pt))
+
 
         self._last_assignments = extended
         if mode == "titles":
@@ -265,7 +274,7 @@ class App(ttkb.Window):
             ws = wb.active
             ws.title = "Assignments"
 
-            # chỉ 6 cột, bỏ group_file và mode/status
+            # ghi header
             headers = ["channel", "directory", "title", "description", "publish_date", "publish_time"]
             ws.append(headers)
             for col_idx, h in enumerate(headers, start=1):
@@ -334,7 +343,7 @@ class App(ttkb.Window):
     def _set_status(self, msg: str):
         self.status_var.set(msg)
 
-    # ---------- Edit row (double-click) ----------
+    # ---------- Edit row by double click----------
     def _on_tree_double_click(self, event):
         region = self.tree.identify("region", event.x, event.y)
         if region != "cell":
