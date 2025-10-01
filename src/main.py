@@ -78,7 +78,7 @@ class App(tk.Tk):
         # Set màu nền chính cho cửa sổ
         self.configure(bg=bg_dark)
 
-                # Treeview (bảng)
+        # Treeview
         style.configure("Treeview",
                         background=bg_panel,
                         foreground=fg_light,
@@ -87,15 +87,14 @@ class App(tk.Tk):
                         font=("Segoe UI", 10))
         style.map("Treeview",
                   background=[("selected", accent)],
-                  foreground=[("selected", "white")])   # chữ trắng trên nền xanh
-
+                  foreground=[("selected", "white")])   
         # Header của Treeview
         style.configure("Treeview.Heading",
                         font=("Segoe UI", 10, "bold"),
                         background=bg_dark,
                         foreground=fg_light)
 
-        # Nút bấm
+        # Button
         style.configure("TButton",
                         background=bg_panel,
                         foreground=fg_light,
@@ -103,7 +102,7 @@ class App(tk.Tk):
                         padding=6)
         style.map("TButton",
                   background=[("active", accent), ("pressed", accent)],
-                  foreground=[("active", "white"), ("pressed", "white")])  # khi hover/nhấn, chữ trắng
+                  foreground=[("active", "white"), ("pressed", "white")])
 
         # Nhãn
         style.configure("TLabel",
@@ -115,7 +114,7 @@ class App(tk.Tk):
         style.configure("TEntry",
                         fieldbackground=bg_panel,
                         foreground=fg_light,
-                        insertcolor="white",   # màu con trỏ
+                        insertcolor="white",  
                         padding=4)
 
         # Combobox
@@ -126,6 +125,7 @@ class App(tk.Tk):
                         selectbackground=accent,
                         selectforeground="white",
                         padding=4)
+        
         style.map("TCombobox",
                   fieldbackground=[("readonly", bg_panel)],
                   foreground=[("readonly", fg_light)],
@@ -147,7 +147,7 @@ class App(tk.Tk):
         self._last_assignments = None  # list[(channel, title, desc, publish_date, publish_time)]
 
         # Date/Time header controls state
-        self.date_entry = None  # sẽ gán widget trong _build_header
+        self.date_entry = None  
         now = datetime.datetime.now()
         self.time_h_var = tk.StringVar(value=f"{now.hour:02d}")
         self.time_m_var = tk.StringVar(value=f"{now.minute:02d}")
@@ -158,14 +158,27 @@ class App(tk.Tk):
         self._build_preview()
         self._build_footer()
         self._refresh_group_files()
+        self._bind_text_preview()
 
     # ---------- Header ----------
+
+    def _schedule_preview(self):
+        if hasattr(self, "_preview_job"):
+            self.after_cancel(self._preview_job)
+        self._preview_job = self.after(500, self._preview)  # 500ms delay
+
+    def _bind_text_preview(self):
+        def on_change(event):
+            event.widget.edit_modified(False)
+            self._schedule_preview()
+        self.txt_titles.bind("<<Modified>>", on_change)
+        self.txt_descs.bind("<<Modified>>", on_change)
 
     def _build_header(self):
         frm = ttk.Frame(self, padding=(10, 10, 10, 0))
         frm.pack(fill=tk.X)
 
-        ttk.Label(frm, text="Group(in ./group):").grid(row=0, column=0, sticky="w")
+        ttk.Label(frm, text="Group:").grid(row=0, column=0, sticky="w")
         self.group_combo = ttk.Combobox(frm, textvariable=self.group_file_var, state="readonly", width=48)
         self.group_combo.grid(row=0, column=1, sticky="w", padx=6)
         self.group_combo.bind("<<ComboboxSelected>>", lambda e: self._load_channels())
@@ -235,7 +248,6 @@ class App(tk.Tk):
 
         btns = ttk.Frame(self, padding=(10, 0, 10, 0))
         btns.pack(fill=tk.X)
-        ttk.Button(btns, text="Preview Distribution", command=self._preview).pack(side=tk.LEFT)
         ttk.Button(btns, text="Clear Inputs", command=self._clear_inputs).pack(side=tk.LEFT, padx=6)
 
     # ---------- Preview / Tree ----------
@@ -314,13 +326,19 @@ class App(tk.Tk):
     def _preview(self):
         group_file = self.group_file_var.get().strip()
         if not group_file:
-            messagebox.showwarning("Missing CSV", "Please select a group CSV in ./group.")
+            messagebox.showwarning("Missing CSV", "Please select a group CSV")
             return
 
         titles = normalize_lines(self.txt_titles.get("1.0", tk.END))
         descs = normalize_lines(self.txt_descs.get("1.0", tk.END))
         channels = self._channels_cache
         mode = self.mode_var.get()
+
+        if not titles and not descs:
+            self.tree.delete(*self.tree.get_children())
+            self._last_assignments = None
+            self._set_status("Inputs empty → preview cleared.")
+            return
 
         try:
             assignments = assign_pairs(channels, titles, descs, mode=mode)
@@ -607,8 +625,8 @@ class App(tk.Tk):
         from openpyxl import load_workbook, Workbook
         from tkinter import messagebox
 
-        input_dir = r"E:\auto upload with gpm\upload"
-        output_file = r"E:\uploadshort_project\upload short\upload.xlsx"
+        input_dir = 'upload'
+        output_file = 'upload_data.xlsx'
 
         pattern = os.path.join(input_dir, "*.xlsx")
         files = glob.glob(pattern)
