@@ -205,7 +205,7 @@ class App(tk.Tk):
         self.date_entry = DateEntry(
             frm3,
             width=12,
-            date_pattern="dd/mm/yyyy",   # định dạng ngày
+            date_pattern="mm/dd/yyyy",   # định dạng ngày
             state="readonly"             # không cho gõ tay, chỉ chọn
         )
         self.date_entry.set_date(datetime.date.today())
@@ -514,7 +514,7 @@ class App(tk.Tk):
         txt_desc.grid(row=3, column=1, sticky="we")
         txt_desc.insert("1.0", desc_cur)
 
-        ttk.Label(frm, text="Publish date (DD/MM/YYYY):").grid(row=4, column=0, sticky="e", padx=6, pady=4)
+        ttk.Label(frm, text="Publish date (MM/DD/YYYY):").grid(row=4, column=0, sticky="e", padx=6, pady=4)
         ent_pd = ttk.Entry(frm, width=20)
         ent_pd.grid(row=4, column=1, sticky="w")
         ent_pd.insert(0, pd_cur)
@@ -557,7 +557,7 @@ class App(tk.Tk):
                 messagebox.showwarning("Missing", "Channel và Title không được để trống.")
                 return
             if not is_valid_date(pd):
-                messagebox.showerror("Invalid date", "Publish date phải dạng DD/MM/YYYY hoặc để trống.")
+                messagebox.showerror("Invalid date", "Publish date phải dạng MM/DD/YYYY hoặc để trống.")
                 return
             if not is_valid_time(pt):
                 messagebox.showerror("Invalid time", "Publish time phải dạng HH:MM (24h) hoặc để trống.")
@@ -596,7 +596,7 @@ class App(tk.Tk):
         try:
             datetime.datetime.strptime(date_str, "%d/%m/%Y")
         except ValueError:
-            messagebox.showerror("Invalid date", "Định dạng ngày phải là DD/MM/YYYY.")
+            messagebox.showerror("Invalid date", "Định dạng ngày phải là MM/DD/YYYY.")
             return
 
         # --- Lấy giờ phút ---
