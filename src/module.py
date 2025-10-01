@@ -110,3 +110,14 @@ def load_used_videos():
         return set()
     with open(USED_LOG_FILE, "r", encoding="utf-8") as f:
         return set(line.strip() for line in f if line.strip())
+
+import os
+
+def get_mp4_filename(path: str) -> str:
+    """Trả về tên file .mp4 từ đường dẫn, nếu không phải mp4 hoặc rỗng thì ''. """
+    if not path:
+        return ""
+    safe_path = str(path).replace("\\", "/")
+    filename = os.path.basename(safe_path)
+    return filename if filename.lower().endswith(".mp4") else ""
+

@@ -1,9 +1,8 @@
 import os
-
 import datetime
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
-from module import list_group_csvs, read_channels_from_csv, normalize_lines, assign_pairs, load_group_dirs, load_used_videos
+from module import list_group_csvs, read_channels_from_csv, normalize_lines, assign_pairs, load_group_dirs, load_used_videos, get_mp4_filename
 from hyperparameter import (
     APP_TITLE,
     GROUPS_DIR,
@@ -13,11 +12,13 @@ from hyperparameter import (
 from tkcalendar  import DateEntry
 from tkcalendar import Calendar
 
-from openpyxl import Workbook
+from openpyxl import Workbook,load_workbook
 from openpyxl.utils import get_column_letter
 from openpyxl.styles import Font
 
 from random_vids import get_random_unused_mp4
+import glob
+
 
 class App(tk.Tk):
     def __init__(self):
@@ -288,8 +289,23 @@ class App(tk.Tk):
     def _build_footer(self):
         bar = ttk.Frame(self, relief=tk.SUNKEN, padding=6)
         bar.pack(fill=tk.X, side=tk.BOTTOM)
-        ttk.Label(bar, textvariable=self.status_var).pack(side=tk.LEFT)
+
+        self.move_folder_var = tk.StringVar(value="")  # đường dẫn video mới
+
+        ttk.Label(bar, text="Save to:").pack(side=tk.LEFT, padx=(0, 4))
+        ent = ttk.Entry(bar, textvariable=self.move_folder_var, width=50)
+        ent.pack(side=tk.LEFT, padx=(0, 4))
+
+        def choose_folder():
+            folder = filedialog.askdirectory(title="Chọn thư mục lưu video mới")
+            if folder:
+                self.move_folder_var.set(folder)
+
+        ttk.Button(bar, text="Browse", command=choose_folder).pack(side=tk.LEFT, padx=(0, 8))
+
         ttk.Button(bar, text="Combine", command=self._combine_excels).pack(side=tk.RIGHT)
+        ttk.Label(bar, textvariable=self.status_var).pack(side=tk.LEFT)
+
 
 
     # ---------- Actions ----------
@@ -620,10 +636,7 @@ class App(tk.Tk):
         self._set_status(f"Tổng cộng có: {len(ids)} dòng.")
 
     def _combine_excels(self):
-        import glob
-        import os
-        from openpyxl import load_workbook, Workbook
-        from tkinter import messagebox
+
 
         input_dir = 'upload'
         output_file = 'upload_data.xlsx'
@@ -641,6 +654,7 @@ class App(tk.Tk):
 
         header_written = False
         row_idx = 1
+        move_folder = self.move_folder_var.get().strip()
 
         for file in files:
             try:
@@ -651,14 +665,34 @@ class App(tk.Tk):
                 max_col = ws.max_column
 
                 if not header_written:
+                    # copy header gốc
                     for col in range(1, max_col + 1):
                         ws_out.cell(row=1, column=col).value = ws.cell(row=1, column=col).value
+                    # thêm cột mới move_folder
+                    ws_out.cell(row=1, column=max_col + 1).value = "move_folder"
                     header_written = True
                     row_idx += 1
 
                 for r in range(2, max_row + 1):
+                    row_values = []
                     for c in range(1, max_col + 1):
-                        ws_out.cell(row=row_idx, column=c).value = ws.cell(row=r, column=c).value
+                        val = ws.cell(row=r, column=c).value
+                        row_values.append(val)
+
+                    # giữ nguyên directory (cột 2)
+                    directory_val = row_values[1] if len(row_values) > 1 else ""
+
+                    # tạo move_folder = thư mục mới + tên file từ directory
+                    filename = get_mp4_filename(directory_val)
+                    move_path = os.path.join(move_folder, filename) if filename else ""
+
+                    # ghi lại các cột cũ
+                    for c, val in enumerate(row_values, start=1):
+                        ws_out.cell(row=row_idx, column=c).value = val
+
+                    # ghi thêm cột move_folder
+                    ws_out.cell(row=row_idx, column=max_col + 1).value = move_path
+
                     row_idx += 1
 
             except Exception as e:
@@ -666,12 +700,15 @@ class App(tk.Tk):
                 return
 
         try:
-            os.makedirs(os.path.dirname(output_file), exist_ok=True)
+            os.makedirs(os.path.dirname(output_file) or ".", exist_ok=True)
             if os.path.exists(output_file):
                 os.remove(output_file)
             wb_out.save(output_file)
 
-            #delete data after combine
+            messagebox.showinfo("Done", f"Đã gộp và lưu vào:\n{output_file}")
+            self._set_status(f"Combined {len(files)} files → {output_file}")
+
+            #delete after combine
             for file in files:
                 try:
                     wb = load_workbook(file)
@@ -679,18 +716,16 @@ class App(tk.Tk):
 
                     max_row = ws.max_row
                     max_col = ws.max_column
-
+                    
                     for row in ws.iter_rows(min_row=2, max_row=max_row, max_col=max_col):
                         for cell in row:
                             cell.value = None
 
                     wb.save(file)
-
                 except Exception as e:
-                    messagebox.showwarning("Warning", f"Không thể xóa dữ liệu trong file:\n{file}\n{e}")
+                    messagebox.showerror("Error", f"Lỗi khi xóa data trong file: {file} \n{e} ")
 
-            messagebox.showinfo("Done", f"Đã gộp và lưu vào:\n{output_file}")
-            self._set_status(f"Combined {len(files)} files → {output_file}")
+            self._set_status(f"Cleared data in {len(files)} files in {input_dir}")
 
         except Exception as e:
             messagebox.showerror("Error", f"Lỗi khi lưu file:\n{e}")
