@@ -727,6 +727,7 @@ class App(tk.Tk):
                 except Exception as e:
                     messagebox.showerror("Error", f"Lỗi khi xóa data trong file: {file} \n{e} ")
 
+            messagebox.showinfo("Cleared", f"Done")
             self._set_status(f"Cleared data in {len(files)} files in {input_dir}")
 
         except Exception as e:
