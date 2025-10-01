@@ -8,11 +8,10 @@ from hyperparameter import (
     APP_TITLE,
     GROUPS_DIR,
     OUTPUT_DIR,
-    HAS_TKCAL,
 )
 
-import ttkbootstrap as ttkb
-from ttkbootstrap.constants import *
+from tkcalendar  import DateEntry
+from tkcalendar import Calendar
 
 from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
@@ -20,9 +19,121 @@ from openpyxl.styles import Font
 
 from random_vids import get_random_unused_mp4
 
-class App(ttkb.Window): 
+class App(tk.Tk):
     def __init__(self):
-        super().__init__(themename="cyborg")
+        super().__init__()
+        style = ttk.Style()
+        style.theme_use("clam") 
+        
+
+        # === Dark Theme custom ===
+        bg_dark = "#2b2b2b"
+        bg_panel = "#3c3f41"
+        fg_light = "#f0f0f0"
+        accent = "#0078d7"
+
+        # Text widget
+        self.option_add("*TEntry*background", bg_panel)
+        self.option_add("*TEntry*foreground", fg_light)
+        self.option_add("*Text*background", bg_panel)
+        self.option_add("*Text*foreground", fg_light)
+        self.option_add("*Text*insertBackground", "white")   # con trỏ trắng
+
+        # Spinbox
+        style.configure("TSpinbox",
+                        fieldbackground=bg_panel,
+                        background=bg_panel,
+                        foreground=fg_light,
+                        arrowsize=14)
+        style.map("TSpinbox",
+                  fieldbackground=[("readonly", bg_panel)],
+                  foreground=[("readonly", fg_light)])
+        
+        # Radiobutton (Repeat / No Repeat)
+        style.configure("TRadiobutton",
+                        background=bg_dark,      
+                        foreground=fg_light, 
+                        font=("Segoe UI", 10))
+
+        style.map("TRadiobutton",
+                background=[("active", bg_panel)],   # khi hover
+                foreground=[("active", accent)])     # chữ xanh khi hover
+
+
+        # DateEntry (từ tkcalendar) kế thừa TEntry
+        style.configure("DateEntry",
+                        fieldbackground=bg_panel,
+                        background=bg_panel,
+                        foreground=fg_light)
+
+        # Frame & window background đồng bộ
+        style.configure("TFrame", background=bg_dark)
+        style.configure("TLabelframe", background=bg_dark, foreground=fg_light)
+        style.configure("TLabelframe.Label", background=bg_dark, foreground=fg_light)
+
+        # Sửa cả default window bg cho đồng bộ
+        self.option_add("*Background", bg_dark)
+        self.option_add("*Foreground", fg_light)
+
+        # Set màu nền chính cho cửa sổ
+        self.configure(bg=bg_dark)
+
+                # Treeview (bảng)
+        style.configure("Treeview",
+                        background=bg_panel,
+                        foreground=fg_light,
+                        rowheight=28,
+                        fieldbackground=bg_panel,
+                        font=("Segoe UI", 10))
+        style.map("Treeview",
+                  background=[("selected", accent)],
+                  foreground=[("selected", "white")])   # chữ trắng trên nền xanh
+
+        # Header của Treeview
+        style.configure("Treeview.Heading",
+                        font=("Segoe UI", 10, "bold"),
+                        background=bg_dark,
+                        foreground=fg_light)
+
+        # Nút bấm
+        style.configure("TButton",
+                        background=bg_panel,
+                        foreground=fg_light,
+                        font=("Segoe UI", 10, "bold"),
+                        padding=6)
+        style.map("TButton",
+                  background=[("active", accent), ("pressed", accent)],
+                  foreground=[("active", "white"), ("pressed", "white")])  # khi hover/nhấn, chữ trắng
+
+        # Nhãn
+        style.configure("TLabel",
+                        background=bg_dark,
+                        foreground=fg_light,
+                        font=("Segoe UI", 10))
+
+        # Ô nhập
+        style.configure("TEntry",
+                        fieldbackground=bg_panel,
+                        foreground=fg_light,
+                        insertcolor="white",   # màu con trỏ
+                        padding=4)
+
+        # Combobox
+        style.configure("TCombobox",
+                        fieldbackground=bg_panel,
+                        background=bg_panel,
+                        foreground=fg_light,
+                        selectbackground=accent,
+                        selectforeground="white",
+                        padding=4)
+        style.map("TCombobox",
+                  fieldbackground=[("readonly", bg_panel)],
+                  foreground=[("readonly", fg_light)],
+                  selectbackground=[("readonly", accent)],
+                  selectforeground=[("readonly", "white")])
+
+
+
         self.title(APP_TITLE)
         self.state("zoomed") 
         self.minsize(880, 580)
@@ -49,11 +160,12 @@ class App(ttkb.Window):
         self._refresh_group_files()
 
     # ---------- Header ----------
+
     def _build_header(self):
         frm = ttk.Frame(self, padding=(10, 10, 10, 0))
         frm.pack(fill=tk.X)
 
-        ttk.Label(frm, text="Group CSV (in ./group):").grid(row=0, column=0, sticky="w")
+        ttk.Label(frm, text="Group(in ./group):").grid(row=0, column=0, sticky="w")
         self.group_combo = ttk.Combobox(frm, textvariable=self.group_file_var, state="readonly", width=48)
         self.group_combo.grid(row=0, column=1, sticky="w", padx=6)
         self.group_combo.bind("<<ComboboxSelected>>", lambda e: self._load_channels())
@@ -75,29 +187,16 @@ class App(ttkb.Window):
 
         ttk.Label(frm3, text="Publish date:").pack(side=tk.LEFT)
 
-        if HAS_TKCAL:
-            try:
-                from tkcalendar import DateEntry  # lazy import
-                self.date_entry = DateEntry(
-                    frm3,
-                    date_pattern="dd/mm/yyyy",
-                    width=12,
-                    background="lightblue",
-                    foreground="black",
-                    borderwidth=2
-                )
-                self.date_entry.set_date(datetime.date.today())
-                self.date_entry.pack(side=tk.LEFT, padx=(6, 16))
-            except Exception:
-                date_str = datetime.date.today().strftime("%d-%m-%Y")
-                self.date_entry = ttk.Entry(frm3, width=12)
-                self.date_entry.insert(0, date_str)
-                self.date_entry.pack(side=tk.LEFT, padx=(6, 16))
-        else:
-            date_str = datetime.date.today().strftime("%d-%m-%Y")
-            self.date_entry = ttk.Entry(frm3, width=12)
-            self.date_entry.insert(0, date_str)
-            self.date_entry.pack(side=tk.LEFT, padx=(6, 16))
+        # Dùng DateEntry trực tiếp (có sẵn ô chọn ngày + popup nhỏ gọn)
+        self.date_entry = DateEntry(
+            frm3,
+            width=12,
+            date_pattern="dd/mm/yyyy",   # định dạng ngày
+            state="readonly"             # không cho gõ tay, chỉ chọn
+        )
+        self.date_entry.set_date(datetime.date.today())
+        self.date_entry.pack(side=tk.LEFT, padx=(6, 16))
+
 
         ttk.Label(frm3, text="Publish time:").pack(side=tk.LEFT)
 
@@ -173,7 +272,6 @@ class App(ttkb.Window):
         btns = ttk.Frame(self, padding=(10, 0, 10, 10))
         btns.pack(fill=tk.X)
         ttk.Button(btns, text="Save Excel", command=self._save_excel).pack(side=tk.LEFT)
-        ttk.Button(btns, text="Copy TSV", command=self._copy_tsv).pack(side=tk.LEFT, padx=6)
 
     def _build_footer(self):
         bar = ttk.Frame(self, relief=tk.SUNKEN, padding=6)
@@ -204,7 +302,7 @@ class App(ttkb.Window):
         channels = read_channels_from_csv(csv_path)
         self._channels_cache = channels
         self.channel_count_lbl.config(text=f"{len(channels)} channels")
-        self._set_status(f"Loaded {len(channels)} channels from {csv_path}")
+        self._set_status(f"Loaded {len(channels)} channels from {name}.")
 
     def _clear_inputs(self):
         self.txt_titles.delete("1.0", tk.END)
@@ -329,16 +427,6 @@ class App(ttkb.Window):
             messagebox.showerror("Error", f"Failed to save Excel:\n{e}")
 
 
-    def _copy_tsv(self):
-        if not self._last_assignments:
-            messagebox.showwarning("Nothing to copy", "Click Preview first.")
-            return
-        header = "channel\tdirectory\ttitle\tdescription\tpublish_date\tpublish_time\n"
-        body = "\n".join(f"{ch}\t{directory}\t{t}\t{d}\t{pd}\t{pt}" for ch, directory, t, d, pd, pt in self._last_assignments)
-        tsv = header + body
-        self.clipboard_clear()
-        self.clipboard_append(tsv)
-        self._set_status("Assignments copied to clipboard as TSV.")
 
     def _set_status(self, msg: str):
         self.status_var.set(msg)
@@ -356,9 +444,9 @@ class App(ttkb.Window):
 
     def _edit_row_dialog(self, item_id, index):
         vals = list(self.tree.item(item_id, "values"))
-        if len(vals) < 6:
-            vals = list(vals) + [""] * (6 - len(vals))
-            ch_cur, dir_cur, title_cur, desc_cur, pd_cur, pt_cur = vals
+        # đảm bảo luôn có 6 phần tử
+        vals += [""] * max(0, 6 - len(vals))
+        ch_cur, dir_cur, title_cur, desc_cur, pd_cur, pt_cur = vals
 
         win = tk.Toplevel(self)
         win.title("Edit row")
@@ -388,7 +476,7 @@ class App(ttkb.Window):
         txt_desc.grid(row=3, column=1, sticky="we")
         txt_desc.insert("1.0", desc_cur)
 
-        ttk.Label(frm, text="Publish date (YYYY-MM-DD):").grid(row=4, column=0, sticky="e", padx=6, pady=4)
+        ttk.Label(frm, text="Publish date (DD/MM/YYYY):").grid(row=4, column=0, sticky="e", padx=6, pady=4)
         ent_pd = ttk.Entry(frm, width=20)
         ent_pd.grid(row=4, column=1, sticky="w")
         ent_pd.insert(0, pd_cur)
@@ -399,16 +487,13 @@ class App(ttkb.Window):
         ent_pt.insert(0, pt_cur)
 
 
-        
-
-
         frm.columnconfigure(1, weight=1)
 
         def is_valid_date(s: str) -> bool:
             if not s.strip():
                 return True
             try:
-                datetime.datetime.strptime(s.strip(), "%Y-%m-%d")
+                datetime.datetime.strptime(s.strip(), "%d/%m/%Y")
                 return True
             except ValueError:
                 return False
@@ -434,7 +519,7 @@ class App(ttkb.Window):
                 messagebox.showwarning("Missing", "Channel và Title không được để trống.")
                 return
             if not is_valid_date(pd):
-                messagebox.showerror("Invalid date", "Publish date phải dạng YYYY-MM-DD hoặc để trống.")
+                messagebox.showerror("Invalid date", "Publish date phải dạng DD/MM/YYYY hoặc để trống.")
                 return
             if not is_valid_time(pt):
                 messagebox.showerror("Invalid time", "Publish time phải dạng HH:MM (24h) hoặc để trống.")
@@ -464,16 +549,16 @@ class App(ttkb.Window):
         if hasattr(self.date_entry, "get_date"):
             try:
                 d = self.date_entry.get_date()
-                date_str = d.strftime("%Y-%m-%d")
+                date_str = d.strftime("%d/%m/%Y")
             except Exception:
                 date_str = str(self.date_entry.get()).strip()
         else:
             date_str = str(self.date_entry.get()).strip()
 
         try:
-            datetime.datetime.strptime(date_str, "%Y-%m-%d")
+            datetime.datetime.strptime(date_str, "%d/%m/%Y")
         except ValueError:
-            messagebox.showerror("Invalid date", "Định dạng ngày phải là YYYY-MM-DD.")
+            messagebox.showerror("Invalid date", "Định dạng ngày phải là DD/MM/YYYY.")
             return
 
         # --- Lấy giờ phút ---
@@ -514,7 +599,7 @@ class App(ttkb.Window):
             if self._last_assignments and i < len(self._last_assignments):
                 self._last_assignments[i] = new_vals    
 
-        self._set_status(f"Set publish_date='{date_str}', publish_time bắt đầu từ {hh}:{mm} với step {step} phút cho {len(ids)} dòng.")
+        self._set_status(f"Tổng cộng có: {len(ids)} dòng.")
 
     def _combine_excels(self):
         import glob

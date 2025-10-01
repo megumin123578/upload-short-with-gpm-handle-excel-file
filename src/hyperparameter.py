@@ -8,5 +8,3 @@ CHANNEL_HEADER_HINTS = [
 ]
 
 OUTPUT_DIR = r"E:\auto upload with gpm\upload" 
-
-HAS_TKCAL = True
