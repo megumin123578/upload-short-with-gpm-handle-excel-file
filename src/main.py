@@ -531,7 +531,7 @@ class App(tk.Tk):
             if not s.strip():
                 return True
             try:
-                datetime.datetime.strptime(s.strip(), "%d/%m/%Y")
+                datetime.datetime.strptime(s.strip(), "%m/%d/%Y")
                 return True
             except ValueError:
                 return False
@@ -587,14 +587,14 @@ class App(tk.Tk):
         if hasattr(self.date_entry, "get_date"):
             try:
                 d = self.date_entry.get_date()
-                date_str = d.strftime("%d/%m/%Y")
+                date_str = d.strftime("%m/%d/%Y")
             except Exception:
                 date_str = str(self.date_entry.get()).strip()
         else:
             date_str = str(self.date_entry.get()).strip()
 
         try:
-            datetime.datetime.strptime(date_str, "%d/%m/%Y")
+            datetime.datetime.strptime(date_str, "%m/%d/%Y")
         except ValueError:
             messagebox.showerror("Invalid date", "Định dạng ngày phải là MM/DD/YYYY.")
             return
