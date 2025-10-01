@@ -2,7 +2,7 @@ import os
 import datetime
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
-from module import list_group_csvs, read_channels_from_csv, normalize_lines, assign_pairs, load_group_dirs, load_used_videos, get_mp4_filename
+from module import list_group_csvs, read_channels_from_csv, normalize_lines, assign_pairs, load_group_dirs, load_used_videos, get_mp4_filename, load_group_config, save_group_config
 from hyperparameter import (
     APP_TITLE,
     GROUPS_DIR,
@@ -300,6 +300,9 @@ class App(tk.Tk):
             folder = filedialog.askdirectory(title="Chọn thư mục lưu video mới")
             if folder:
                 self.move_folder_var.set(folder)
+                group_name = self.group_file_var.get().strip()
+                if group_name:
+                    save_group_config(group_name, folder)
 
         ttk.Button(bar, text="Browse", command=choose_folder).pack(side=tk.LEFT, padx=(0, 8))
 
@@ -331,6 +334,9 @@ class App(tk.Tk):
         self._channels_cache = channels
         self.channel_count_lbl.config(text=f"{len(channels)} channels")
         self._set_status(f"Loaded {len(channels)} channels from {name}.")
+        # Load last used move_folder
+        last_folder = load_group_config(name)
+        self.move_folder_var.set(last_folder)
 
     def _clear_inputs(self):
         self.txt_titles.delete("1.0", tk.END)
@@ -455,8 +461,6 @@ class App(tk.Tk):
             wb.save(out_path)
 
             self._set_status(f"Saved Excel: {out_path}" + (" (overwritten)" if existed else ""))
-            messagebox.showinfo("Saved",
-                               "Save successfully!")
         except Exception as e:
             messagebox.showerror("Error", f"Failed to save Excel:\n{e}")
 
@@ -704,8 +708,6 @@ class App(tk.Tk):
             if os.path.exists(output_file):
                 os.remove(output_file)
             wb_out.save(output_file)
-
-            messagebox.showinfo("Done", f"Đã gộp và lưu vào:\n{output_file}")
             self._set_status(f"Combined {len(files)} files → {output_file}")
 
             #delete after combine
@@ -730,6 +732,9 @@ class App(tk.Tk):
         except Exception as e:
             messagebox.showerror("Error", f"Lỗi khi lưu file:\n{e}")
 
+        group_name = self.group_file_var.get().strip()
+        if group_name and move_folder:
+            save_group_config(group_name, move_folder)
 
 
 if __name__ == "__main__":

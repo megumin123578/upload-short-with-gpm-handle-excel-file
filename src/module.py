@@ -3,6 +3,9 @@ import itertools
 from hyperparameter import CHANNEL_HEADER_HINTS
 import os
 import csv
+import json
+
+CONFIG_FILE = "config.json"
 
 
 USED_LOG_FILE = "log.txt"
@@ -111,7 +114,6 @@ def load_used_videos():
     with open(USED_LOG_FILE, "r", encoding="utf-8") as f:
         return set(line.strip() for line in f if line.strip())
 
-import os
 
 def get_mp4_filename(path: str) -> str:
     """Trả về tên file .mp4 từ đường dẫn, nếu không phải mp4 hoặc rỗng thì ''. """
@@ -121,3 +123,28 @@ def get_mp4_filename(path: str) -> str:
     filename = os.path.basename(safe_path)
     return filename if filename.lower().endswith(".mp4") else ""
 
+
+def save_group_config(group_name: str, move_folder: str):
+    """Lưu move_folder theo group CSV."""
+    data = {}
+    if os.path.exists(CONFIG_FILE):
+        try:
+            with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        except:
+            data = {}
+
+    data[group_name] = move_folder
+    with open(CONFIG_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+def load_group_config(group_name: str) -> str:
+    """Đọc move_folder theo group CSV, nếu không có thì trả về ''."""
+    if not os.path.exists(CONFIG_FILE):
+        return ""
+    try:
+        with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return data.get(group_name, "")
+    except:
+        return ""
