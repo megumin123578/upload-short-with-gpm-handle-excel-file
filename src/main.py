@@ -152,7 +152,7 @@ class App(tk.Tk):
         now = datetime.datetime.now()
         self.time_h_var = tk.StringVar(value=f"{now.hour:02d}")
         self.time_m_var = tk.StringVar(value=f"{now.minute:02d}")
-        self.step_min_var = tk.IntVar(value=0) 
+        self.step_min_var = tk.IntVar(value=30) 
 
         self._build_header()
         self._build_inputs()
@@ -201,7 +201,6 @@ class App(tk.Tk):
 
         ttk.Label(frm3, text="Publish date:").pack(side=tk.LEFT)
 
-        # Dùng DateEntry trực tiếp (có sẵn ô chọn ngày + popup nhỏ gọn)
         self.date_entry = DateEntry(
             frm3,
             width=12,
@@ -308,7 +307,6 @@ class App(tk.Tk):
 
         ttk.Button(bar, text="Combine", command=self._combine_excels).pack(side=tk.RIGHT)
         ttk.Label(bar, textvariable=self.status_var).pack(side=tk.LEFT)
-
 
 
     # ---------- Actions ----------
@@ -583,7 +581,7 @@ class App(tk.Tk):
 
     # ---------- Apply date/time to ALL ----------
     def _apply_date_time_all(self):
-    # --- Lấy ngày ---
+    # --- get date ---
         if hasattr(self.date_entry, "get_date"):
             try:
                 d = self.date_entry.get_date()
@@ -599,7 +597,7 @@ class App(tk.Tk):
             messagebox.showerror("Invalid date", "Định dạng ngày phải là MM/DD/YYYY.")
             return
 
-        # --- Lấy giờ phút ---
+        # --- get time ---
         hh = self.time_h_var.get().strip()
         mm = self.time_m_var.get().strip()
         step = self.step_min_var.get()
@@ -625,7 +623,7 @@ class App(tk.Tk):
         ids = self.tree.get_children()
 
         for i, iid in enumerate(ids):
-            tm = (base_dt + datetime.timedelta(minutes=i * step)).time()
+            tm = (base_dt + datetime.timedelta(minutes=step)).time()
             time_str = f"{tm.hour:02d}:{tm.minute:02d}"
 
             vals = list(self.tree.item(iid, "values"))
