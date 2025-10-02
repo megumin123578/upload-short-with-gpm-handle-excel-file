@@ -174,6 +174,7 @@ class App(tk.Tk):
             self._schedule_preview()
         self.txt_titles.bind("<<Modified>>", on_change)
         self.txt_descs.bind("<<Modified>>", on_change)
+        self.txt_times.bind("<<Modified>>", on_change)
 
     def _build_header(self):
         frm = ttk.Frame(self, padding=(10, 10, 10, 0))
@@ -234,21 +235,32 @@ class App(tk.Tk):
         frm = ttk.Frame(self, padding=10)
         frm.pack(fill=tk.BOTH, expand=True)
 
+        # === Titles ===
         left = ttk.Frame(frm)
         left.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 5))
         ttk.Label(left, text="Titles (one per line)").pack(anchor="w")
         self.txt_titles = tk.Text(left, height=12, wrap=tk.WORD)
         self.txt_titles.pack(fill=tk.BOTH, expand=True)
 
-        right = ttk.Frame(frm)
-        right.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(5, 0))
-        ttk.Label(right, text="Descriptions (1 line for all, or multiple lines)").pack(anchor="w")
-        self.txt_descs = tk.Text(right, height=12, wrap=tk.WORD)
+        # === Descriptions ===
+        mid = ttk.Frame(frm)
+        mid.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5)
+        ttk.Label(mid, text="Descriptions (1 line for all, or multiple lines)").pack(anchor="w")
+        self.txt_descs = tk.Text(mid, height=12, wrap=tk.WORD)
         self.txt_descs.pack(fill=tk.BOTH, expand=True)
 
+        # === Time column ===
+        right = ttk.Frame(frm)
+        right.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(5, 0))
+        ttk.Label(right, text="Time (HH:MM or per line)").pack(anchor="w")
+        self.txt_times = tk.Text(right, height=12, wrap=tk.WORD)
+        self.txt_times.pack(fill=tk.BOTH, expand=True)
+
+        # === Buttons ===
         btns = ttk.Frame(self, padding=(10, 0, 10, 0))
         btns.pack(fill=tk.X)
         ttk.Button(btns, text="Clear Inputs", command=self._clear_inputs).pack(side=tk.LEFT, padx=6)
+
 
     # ---------- Preview / Tree ----------
     def _build_preview(self):
@@ -351,6 +363,7 @@ class App(tk.Tk):
 
         titles = normalize_lines(self.txt_titles.get("1.0", tk.END))
         descs = normalize_lines(self.txt_descs.get("1.0", tk.END))
+        times = normalize_lines(self.txt_times.get("1.0", tk.END))   # <== thêm dòng này
         channels = self._channels_cache
         mode = self.mode_var.get()
 
@@ -366,16 +379,20 @@ class App(tk.Tk):
             messagebox.showerror("Error", str(e))
             return
 
-        group_dirs = load_group_dirs()  # {group.csv: folder_path}
+        group_dirs = load_group_dirs()
         folder_path = group_dirs.get(group_file)
 
-        used_paths = load_used_videos()   # load from log.txt
-        session_used = set()              # avoid duplicate in preview session
+        used_paths = load_used_videos()
+        session_used = set()
         self.tree.delete(*self.tree.get_children())
         extended = []
 
-        for ch, t, d in assignments:
-            pd, pt = "", ""
+        for i, (ch, t, d) in enumerate(assignments):
+
+            pt = times[i] if i < len(times) else ""
+            #if time ->> date = today
+            pd = datetime.date.today().strftime("%m/%d/%Y") if pt else ""
+
             if folder_path and os.path.isdir(folder_path):
                 directory = get_random_unused_mp4(folder_path, used_paths | session_used)
                 if directory:
@@ -386,12 +403,12 @@ class App(tk.Tk):
             self.tree.insert("", tk.END, values=(ch, directory, t, d, pd, pt))
             extended.append((ch, directory, t, d, pd, pt))
 
-
         self._last_assignments = extended
         if mode == "titles":
             self._set_status(f"Previewed {len(assignments)} rows (title-driven; channels cycle if needed).")
         else:
             self._set_status(f"Previewed {len(assignments)} rows (channel-driven).")
+
 
 
     def _save_excel(self):
