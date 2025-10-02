@@ -5,6 +5,7 @@ import os
 import csv
 import json
 
+
 CONFIG_FILE = "config.json"
 
 
@@ -116,7 +117,6 @@ def load_used_videos():
 
 
 def get_mp4_filename(path: str) -> str:
-    """Trả về tên file .mp4 từ đường dẫn, nếu không phải mp4 hoặc rỗng thì ''. """
     if not path:
         return ""
     safe_path = str(path).replace("\\", "/")
@@ -125,7 +125,6 @@ def get_mp4_filename(path: str) -> str:
 
 
 def save_group_config(group_name: str, move_folder: str):
-    """Lưu move_folder theo group CSV."""
     data = {}
     if os.path.exists(CONFIG_FILE):
         try:
@@ -139,7 +138,6 @@ def save_group_config(group_name: str, move_folder: str):
         json.dump(data, f, ensure_ascii=False, indent=2)
 
 def load_group_config(group_name: str) -> str:
-    """Đọc move_folder theo group CSV, nếu không có thì trả về ''."""
     if not os.path.exists(CONFIG_FILE):
         return ""
     try:

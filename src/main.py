@@ -1,4 +1,5 @@
 import os
+import threading
 import datetime
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
@@ -8,132 +9,22 @@ from hyperparameter import (
     GROUPS_DIR,
     OUTPUT_DIR,
 )
-
 from tkcalendar  import DateEntry
 from tkcalendar import Calendar
-
 from openpyxl import Workbook,load_workbook
 from openpyxl.utils import get_column_letter
 from openpyxl.styles import Font
-
 from random_vids import get_random_unused_mp4
 import glob
-
+from ui_theme import setup_theme
+from excel_helper import save_assignments_to_excel, combine_excels
 
 class App(tk.Tk):
     def __init__(self):
         super().__init__()
         style = ttk.Style()
         style.theme_use("clam") 
-        
-
-        # === Dark Theme custom ===
-        bg_dark = "#2b2b2b"
-        bg_panel = "#3c3f41"
-        fg_light = "#f0f0f0"
-        accent = "#0078d7"
-
-        # Text widget
-        self.option_add("*TEntry*background", bg_panel)
-        self.option_add("*TEntry*foreground", fg_light)
-        self.option_add("*Text*background", bg_panel)
-        self.option_add("*Text*foreground", fg_light)
-        self.option_add("*Text*insertBackground", "white")   # con trỏ trắng
-
-        # Spinbox
-        style.configure("TSpinbox",
-                        fieldbackground=bg_panel,
-                        background=bg_panel,
-                        foreground=fg_light,
-                        arrowsize=14)
-        style.map("TSpinbox",
-                  fieldbackground=[("readonly", bg_panel)],
-                  foreground=[("readonly", fg_light)])
-        
-        # Radiobutton (Repeat / No Repeat)
-        style.configure("TRadiobutton",
-                        background=bg_dark,      
-                        foreground=fg_light, 
-                        font=("Segoe UI", 10))
-
-        style.map("TRadiobutton",
-                background=[("active", bg_panel)],   # khi hover
-                foreground=[("active", accent)])     # chữ xanh khi hover
-
-
-        # DateEntry (từ tkcalendar) kế thừa TEntry
-        style.configure("DateEntry",
-                        fieldbackground=bg_panel,
-                        background=bg_panel,
-                        foreground=fg_light)
-
-        # Frame & window background đồng bộ
-        style.configure("TFrame", background=bg_dark)
-        style.configure("TLabelframe", background=bg_dark, foreground=fg_light)
-        style.configure("TLabelframe.Label", background=bg_dark, foreground=fg_light)
-
-        # Sửa cả default window bg cho đồng bộ
-        self.option_add("*Background", bg_dark)
-        self.option_add("*Foreground", fg_light)
-
-        # Set màu nền chính cho cửa sổ
-        self.configure(bg=bg_dark)
-
-        # Treeview
-        style.configure("Treeview",
-                        background=bg_panel,
-                        foreground=fg_light,
-                        rowheight=28,
-                        fieldbackground=bg_panel,
-                        font=("Segoe UI", 10))
-        style.map("Treeview",
-                  background=[("selected", accent)],
-                  foreground=[("selected", "white")])   
-        # Header của Treeview
-        style.configure("Treeview.Heading",
-                        font=("Segoe UI", 10, "bold"),
-                        background=bg_dark,
-                        foreground=fg_light)
-
-        # Button
-        style.configure("TButton",
-                        background=bg_panel,
-                        foreground=fg_light,
-                        font=("Segoe UI", 10, "bold"),
-                        padding=6)
-        style.map("TButton",
-                  background=[("active", accent), ("pressed", accent)],
-                  foreground=[("active", "white"), ("pressed", "white")])
-
-        # Nhãn
-        style.configure("TLabel",
-                        background=bg_dark,
-                        foreground=fg_light,
-                        font=("Segoe UI", 10))
-
-        # Ô nhập
-        style.configure("TEntry",
-                        fieldbackground=bg_panel,
-                        foreground=fg_light,
-                        insertcolor="white",  
-                        padding=4)
-
-        # Combobox
-        style.configure("TCombobox",
-                        fieldbackground=bg_panel,
-                        background=bg_panel,
-                        foreground=fg_light,
-                        selectbackground=accent,
-                        selectforeground="white",
-                        padding=4)
-        
-        style.map("TCombobox",
-                  fieldbackground=[("readonly", bg_panel)],
-                  foreground=[("readonly", fg_light)],
-                  selectbackground=[("readonly", accent)],
-                  selectforeground=[("readonly", "white")])
-
-
+        setup_theme(style, self)
 
         self.title(APP_TITLE)
         self.state("zoomed") 
@@ -415,69 +306,20 @@ class App(tk.Tk):
         if not self._last_assignments:
             messagebox.showwarning("Nothing to save", "Click Preview first.")
             return
-        base = os.path.splitext(self.group_file_var.get().strip())[0] or "group"
-        out_name = f"{base}.xlsx"
 
-        os.makedirs(OUTPUT_DIR, exist_ok=True)
-        out_path = os.path.join(OUTPUT_DIR, out_name)
-        existed = os.path.exists(out_path)
+        def worker():
+            try:
+                base = os.path.splitext(self.group_file_var.get().strip())[0] or "group"
+                out_name = f"{base}.xlsx"
+                out_path = os.path.join(OUTPUT_DIR, out_name)
 
-        try:
-            wb = Workbook()
-            ws = wb.active
-            ws.title = "Assignments"
+                save_assignments_to_excel(self._last_assignments, out_path)
+                self._set_status(f"Saved Excel: {out_path}")
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to save Excel:\n{e}")
 
-            # ghi header
-            headers = ["channel", "directory", "title", "description", "publish_date", "publish_time"]
-            ws.append(headers)
-            for col_idx, h in enumerate(headers, start=1):
-                cell = ws.cell(row=1, column=col_idx)
-                cell.font = Font(bold=True)
+        threading.Thread(target=worker, daemon=True).start()
 
-            # ghi dữ liệu từ preview
-            for ch, directory, t, d, pd, pt in self._last_assignments:
-                ws.append([ch, directory, t, d, pd, pt])
-
-            # Auto width (approx)
-            desc_idx = headers.index("description") + 1
-            for col_idx in range(1, ws.max_column + 1):
-                col_letter = get_column_letter(col_idx)
-                max_len = 0
-                for row in ws.iter_rows(min_row=1, max_row=ws.max_row,
-                                        min_col=col_idx, max_col=col_idx):
-                    val = row[0].value
-                    if val is None:
-                        continue
-                    s = str(val)
-                    if col_idx == desc_idx:
-                        s = s[:120]
-                    max_len = max(max_len, len(s))
-
-                header_name = headers[col_idx - 1]
-                if header_name in ("publish_date", "publish_time"):
-                    ws.column_dimensions[col_letter].width = max(12, min(max_len + 2, 18))
-                else:
-                    ws.column_dimensions[col_letter].width = min(max_len + 2, 80)
-
-            ws.auto_filter.ref = ws.dimensions
-            ws.freeze_panes = "A2"
-
-            # Ghi đè nếu tồn tại
-            if existed:
-                try:
-                    os.remove(out_path)
-                except PermissionError:
-                    messagebox.showerror(
-                        "File is open",
-                        f"Can't write to file when file is opening:\n{out_path}\nPlz close file."
-                    )
-                    return
-
-            wb.save(out_path)
-
-            self._set_status(f"Saved Excel: {out_path}" + (" (overwritten)" if existed else ""))
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to save Excel:\n{e}")
 
 
 
@@ -655,103 +497,19 @@ class App(tk.Tk):
         self._set_status(f"Tổng cộng có: {len(ids)} dòng.")
 
     def _combine_excels(self):
-
-
-        input_dir = 'upload'
-        output_file = 'upload_data.xlsx'
-
-        pattern = os.path.join(input_dir, "*.xlsx")
-        files = glob.glob(pattern)
-
-        if not files:
-            messagebox.showwarning("No files", f"Không tìm thấy file Excel nào trong:\n{input_dir}")
-            return
-
-        wb_out = Workbook()
-        ws_out = wb_out.active
-        ws_out.title = "Combined"
-
-        header_written = False
-        row_idx = 1
+        input_dir = "upload"
+        output_file = "upload_data.xlsx"
         move_folder = self.move_folder_var.get().strip()
 
-        for file in files:
-            try:
-                wb = load_workbook(file)
-                ws = wb.active
-
-                max_row = ws.max_row
-                max_col = ws.max_column
-
-                if not header_written:
-                    # copy header gốc
-                    for col in range(1, max_col + 1):
-                        ws_out.cell(row=1, column=col).value = ws.cell(row=1, column=col).value
-                    # thêm cột mới move_folder
-                    ws_out.cell(row=1, column=max_col + 1).value = "move_folder"
-                    header_written = True
-                    row_idx += 1
-
-                for r in range(2, max_row + 1):
-                    row_values = []
-                    for c in range(1, max_col + 1):
-                        val = ws.cell(row=r, column=c).value
-                        row_values.append(val)
-
-                    # giữ nguyên directory (cột 2)
-                    directory_val = row_values[1] if len(row_values) > 1 else ""
-
-                    # tạo move_folder = thư mục mới + tên file từ directory
-                    filename = get_mp4_filename(directory_val)
-                    move_path = os.path.join(move_folder, filename) if filename else ""
-
-                    # ghi lại các cột cũ
-                    for c, val in enumerate(row_values, start=1):
-                        ws_out.cell(row=row_idx, column=c).value = val
-
-                    # ghi thêm cột move_folder
-                    ws_out.cell(row=row_idx, column=max_col + 1).value = move_path
-
-                    row_idx += 1
-
-            except Exception as e:
-                messagebox.showerror("Error", f"Lỗi khi đọc {file}:\n{e}")
-                return
-
         try:
-            os.makedirs(os.path.dirname(output_file) or ".", exist_ok=True)
-            if os.path.exists(output_file):
-                os.remove(output_file)
-            wb_out.save(output_file)
-            self._set_status(f"Combined {len(files)} files → {output_file}")
-
-            #delete after combine
-            for file in files:
-                try:
-                    wb = load_workbook(file)
-                    ws = wb.active
-
-                    max_row = ws.max_row
-                    max_col = ws.max_column
-                    
-                    for row in ws.iter_rows(min_row=2, max_row=max_row, max_col=max_col):
-                        for cell in row:
-                            cell.value = None
-
-                    wb.save(file)
-                except Exception as e:
-                    messagebox.showerror("Error", f"Lỗi khi xóa data trong file: {file} \n{e} ")
-
-            messagebox.showinfo("Cleared", f"Done")
-            self._set_status(f"Cleared data in {len(files)} files in {input_dir}")
-
+            count, files = combine_excels(input_dir, output_file, move_folder, get_mp4_filename)
+            if count == 0:
+                messagebox.showwarning("No files", f"Không tìm thấy file Excel nào trong:\n{input_dir}")
+                return
+            self._set_status(f"Combined {count} files → {output_file}")
+            messagebox.showinfo("Done", f"Combined successfully")
         except Exception as e:
-            messagebox.showerror("Error", f"Lỗi khi lưu file:\n{e}")
-
-        group_name = self.group_file_var.get().strip()
-        if group_name and move_folder:
-            save_group_config(group_name, move_folder)
-
+            messagebox.showerror("Error", f"Lỗi khi combine:\n{e}")
 
 if __name__ == "__main__":
     app = App()
