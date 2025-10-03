@@ -337,9 +337,9 @@ class App(tk.Tk):
         index = self.tree.index(item_id)
         self._edit_row_dialog(item_id, index)
 
+
     def _edit_row_dialog(self, item_id, index):
         vals = list(self.tree.item(item_id, "values"))
-        # đảm bảo luôn có 6 phần tử
         vals += [""] * max(0, 6 - len(vals))
         ch_cur, dir_cur, title_cur, desc_cur, pd_cur, pt_cur = vals
 
@@ -351,76 +351,83 @@ class App(tk.Tk):
         frm = ttk.Frame(win, padding=10)
         frm.pack(fill=tk.BOTH, expand=True)
 
+        # --- Profile (Combobox) ---
         ttk.Label(frm, text="Profile:").grid(row=0, column=0, sticky="e", padx=6, pady=4)
-        ent_ch = ttk.Entry(frm, width=60)
+        ent_ch = ttk.Combobox(frm, values=[c for c in self._channels_cache],
+                            state="readonly", width=60)
         ent_ch.grid(row=0, column=1, sticky="we")
-        ent_ch.insert(0, ch_cur)
+        ent_ch.set(ch_cur)
 
+        # --- Directory ---
         ttk.Label(frm, text="Directory:").grid(row=1, column=0, sticky="e", padx=6, pady=4)
         ent_dir = ttk.Entry(frm, width=60)
         ent_dir.grid(row=1, column=1, sticky="we")
         ent_dir.insert(0, dir_cur)
 
+        # --- Title ---
         ttk.Label(frm, text="Title:").grid(row=2, column=0, sticky="e", padx=6, pady=4)
         ent_title = ttk.Entry(frm, width=60)
         ent_title.grid(row=2, column=1, sticky="we")
         ent_title.insert(0, title_cur)
 
+        # --- Description ---
         ttk.Label(frm, text="Description:").grid(row=3, column=0, sticky="ne", padx=6, pady=4)
         txt_desc = tk.Text(frm, width=60, height=6, wrap=tk.WORD)
         txt_desc.grid(row=3, column=1, sticky="we")
         txt_desc.insert("1.0", desc_cur)
 
-        ttk.Label(frm, text="Publish date (MM/DD/YYYY):").grid(row=4, column=0, sticky="e", padx=6, pady=4)
-        ent_pd = ttk.Entry(frm, width=20)
+        # --- Publish date ---
+        ttk.Label(frm, text="Publish date:").grid(row=4, column=0, sticky="e", padx=6, pady=4)
+        import datetime
+        if pd_cur:
+            try:
+                init_date = datetime.datetime.strptime(pd_cur, "%m/%d/%Y").date()
+            except Exception:
+                init_date = datetime.date.today()
+        else:
+            init_date = datetime.date.today()
+
+        ent_pd = DateEntry(frm, width=12, date_pattern="mm/dd/yyyy")
         ent_pd.grid(row=4, column=1, sticky="w")
-        ent_pd.insert(0, pd_cur)
+        ent_pd.set_date(init_date)
 
-        ttk.Label(frm, text="Publish time (HH:MM):").grid(row=5, column=0, sticky="e", padx=6, pady=4)
-        ent_pt = ttk.Entry(frm, width=20)
-        ent_pt.grid(row=5, column=1, sticky="w")
-        ent_pt.insert(0, pt_cur)
+        # --- Publish time (giờ/phút dropdown) ---
+        ttk.Label(frm, text="Publish time:").grid(row=5, column=0, sticky="e", padx=6, pady=4)
 
+        # Tách giờ:phút cũ
+        try:
+            h_cur, m_cur = (pt_cur.split(":") if pt_cur else ("", ""))
+        except Exception:
+            h_cur, m_cur = ("", "")
+
+        hours = [f"{i:02d}" for i in range(24)]
+        minutes = [f"{i:02d}" for i in range(0, 60, 5)]  # step 5 phút cho dễ chọn
+
+        cb_h = ttk.Combobox(frm, values=hours, width=3, state="readonly")
+        cb_h.grid(row=5, column=1, sticky="w", padx=(0, 2))
+        cb_h.set(h_cur if h_cur in hours else "00")
+
+        ttk.Label(frm, text=":").grid(row=5, column=1, padx=(50, 0), sticky="w")
+
+        cb_m = ttk.Combobox(frm, values=minutes, width=3, state="readonly")
+        cb_m.grid(row=5, column=1, padx=(65, 0), sticky="w")
+        cb_m.set(m_cur if m_cur in minutes else "00")
 
         frm.columnconfigure(1, weight=1)
 
-        def is_valid_date(s: str) -> bool:
-            if not s.strip():
-                return True
-            try:
-                datetime.datetime.strptime(s.strip(), "%m/%d/%Y")
-                return True
-            except ValueError:
-                return False
-
-        def is_valid_time(s: str) -> bool:
-            if not s.strip():
-                return True
-            try:
-                datetime.datetime.strptime(s.strip(), "%H:%M")
-                return True
-            except ValueError:
-                return False
-
         def on_save():
-            directory = ent_dir.get().strip()
             ch = ent_ch.get().strip()
+            directory = ent_dir.get().strip()
             t = ent_title.get().strip()
             d = txt_desc.get("1.0", tk.END).strip()
-            pd = ent_pd.get().strip()
-            pt = ent_pt.get().strip()
+            pd = ent_pd.get_date().strftime("%m/%d/%Y")
+            pt = f"{cb_h.get()}:{cb_m.get()}"
 
             if not ch or not t:
                 messagebox.showwarning("Missing", "Channel và Title không được để trống.")
                 return
-            if not is_valid_date(pd):
-                messagebox.showerror("Invalid date", "Publish date phải dạng MM/DD/YYYY hoặc để trống.")
-                return
-            if not is_valid_time(pt):
-                messagebox.showerror("Invalid time", "Publish time phải dạng HH:MM (24h) hoặc để trống.")
-                return
 
-            new_vals = (ch,directory, t, d, pd, pt)
+            new_vals = (ch, directory, t, d, pd, pt)
             self.tree.item(item_id, values=new_vals)
 
             if 0 <= index < len(self._last_assignments):
@@ -429,14 +436,28 @@ class App(tk.Tk):
             self._set_status(f"Updated row {index+1}.")
             win.destroy()
 
+        # --- Buttons ---
         btns = ttk.Frame(win, padding=(0, 8))
         btns.pack(fill=tk.X)
         ttk.Button(btns, text="Save", command=on_save).pack(side=tk.LEFT)
         ttk.Button(btns, text="Cancel", command=win.destroy).pack(side=tk.LEFT, padx=6)
 
+        # --- Center window ---
+        win.update_idletasks()
+        w = win.winfo_width()
+        h = win.winfo_height()
+        sw = win.winfo_screenwidth()
+        sh = win.winfo_screenheight()
+        x = (sw // 2) - (w // 2)
+        y = (sh // 2) - (h // 2)
+        win.geometry(f"{w}x{h}+{x}+{y}")
+
+
         win.bind("<Return>", lambda e: on_save())
         win.bind("<Escape>", lambda e: win.destroy())
         ent_title.focus_set()
+
+
 
     # ---------- Apply date/time to ALL ----------
     def _apply_date_time_all(self):
