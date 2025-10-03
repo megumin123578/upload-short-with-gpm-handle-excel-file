@@ -24,6 +24,9 @@ import glob
 from ui_theme import setup_theme
 from excel_helper import save_assignments_to_excel, combine_excels
 import tkinter.simpledialog as sd
+from hyperparameter import APP_VERSION, UPDATE_MANIFEST
+from update_manager import check_and_update, install_from_zip
+
 
 class App(tk.Tk):
     def __init__(self):
@@ -45,6 +48,12 @@ class App(tk.Tk):
         profiles_menu.add_command(label="Map Group Folder...", command=self._map_group_folder)
         menubar.add_cascade(label="Profiles", menu=profiles_menu)
 
+        # Menu Help
+        help_menu = tk.Menu(menubar, tearoff=0)
+        help_menu.add_command(label="Check for Updates (Default)...", command=self._check_for_updates)
+        help_menu.add_separator()
+        help_menu.add_command(label=f"About (v{APP_VERSION})", command=lambda: messagebox.showinfo("About", f"Version: {APP_VERSION}"))
+        menubar.add_cascade(label="Help", menu=help_menu)
 
 
         self.group_file_var = tk.StringVar(value="")
@@ -729,7 +738,25 @@ class App(tk.Tk):
 
         self._load_channels()
 
+    def _check_for_updates(self):
+        def worker():
+            try:
+                self._set_status("Checking for updates...")
+                msg = check_and_update(UPDATE_MANIFEST, APP_VERSION, verify_hash=True)
+                self._set_status(msg)
+                if msg.startswith("Installed update"):
+                    if messagebox.askyesno("Update installed", "Khởi động lại để áp dụng?"):
+                        self._restart_app()
+            except Exception as e:
+                messagebox.showerror("Update error", str(e))
+                self._set_status("Update failed.")
+        threading.Thread(target=worker, daemon=True).start()
 
+
+    def _restart_app(self):
+        import sys, os
+        python = sys.executable
+        os.execl(python, python, *sys.argv)
 
 if __name__ == "__main__":
     app = App()

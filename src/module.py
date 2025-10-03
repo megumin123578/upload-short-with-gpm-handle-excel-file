@@ -8,7 +8,7 @@ import json
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) # lấy thư mục gốc
 CONFIG_FILE = os.path.join(BASE_DIR,"config.json")
 USED_LOG_FILE = os.path.join(BASE_DIR,"log.txt")
-CONFIG_PATH = "config_dir"
+CONFIG_PATH = os.path.join(BASE_DIR,"config_dir")
 
 
 def list_group_csvs(groups_dir: str):
