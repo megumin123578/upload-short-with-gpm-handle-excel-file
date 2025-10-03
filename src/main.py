@@ -560,7 +560,9 @@ class App(tk.Tk):
         if not item_id:
             return
 
-        self.tree.selection_set(item_id)
+        if item_id not in self.tree.selection():
+            self.tree.selection_set(item_id)
+            
         menu = tk.Menu(self, tearoff=0)
         menu.add_command(label="Delete", command=lambda: self._delete_selected_rows())
         menu.post(event.x_root, event.y_root)
