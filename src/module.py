@@ -5,11 +5,11 @@ import os
 import csv
 import json
 
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) # lấy thư mục gốc
+CONFIG_FILE = os.path.join(BASE_DIR,"config.json")
+USED_LOG_FILE = os.path.join(BASE_DIR,"log.txt")
+CONFIG_PATH = os.path.join(BASE_DIR, "config_dir")
 
-CONFIG_FILE = "config.json"
-
-
-USED_LOG_FILE = "log.txt"
 
 def list_group_csvs(groups_dir: str):
     if not os.path.isdir(groups_dir):
@@ -63,10 +63,7 @@ def normalize_lines(s: str):
 
 
 def assign_pairs(channels, titles, descs, mode="titles"):
-    """
-    mode = "titles": số dòng = len(titles); kênh & mô tả chạy vòng.
-    mode = "channels": số dòng = len(channels); tiêu đề & mô tả chạy vòng.
-    """
+
     if not channels:
         raise ValueError("No channels found in selected CSV.")
     if not titles:
@@ -94,7 +91,8 @@ def assign_pairs(channels, titles, descs, mode="titles"):
             out.append((ch, t, d))
         return out
     
-def load_group_dirs(config_path="src/config_dir") -> dict:
+# module.py
+def load_group_dirs(config_path='config_dir') -> dict:
     group_to_dir = {}
     if not os.path.isfile(config_path):
         return group_to_dir
@@ -103,9 +101,13 @@ def load_group_dirs(config_path="src/config_dir") -> dict:
             if ":" not in line:
                 continue
             name, path = line.strip().split(":", 1)
-            name = name.strip()
-            path = path.strip().replace("\\", "/")  # normalize
-            group_to_dir[name] = os.path.abspath(path)
+            # -- chuẩn hóa khóa: bỏ .csv
+            key = os.path.splitext(name.strip())[0]
+            # -- chuẩn hóa path
+            norm_path = os.path.abspath(path.strip().replace("\\", "/"))
+            group_to_dir[key] = norm_path
+            # (tùy chọn) giữ thêm khóa cũ để tương thích 2 chiều
+            group_to_dir[key + ".csv"] = norm_path
     return group_to_dir
 
 

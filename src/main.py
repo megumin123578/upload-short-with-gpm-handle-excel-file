@@ -8,6 +8,7 @@ from hyperparameter import (
     APP_TITLE,
     GROUPS_DIR,
     OUTPUT_DIR,
+    EXCEL_DIR
 )
 from tkcalendar  import DateEntry
 from openpyxl.styles import Font
@@ -293,7 +294,8 @@ class App(tk.Tk):
             return
 
         group_dirs = load_group_dirs()
-        folder_path = group_dirs.get(group_file)
+        key = self.group_file_var.get().strip()
+        folder_path = group_dirs.get(key) or group_dirs.get(f"{key}.csv")
 
         used_paths = load_used_videos()
         session_used = set()
@@ -540,8 +542,8 @@ class App(tk.Tk):
         self._set_status(f"Tổng cộng có: {len(ids)} dòng.")
 
     def _combine_excels(self):
-        input_dir = "upload"
-        output_file = "upload_data.xlsx"
+        input_dir = OUTPUT_DIR
+        output_file = EXCEL_DIR
         move_folder = self.move_folder_var.get().strip()
 
         try:
@@ -588,7 +590,7 @@ class App(tk.Tk):
             messagebox.showwarning("No group", "Hãy chọn một group CSV trước.")
             return
 
-        csv_path = os.path.join(GROUPS_DIR, group_file)
+        csv_path = os.path.join(GROUPS_DIR, f"{group_file}.csv")
 
         win = tk.Toplevel(self)
         win.title(f"Profile Manager - {group_file}")
