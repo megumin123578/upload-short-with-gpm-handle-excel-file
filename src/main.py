@@ -10,14 +10,12 @@ from hyperparameter import (
     OUTPUT_DIR,
 )
 from tkcalendar  import DateEntry
-from tkcalendar import Calendar
-from openpyxl import Workbook,load_workbook
-from openpyxl.utils import get_column_letter
 from openpyxl.styles import Font
 from random_vids import get_random_unused_mp4
 import glob
 from ui_theme import setup_theme
 from excel_helper import save_assignments_to_excel, combine_excels
+import tkinter.simpledialog as sd
 
 class App(tk.Tk):
     def __init__(self):
@@ -35,6 +33,7 @@ class App(tk.Tk):
         profiles_menu = tk.Menu(menubar, tearoff=0)
         profiles_menu.add_command(label="Manage Profiles", command=self._open_profile_manager)
         profiles_menu.add_command(label="Add Group", command=self._add_group)
+        profiles_menu.add_command(label="Delete Group", command=self._delete_group)
         menubar.add_cascade(label="Profiles", menu=profiles_menu)
 
 
@@ -634,7 +633,7 @@ class App(tk.Tk):
         win.geometry(f"{w}x{h}+{x}+{y}")
 
     def _add_group(self):
-        import tkinter.simpledialog as sd
+
 
         name = sd.askstring("Add Group", "Enter new group name:")
         if not name:
@@ -659,6 +658,23 @@ class App(tk.Tk):
             self._load_channels()
         except Exception as e:
             messagebox.showerror("Error", f"Error when creating group:\n{e}")
+
+    def _delete_group(self):
+        name = self.group_file_var.get().strip()
+        if not name:
+            messagebox.showwarninng("No group", "Select a group to delete first.")
+            return
+        confirm = messagebox.askyesno("Confirm delete", f"Delete group '{name}' ?")
+        if not confirm:
+            return
+        path = os.path.join(GROUPS_DIR, name + '.csv')
+        try:
+            if os.path.exists(path):
+                os.remove(path)
+            self._set_status(f"Deleted group: '{name}'")
+            self._refresh_group_files()
+        except Exception as e:
+            messagebox.showerror("Error", f'Error when deleting group: \n{e}')
 
 
 if __name__ == "__main__":
