@@ -160,6 +160,7 @@ class App(tk.Tk):
 
         cols = ("channel", "directory", "title", "description", "publish_date", "publish_time")
         self.tree = ttk.Treeview(frm, columns=cols, show="headings", height=12)
+        
         for col in cols:
             self.tree.heading(col, text=col.capitalize())
             if col == "description":
@@ -183,6 +184,10 @@ class App(tk.Tk):
 
         # Double-click edit row
         self.tree.bind("<Double-1>", self._on_tree_double_click)
+
+        self.tree.bind("<Delete>", self._delete_selected_rows)
+        self.tree.bind("<Button-3>", self._show_tree_menu)
+
 
         btns = ttk.Frame(self, padding=(10, 0, 10, 10))
         btns.pack(fill=tk.X)
@@ -225,6 +230,8 @@ class App(tk.Tk):
         if cur not in files:
             self.group_file_var.set(files[0])
         self._load_channels()
+
+    
 
     def _load_channels(self):
         name = self.group_file_var.get().strip()
@@ -531,6 +538,32 @@ class App(tk.Tk):
             messagebox.showinfo("Done", f"Combined successfully")
         except Exception as e:
             messagebox.showerror("Error", f"Lỗi khi combine:\n{e}")
+
+    def _delete_selected_rows(self, event=None):
+        items = self.tree.selection()
+        if not items:
+            return
+        confirm = messagebox.askyesno("Confirm delete", f"Delete {len(items)} row(s)?")
+        if not confirm:
+            return
+
+        for item_id in items:
+            index = self.tree.index(item_id)
+            self.tree.delete(item_id)
+            if self._last_assignments and 0 <= index < len(self._last_assignments):
+                self._last_assignments.pop(index)
+
+        self._set_status(f"Deleted {len(items)} row(s).")
+
+    def _show_tree_menu(self, event):
+        item_id = self.tree.identify_row(event.y)
+        if not item_id:
+            return
+
+        self.tree.selection_set(item_id)
+        menu = tk.Menu(self, tearoff=0)
+        menu.add_command(label="Delete", command=lambda: self._delete_selected_rows())
+        menu.post(event.x_root, event.y_root)
 
 if __name__ == "__main__":
     app = App()
