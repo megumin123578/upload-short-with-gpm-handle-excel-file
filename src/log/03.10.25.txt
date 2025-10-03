@@ -1,0 +1,1 @@
+ERROR ghép video (path is on mount 'E:', start on mount '\\\\nasfmc\\Ổ Sever Mới') | Files: E:/storage\128G.mp4, E:/storage\125G.mp4, E:/storage\64G.mp4, E:/storage\58G.mp4, E:/storage\8G.mp4, E:/storage\71G.mp4

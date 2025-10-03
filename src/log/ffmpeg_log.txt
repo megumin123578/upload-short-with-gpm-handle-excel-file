@@ -1,0 +1,48 @@
+ffmpeg version 2025-06-28-git-cfd1f81e7d-full_build-www.gyan.dev Copyright (c) 2000-2025 the FFmpeg developers
+  built with gcc 15.1.0 (Rev4, Built by MSYS2 project)
+  configuration: --enable-gpl --enable-version3 --enable-static --disable-w32threads --disable-autodetect --enable-fontconfig --enable-iconv --enable-gnutls --enable-lcms2 --enable-libxml2 --enable-gmp --enable-bzlib --enable-lzma --enable-libsnappy --enable-zlib --enable-librist --enable-libsrt --enable-libssh --enable-libzmq --enable-avisynth --enable-libbluray --enable-libcaca --enable-libdvdnav --enable-libdvdread --enable-sdl2 --enable-libaribb24 --enable-libaribcaption --enable-libdav1d --enable-libdavs2 --enable-libopenjpeg --enable-libquirc --enable-libuavs3d --enable-libxevd --enable-libzvbi --enable-liboapv --enable-libqrencode --enable-librav1e --enable-libsvtav1 --enable-libvvenc --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxavs2 --enable-libxeve --enable-libxvid --enable-libaom --enable-libjxl --enable-libvpx --enable-mediafoundation --enable-libass --enable-frei0r --enable-libfreetype --enable-libfribidi --enable-libharfbuzz --enable-liblensfun --enable-libvidstab --enable-libvmaf --enable-libzimg --enable-amf --enable-cuda-llvm --enable-cuvid --enable-dxva2 --enable-d3d11va --enable-d3d12va --enable-ffnvcodec --enable-libvpl --enable-nvdec --enable-nvenc --enable-vaapi --enable-libshaderc --enable-vulkan --enable-libplacebo --enable-opencl --enable-libcdio --enable-openal --enable-libgme --enable-libmodplug --enable-libopenmpt --enable-libopencore-amrwb --enable-libmp3lame --enable-libshine --enable-libtheora --enable-libtwolame --enable-libvo-amrwbenc --enable-libcodec2 --enable-libilbc --enable-libgsm --enable-liblc3 --enable-libopencore-amrnb --enable-libopus --enable-libspeex --enable-libvorbis --enable-ladspa --enable-libbs2b --enable-libflite --enable-libmysofa --enable-librubberband --enable-libsoxr --enable-chromaprint
+  libavutil      60.  3.100 / 60.  3.100
+  libavcodec     62.  4.100 / 62.  4.100
+  libavformat    62.  1.101 / 62.  1.101
+  libavdevice    62.  0.100 / 62.  0.100
+  libavfilter    11.  0.100 / 11.  0.100
+  libswscale      9.  0.100 /  9.  0.100
+  libswresample   6.  0.100 /  6.  0.100
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000025e5723ab80] Auto-inserting h264_mp4toannexb bitstream filter
+Input #0, concat, from 'temp.txt':
+  Duration: N/A, start: -0.021333, bitrate: 11993 kb/s
+  Stream #0:0(eng): Video: h264 (Main) (avc1 / 0x31637661), yuv420p(progressive), 1080x1920 [SAR 1:1 DAR 9:16], 11827 kb/s, 60 fps, 60 tbr, 15360 tbn
+    Metadata:
+      handler_name    : ?Mainconcept Video Media Handler
+      vendor_id       : [0][0][0][0]
+      encoder         : Lavc62.4.100 h264_nvenc
+  Stream #0:1(eng): Audio: aac (LC) (mp4a / 0x6134706D), 48000 Hz, stereo, fltp, 166 kb/s, start -0.021333
+    Metadata:
+      handler_name    : #Mainconcept MP4 Sound Media Handler
+      vendor_id       : [0][0][0][0]
+Stream mapping:
+  Stream #0:0 -> #0:0 (copy)
+  Stream #0:1 -> #0:1 (copy)
+Output #0, mp4, to 'E:\auto upload with gpm\src\temp.mp4':
+  Metadata:
+    encoder         : Lavf62.1.101
+  Stream #0:0(eng): Video: h264 (Main) (avc1 / 0x31637661), yuv420p(progressive), 1080x1920 [SAR 1:1 DAR 9:16], q=2-31, 11827 kb/s, 60 fps, 60 tbr, 15360 tbn
+    Metadata:
+      handler_name    : ?Mainconcept Video Media Handler
+      vendor_id       : [0][0][0][0]
+      encoder         : Lavc62.4.100 h264_nvenc
+  Stream #0:1(eng): Audio: aac (LC) (mp4a / 0x6134706D), 48000 Hz, stereo, fltp, 166 kb/s
+    Metadata:
+      handler_name    : #Mainconcept MP4 Sound Media Handler
+      vendor_id       : [0][0][0][0]
+Press [q] to stop, [?] for help
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000025e577a2c80] Auto-inserting h264_mp4toannexb bitstream filter
+frame=12907 fps=0.0 q=-1.0 size=  314624KiB time=00:03:35.16 bitrate=11978.5kbits/s speed= 417x elapsed=0:00:00.51    frame=20426 fps=19941 q=-1.0 size=  498688KiB time=00:05:40.41 bitrate=12000.9kbits/s speed= 332x elapsed=0:00:01.02    [mov,mp4,m4a,3gp,3g2,mj2 @ 0000025e577a1240] Auto-inserting h264_mp4toannexb bitstream filter
+[aost#0:1/copy @ 0000025e5799abc0] Non-monotonic DTS; previous: 16342016, current: 16341984; changing to 16342017. This may result in incorrect timestamps in the output file.
+frame=31073 fps=20095 q=-1.0 size=  761600KiB time=00:08:37.87 bitrate=12047.3kbits/s speed= 335x elapsed=0:00:01.54    [mov,mp4,m4a,3gp,3g2,mj2 @ 0000025e577a1f80] Auto-inserting h264_mp4toannexb bitstream filter
+[aost#0:1/copy @ 0000025e5799abc0] Non-monotonic DTS; previous: 24859616, current: 24859584; changing to 24859617. This may result in incorrect timestamps in the output file.
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000025e577eccc0] Auto-inserting h264_mp4toannexb bitstream filter
+frame=41878 fps=20399 q=-1.0 size= 1026304KiB time=00:11:38.04 bitrate=12044.3kbits/s speed= 340x elapsed=0:00:02.05    frame=42163 fps=16415 q=-1.0 size= 1033216KiB time=00:11:42.80 bitrate=12043.3kbits/s speed= 274x elapsed=0:00:02.56    frame=45184 fps=14643 q=-1.0 size= 1107968KiB time=00:12:33.15 bitrate=12051.3kbits/s speed= 244x elapsed=0:00:03.08    frame=47200 fps=13109 q=-1.0 size= 1157632KiB time=00:13:06.75 bitrate=12053.8kbits/s speed= 219x elapsed=0:00:03.60    frame=47441 fps=11523 q=-1.0 size= 1163520KiB time=00:13:10.76 bitrate=12053.6kbits/s speed= 192x elapsed=0:00:04.11    frame=50635 fps=10922 q=-1.0 size= 1242624KiB time=00:14:04.00 bitrate=12061.0kbits/s speed= 182x elapsed=0:00:04.63    frame=51260 fps=9947 q=-1.0 size= 1257984KiB time=00:14:14.42 bitrate=12061.3kbits/s speed= 166x elapsed=0:00:05.15    [mov,mp4,m4a,3gp,3g2,mj2 @ 0000025e577eba80] Auto-inserting h264_mp4toannexb bitstream filter
+[aost#0:1/copy @ 0000025e5799abc0] Non-monotonic DTS; previous: 41579456, current: 41579424; changing to 41579457. This may result in incorrect timestamps in the output file.
+frame=55154 fps=9728 q=-1.0 size= 1351424KiB time=00:15:19.33 bitrate=12042.2kbits/s speed= 162x elapsed=0:00:05.66    frame=56384 fps=9119 q=-1.0 size= 1381120KiB time=00:15:39.83 bitrate=12038.4kbits/s speed= 152x elapsed=0:00:06.18    frame=58017 fps=8662 q=-1.0 size= 1421056KiB time=00:16:07.05 bitrate=12037.8kbits/s speed= 144x elapsed=0:00:06.69    frame=58650 fps=8130 q=-1.0 size= 1436672KiB time=00:16:17.59 bitrate=12038.9kbits/s speed= 136x elapsed=0:00:07.21    frame=58693 fps=7598 q=-1.0 size= 1437696KiB time=00:16:18.32 bitrate=12038.6kbits/s speed= 127x elapsed=0:00:07.72    [out#0/mp4 @ 0000025e5722f200] video:1508880KiB audio:20817KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 0.110182%
+frame=62428 fps=7863 q=-1.0 Lsize= 1531383KiB time=00:17:20.49 bitrate=12056.9kbits/s speed= 131x elapsed=0:00:07.93    
