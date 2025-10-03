@@ -34,7 +34,10 @@ class App(tk.Tk):
         self.config(menu=menubar)
         profiles_menu = tk.Menu(menubar, tearoff=0)
         profiles_menu.add_command(label="Manage Profiles", command=self._open_profile_manager)
+        profiles_menu.add_command(label="Add Group", command=self._add_group)
         menubar.add_cascade(label="Profiles", menu=profiles_menu)
+
+
 
         self.group_file_var = tk.StringVar(value="")
         self.mode_var = tk.StringVar(value="titles") 
@@ -226,16 +229,22 @@ class App(tk.Tk):
     # ---------- Actions ----------
     def _refresh_group_files(self):
         files = list_group_csvs(GROUPS_DIR)
-        self.group_combo["values"] = files
+        groups = [os.path.splitext(f)[0] for f in files]
+
+        self.group_combo["values"] = groups
         cur = self.group_file_var.get()
-        if not files:
+
+        if not groups:
             self.group_file_var.set("")
             self.channel_count_lbl.config(text="0 channels")
             self._set_status(f"No CSV files in: {GROUPS_DIR}")
             return
-        if cur not in files:
-            self.group_file_var.set(files[0])
+
+        if cur not in groups:
+            self.group_file_var.set(groups[0])   # <== set tên không .csv
+
         self._load_channels()
+
 
     
 
@@ -243,14 +252,15 @@ class App(tk.Tk):
         name = self.group_file_var.get().strip()
         if not name:
             return
-        csv_path = os.path.join(GROUPS_DIR, name)
+        csv_path = os.path.join(GROUPS_DIR, name + ".csv")
         channels = read_channels_from_csv(csv_path)
         self._channels_cache = channels
         self.channel_count_lbl.config(text=f"{len(channels)} channels")
-        self._set_status(f"Loaded {len(channels)} channels from {name}.")
+        self._set_status(f"Loaded {len(channels)} channels from {name}")
         # Load last used move_folder
-        last_folder = load_group_config(name)
+        last_folder = load_group_config(name + ".csv")
         self.move_folder_var.set(last_folder)
+
 
     def _clear_inputs(self):
         self.txt_titles.delete("1.0", tk.END)
@@ -622,6 +632,34 @@ class App(tk.Tk):
         sw, sh = win.winfo_screenwidth(), win.winfo_screenheight()
         x, y = (sw // 2) - (w // 2), (sh // 2) - (h // 2)
         win.geometry(f"{w}x{h}+{x}+{y}")
+
+    def _add_group(self):
+        import tkinter.simpledialog as sd
+
+        name = sd.askstring("Add Group", "Enter new group name:")
+        if not name:
+            return
+
+        if name.lower().endswith(".csv"):
+            name = name[:-4]  # bỏ đuôi csv nếu người dùng nhập
+
+        filename = name + ".csv"
+        path = os.path.join(GROUPS_DIR, filename)
+        if os.path.exists(path):
+            messagebox.showwarning("Exists", f"Group '{name}' already exists")
+            return
+
+        try:
+            with open(path, "w", encoding="utf-8") as f:
+                f.write("")
+
+            self._set_status(f"Created new group: {name}")
+            self._refresh_group_files()
+            self.group_file_var.set(name)   # không .csv
+            self._load_channels()
+        except Exception as e:
+            messagebox.showerror("Error", f"Error when creating group:\n{e}")
+
 
 if __name__ == "__main__":
     app = App()
