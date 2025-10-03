@@ -3,7 +3,14 @@ import threading
 import datetime
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
-from module import list_group_csvs, read_channels_from_csv, normalize_lines, assign_pairs, load_group_dirs, load_used_videos, get_mp4_filename, load_group_config, save_group_config
+from module import (list_group_csvs, 
+    read_channels_from_csv,normalize_lines,
+    assign_pairs, load_group_dirs, 
+    load_used_videos, get_mp4_filename, 
+    load_group_config, save_group_config,
+    CONFIG_PATH
+    
+    )
 from hyperparameter import (
     APP_TITLE,
     GROUPS_DIR,
@@ -35,6 +42,7 @@ class App(tk.Tk):
         profiles_menu.add_command(label="Manage Profiles", command=self._open_profile_manager)
         profiles_menu.add_command(label="Add Group", command=self._add_group)
         profiles_menu.add_command(label="Delete Group", command=self._delete_group)
+        profiles_menu.add_command(label="Map Group Folder...", command=self._map_group_folder)
         menubar.add_cascade(label="Profiles", menu=profiles_menu)
 
 
@@ -256,8 +264,15 @@ class App(tk.Tk):
         channels = read_channels_from_csv(csv_path)
         self._channels_cache = channels
         self.channel_count_lbl.config(text=f"{len(channels)} channels")
-        self._set_status(f"Loaded {len(channels)} channels from {name}")
-        # Load last used move_folder
+
+    
+        group_dirs = load_group_dirs()
+        mapped_dir = group_dirs.get(name) or group_dirs.get(f"{name}.csv") or ""
+
+        # Status map
+        mapped_note = f" | mapped: {mapped_dir}" if mapped_dir else " | mapped: (none)"
+        self._set_status(f"Loaded {len(channels)} channels from {name}{mapped_note}")
+
         last_folder = load_group_config(name + ".csv")
         self.move_folder_var.set(last_folder)
 
@@ -677,6 +692,43 @@ class App(tk.Tk):
             self._refresh_group_files()
         except Exception as e:
             messagebox.showerror("Error", f'Error when deleting group: \n{e}')
+
+    def _map_group_folder(self):
+        name = self.group_file_var.get().strip()
+        if not name:
+            messagebox.showwarning("No group", "Select group first.")
+            return
+
+        folder = filedialog.askdirectory(title=f"Select folder for group '{name}'")
+        if not folder:
+            return
+
+        folder = os.path.abspath(folder)
+
+        lines = []
+        if os.path.exists(CONFIG_PATH):
+            with open(CONFIG_PATH, "r", encoding="utf-8") as f:
+                for raw in f:
+                    line = raw.strip()
+                    if ":" not in line:
+                        continue
+                    k, _ = line.split(":", 1)
+                    k = k.strip()
+                    if k in (name, f"{name}.csv"):
+                        continue
+                    lines.append(line)
+        lines.append(f"{name}:{folder}")
+
+        try:
+            with open(CONFIG_PATH, "w", encoding="utf-8") as f:
+                f.write("\n".join(lines) + ("\n" if lines else ""))
+            self._set_status(f"Mapped '{name}' → {folder}")
+        except Exception as e:
+            messagebox.showerror("Error", f"Error when write:\n{e}")
+            return
+
+        self._load_channels()
+
 
 
 if __name__ == "__main__":
