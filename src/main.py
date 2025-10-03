@@ -754,9 +754,14 @@ class App(tk.Tk):
 
 
     def _restart_app(self):
-        import sys, os
+        import sys, os, subprocess
         python = sys.executable
-        os.execl(python, python, *sys.argv)
+        script = os.path.abspath(sys.argv[0])   # file main đang chạy
+        args = sys.argv[1:]
+        subprocess.Popen([python, script] + args, shell=True)
+        self.destroy()
+        sys.exit(0)
+
 
 if __name__ == "__main__":
     app = App()
