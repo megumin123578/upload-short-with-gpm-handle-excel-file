@@ -30,6 +30,12 @@ class App(tk.Tk):
         self.state("zoomed") 
         self.minsize(880, 580)
 
+        menubar = tk.Menu(self)
+        self.config(menu=menubar)
+        profiles_menu = tk.Menu(menubar, tearoff=0)
+        profiles_menu.add_command(label="Manage Profiles", command=self._open_profile_manager)
+        menubar.add_cascade(label="Profiles", menu=profiles_menu)
+
         self.group_file_var = tk.StringVar(value="")
         self.mode_var = tk.StringVar(value="titles") 
         self.status_var = tk.StringVar(value="Ready.")
@@ -562,10 +568,60 @@ class App(tk.Tk):
 
         if item_id not in self.tree.selection():
             self.tree.selection_set(item_id)
-            
+
         menu = tk.Menu(self, tearoff=0)
         menu.add_command(label="Delete", command=lambda: self._delete_selected_rows())
         menu.post(event.x_root, event.y_root)
+
+    def _open_profile_manager(self):
+        group_file = self.group_file_var.get().strip()
+        if not group_file:
+            messagebox.showwarning("No group", "Hãy chọn một group CSV trước.")
+            return
+
+        csv_path = os.path.join(GROUPS_DIR, group_file)
+
+        win = tk.Toplevel(self)
+        win.title(f"Profile Manager - {group_file}")
+        win.transient(self)
+        win.grab_set()
+
+        frm = ttk.Frame(win, padding=10)
+        frm.pack(fill=tk.BOTH, expand=True)
+
+        ttk.Label(frm, text="Danh sách channel (mỗi dòng 1 channel):").pack(anchor="w")
+
+        txt = tk.Text(frm, width=50, height=20)
+        txt.pack(fill=tk.BOTH, expand=True)
+
+        # load danh sách hiện tại
+        for ch in self._channels_cache:
+            txt.insert(tk.END, ch + "\n")
+
+        def save_profiles():
+            lines = [line.strip() for line in txt.get("1.0", tk.END).splitlines() if line.strip()]
+            if not lines:
+                messagebox.showwarning("Empty", "Danh sách channel không được để trống.")
+                return
+            with open(csv_path, "w", encoding="utf-8") as f:
+                for ch in lines:
+                    f.write(ch + "\n")
+            self._channels_cache = lines
+            self.channel_count_lbl.config(text=f"{len(lines)} channels")
+            self._set_status(f"Saved {len(lines)} channels to {group_file}")
+            win.destroy()
+
+        btns = ttk.Frame(win, padding=6)
+        btns.pack(fill=tk.X)
+        ttk.Button(btns, text="Save", command=save_profiles).pack(side=tk.LEFT)
+        ttk.Button(btns, text="Cancel", command=win.destroy).pack(side=tk.LEFT, padx=6)
+
+        # Center window
+        win.update_idletasks()
+        w, h = win.winfo_width(), win.winfo_height()
+        sw, sh = win.winfo_screenwidth(), win.winfo_screenheight()
+        x, y = (sw // 2) - (w // 2), (sh // 2) - (h // 2)
+        win.geometry(f"{w}x{h}+{x}+{y}")
 
 if __name__ == "__main__":
     app = App()
