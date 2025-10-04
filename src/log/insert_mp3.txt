@@ -14,36 +14,39 @@ Input #0, mov,mp4,m4a,3gp,3g2,mj2, from 'temp.mp4':
     minor_version   : 512
     compatible_brands: isomiso2avc1mp41
     encoder         : Lavf62.1.101
-  Duration: 00:05:51.55, start: 0.000000, bitrate: 12109 kb/s
-  Stream #0:0[0x1](eng): Video: h264 (Main) (avc1 / 0x31637661), yuv420p(progressive), 1080x1920 [SAR 1:1 DAR 9:16], 11934 kb/s, 60 fps, 60 tbr, 15360 tbn, start 0.021029 (default)
+  Duration: 00:05:51.53, start: 0.000000, bitrate: 12076 kb/s
+  Stream #0:0[0x1](eng): Video: h264 (Main) (avc1 / 0x31637661), yuv420p(progressive), 1080x1920 [SAR 1:1 DAR 9:16], 11900 kb/s, 60 fps, 60 tbr, 15360 tbn, start 0.021029 (default)
     Metadata:
       handler_name    : ?Mainconcept Video Media Handler
       vendor_id       : [0][0][0][0]
       encoder         : Lavc62.4.100 h264_nvenc
-  Stream #0:1[0x2](eng): Audio: aac (LC) (mp4a / 0x6134706D), 48000 Hz, stereo, fltp, 162 kb/s (default)
+  Stream #0:1[0x2](eng): Audio: aac (LC) (mp4a / 0x6134706D), 48000 Hz, stereo, fltp, 163 kb/s (default)
     Metadata:
       handler_name    : #Mainconcept MP4 Sound Media Handler
       vendor_id       : [0][0][0][0]
-Input #1, mp3, from 'C:/Users/Admin/Music\Cam_Tu_Cau_-_Remix_KLICKAUD.mp3':
-  Duration: 00:04:41.22, start: 0.025057, bitrate: 128 kb/s
+Input #1, mp3, from 'C:/Users/Admin/Music\Hollow Coves - These Memories (Official Music Video).mp3':
+  Metadata:
+    major_brand     : dash
+    minor_version   : 0
+    compatible_brands: iso6mp41
+    encoder         : Lavf58.76.100
+  Duration: 00:05:13.38, start: 0.025057, bitrate: 128 kb/s
   Stream #1:0: Audio: mp3 (mp3float), 44100 Hz, stereo, fltp, 128 kb/s, start 0.025057
     Metadata:
-      encoder         : LAME3.100
-    Side data:
-      replaygain: track gain - -6.000000, track peak - unknown, album gain - unknown, album peak - unknown, 
+      encoder         : Lavc58.13
 Stream mapping:
   Stream #0:1 (aac) -> amix
   Stream #1:0 (mp3float) -> volume:default
   Stream #0:0 -> #0:0 (copy)
   amix:default -> Stream #0:1 (aac)
 Press [q] to stop, [?] for help
-Output #0, mp4, to 'E:/New folder\3.mp4':
+Output #0, mp4, to 'E:/New folder\4.mp4':
   Metadata:
     major_brand     : isom
     minor_version   : 512
     compatible_brands: isomiso2avc1mp41
     encoder         : Lavf62.1.101
-  Stream #0:0(eng): Video: h264 (Main) (avc1 / 0x31637661), yuv420p(progressive), 1080x1920 [SAR 1:1 DAR 9:16], q=2-31, 11934 kb/s, 60 fps, 60 tbr, 15360 tbn (default)
+  Stream #0:0(eng): Video: h264 (Main) (avc1 / 0x31637661), yuv420p(progressive), 1080x1920 [SAR 1:1 DAR 9:16], q=2-31, 11900 kb/s, 60 fps, 60 tbr, 15360 tbn (default)
     Metadata:
       handler_name    : ?Mainconcept Video Media Handler
       vendor_id       : [0][0][0][0]
@@ -51,6 +54,6 @@ Output #0, mp4, to 'E:/New folder\3.mp4':
   Stream #0:1: Audio: aac (LC) (mp4a / 0x6134706D), 48000 Hz, stereo, fltp, 128 kb/s
     Metadata:
       encoder         : Lavc62.4.100 aac
-frame= 1161 fps=0.0 q=-1.0 size=   27904KiB time=00:00:19.41 bitrate=11774.9kbits/s speed=37.2x elapsed=0:00:00.52    frame= 1185 fps=1139 q=-1.0 size=   28672KiB time=00:00:19.79 bitrate=11864.3kbits/s speed=  19x elapsed=0:00:01.04    frame= 2391 fps=1542 q=-1.0 size=   57600KiB time=00:00:39.93 bitrate=11815.4kbits/s speed=25.8x elapsed=0:00:01.55    frame= 3653 fps=1760 q=-1.0 size=   88576KiB time=00:01:00.97 bitrate=11901.1kbits/s speed=29.4x elapsed=0:00:02.07    frame= 4823 fps=1868 q=-1.0 size=  117504KiB time=00:01:20.46 bitrate=11962.2kbits/s speed=31.2x elapsed=0:00:02.58    frame= 6213 fps=2006 q=-1.0 size=  151296KiB time=00:01:43.57 bitrate=11966.6kbits/s speed=33.4x elapsed=0:00:03.09    frame= 7661 fps=2122 q=-1.0 size=  187136KiB time=00:02:07.72 bitrate=12002.7kbits/s speed=35.4x elapsed=0:00:03.61    frame= 8887 fps=2154 q=-1.0 size=  217088KiB time=00:02:28.16 bitrate=12003.1kbits/s speed=35.9x elapsed=0:00:04.12    frame=10117 fps=2171 q=-1.0 size=  247552KiB time=00:02:48.66 bitrate=12023.8kbits/s speed=36.2x elapsed=0:00:04.65    frame=11251 fps=2171 q=-1.0 size=  274944KiB time=00:03:07.60 bitrate=12005.7kbits/s speed=36.2x elapsed=0:00:05.18    frame=12347 fps=2170 q=-1.0 size=  301824KiB time=00:03:25.86 bitrate=12010.4kbits/s speed=36.2x elapsed=0:00:05.68    frame=13577 fps=2187 q=-1.0 size=  332288KiB time=00:03:46.36 bitrate=12025.1kbits/s speed=36.5x elapsed=0:00:06.20    frame=14823 fps=2206 q=-1.0 size=  362752KiB time=00:04:07.14 bitrate=12023.9kbits/s speed=36.8x elapsed=0:00:06.72    frame=16065 fps=2218 q=-1.0 size=  393472KiB time=00:04:27.81 bitrate=12035.5kbits/s speed=  37x elapsed=0:00:07.24    frame=17343 fps=2238 q=-1.0 size=  425472KiB time=00:04:49.08 bitrate=12056.8kbits/s speed=37.3x elapsed=0:00:07.74    frame=18601 fps=2250 q=-1.0 size=  456192KiB time=00:05:10.08 bitrate=12052.1kbits/s speed=37.5x elapsed=0:00:08.26    frame=19763 fps=2251 q=-1.0 size=  484864KiB time=00:05:29.45 bitrate=12056.5kbits/s speed=37.5x elapsed=0:00:08.78    frame=20875 fps=2245 q=-1.0 size=  512256KiB time=00:05:47.96 bitrate=12059.7kbits/s speed=37.4x elapsed=0:00:09.29    [out#0/mp4 @ 000002613e194400] video:512134KiB audio:5727KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 0.106120%
-frame=21091 fps=2241 q=-1.0 Lsize=  518410KiB time=00:05:51.50 bitrate=12081.9kbits/s speed=37.4x elapsed=0:00:09.41    
-[aac @ 000002613dd8c500] Qavg: 589.657
+frame= 1387 fps=0.0 q=-1.0 size=   32512KiB time=00:00:23.18 bitrate=11485.4kbits/s speed=44.9x elapsed=0:00:00.51    frame= 1403 fps=1347 q=-1.0 size=   33024KiB time=00:00:23.46 bitrate=11528.4kbits/s speed=22.5x elapsed=0:00:01.04    frame= 2089 fps=1331 q=-1.0 size=   49408KiB time=00:00:34.88 bitrate=11604.1kbits/s speed=22.2x elapsed=0:00:01.56    frame= 3541 fps=1698 q=-1.0 size=   85248KiB time=00:00:59.07 bitrate=11822.0kbits/s speed=28.3x elapsed=0:00:02.08    frame= 5017 fps=1929 q=-1.0 size=  121088KiB time=00:01:23.69 bitrate=11852.6kbits/s speed=32.2x elapsed=0:00:02.60    frame= 6633 fps=2126 q=-1.0 size=  160768KiB time=00:01:50.57 bitrate=11911.0kbits/s speed=35.4x elapsed=0:00:03.12    frame= 8367 fps=2304 q=-1.0 size=  203264KiB time=00:02:19.47 bitrate=11938.4kbits/s speed=38.4x elapsed=0:00:03.63    frame= 9819 fps=2366 q=-1.0 size=  239360KiB time=00:02:43.71 bitrate=11977.4kbits/s speed=39.5x elapsed=0:00:04.14    frame=11404 fps=2444 q=-1.0 size=  277248KiB time=00:03:10.14 bitrate=11944.7kbits/s speed=40.8x elapsed=0:00:04.66    frame=12840 fps=2484 q=-1.0 size=  312576KiB time=00:03:34.08 bitrate=11961.1kbits/s speed=41.4x elapsed=0:00:05.16    frame=14454 fps=2542 q=-1.0 size=  352256KiB time=00:04:00.98 bitrate=11974.7kbits/s speed=42.4x elapsed=0:00:05.68    frame=16050 fps=2584 q=-1.0 size=  391680KiB time=00:04:27.58 bitrate=11991.2kbits/s speed=43.1x elapsed=0:00:06.21    frame=17232 fps=2563 q=-1.0 size=  420864KiB time=00:04:47.27 bitrate=12001.5kbits/s speed=42.7x elapsed=0:00:06.72    frame=18320 fps=2533 q=-1.0 size=  447744KiB time=00:05:05.38 bitrate=12010.7kbits/s speed=42.2x elapsed=0:00:07.23    frame=19566 fps=2525 q=-1.0 size=  478720KiB time=00:05:26.12 bitrate=12025.2kbits/s speed=42.1x elapsed=0:00:07.74    frame=20942 fps=2532 q=-1.0 size=  512256KiB time=00:05:49.07 bitrate=12021.4kbits/s speed=42.2x elapsed=0:00:08.27    [out#0/mp4 @ 00000227f150a180] video:510639KiB audio:5634KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 0.106443%
+frame=21090 fps=2537 q=-1.0 Lsize=  516823KiB time=00:05:51.47 bitrate=12045.7kbits/s speed=42.3x elapsed=0:00:08.31    
+[aac @ 00000227f148e4c0] Qavg: 544.643
