@@ -9,8 +9,6 @@ import random
 from helper import *
 
 CONFIG_FILE = "ghep music\config.json"
-
-
 class ConcatApp(tk.Tk):
     def __init__(self):
         super().__init__()
