@@ -3,7 +3,9 @@ import os
 import random
 import re
 import subprocess
-
+from concurrent.futures import ThreadPoolExecutor
+import shutil
+import pathlib
 
 def list_all_mp4_files(folder_path):
     if not os.path.isdir(folder_path):
@@ -143,12 +145,7 @@ def read_log_info(log_path: str):
             used_inputs.update(inputs)
     return used_inputs, done_count
 
-import subprocess
-from concurrent.futures import ThreadPoolExecutor
-from google.oauth2.service_account import Credentials
-import shutil
-import pathlib
-import os
+
 
 def normalize_video(
     input_path,
