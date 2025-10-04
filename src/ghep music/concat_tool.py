@@ -29,6 +29,8 @@ class ConcatApp(tk.Tk):
         self.num_groups = tk.StringVar(value="0")
         self.groups_done = tk.StringVar(value="0")
         self.status_var = tk.StringVar(value="0%")
+        self.limit_videos_var = tk.IntVar(value=0)
+
 
         self.groups: list[list[str]] = []
         self.stop_flag = threading.Event()
@@ -47,36 +49,64 @@ class ConcatApp(tk.Tk):
         self.frm_top = ttk.Frame(self)
 
         # nhập số lượng video ghép
-        ttk.Label(self.frm_top, text="Số video / nhóm:").grid(row=0, column=0, sticky='e')
-        self.entry_group_size = ttk.Entry(self.frm_top, textvariable=self.group_size_var, width=5)
-        self.entry_group_size.grid(row=0, column=1, sticky='w')
+        ttk.Label(self.frm_top, text="Số lượng để ghép / video:").grid(row=0, column=0, sticky='e')
+        self.combo_group_size = ttk.Combobox(
+            self.frm_top,
+            textvariable=self.group_size_var,
+            values=list(range(2,100)),
+            width=5,
+            state="normal"
+        )
+        self.combo_group_size.grid(row=0, column=1, sticky='w')
+        self.combo_group_size.bind("<<ComboboxSelected>>", lambda e: self.reload_groups())
+
+        ttk.Label(self.frm_top, text="Số video cần ghép:").grid(row=1, column=0, sticky='e', padx=(4,0))
+        self.combo_limit_videos = ttk.Combobox(
+            self.frm_top,
+            textvariable=self.limit_videos_var,
+            values=list(range(100)),  # 0 = không giới hạn
+            width=6,
+            state="normal"
+        )
+        self.combo_limit_videos.grid(row=1, column=1, sticky='w')
+        self.combo_limit_videos.bind("<<ComboboxSelected>>", lambda e: self.reload_groups())
+
+        self.group_size_var.trace_add("write", lambda *a: self.reload_groups())
+        self.limit_videos_var.trace_add("write", lambda *a: self.reload_groups())
+
+        self.btn_clear_log = ttk.Button(self.frm_top, text="Clear data", command=self.clear_log)
+        self.btn_clear_log.grid(row=2, column=0, sticky='w', padx=(4,0), pady=4)
 
         # Folder chọn + hiển thị path
         self.btn_in = ttk.Button(self.frm_top, text="Chọn thư mục nguồn",
-                                 command=lambda: self._choose_folder(self.input_folder, reload=True))
+                                command=lambda: self._choose_folder(self.input_folder, reload=True))
         self.lbl_in = ttk.Label(self.frm_top, textvariable=self.input_folder, width=40, anchor="w")
 
         self.btn_out = ttk.Button(self.frm_top, text="Chọn thư mục lưu",
-                                  command=lambda: self._choose_folder(self.save_folder))
+                                command=lambda: self._choose_folder(self.save_folder))
         self.lbl_out = ttk.Label(self.frm_top, textvariable=self.save_folder, width=40, anchor="w")
 
         self.btn_bgm = ttk.Button(self.frm_top, text="Chọn thư mục nhạc",
-                                  command=lambda: self._choose_folder(self.bgm_folder, bgm=True))
+                                command=lambda: self._choose_folder(self.bgm_folder, bgm=True))
         self.lbl_bgm = ttk.Label(self.frm_top, textvariable=self.bgm_folder, width=40, anchor="w")
 
-        # Tùy chọn xuất
-        self.frm_opts = ttk.LabelFrame(self, text="Tuỳ chọn xuất")
-        self.btn_concat = ttk.Button(self.frm_opts, text="▶ Bắt đầu ghép", command=self.start_concat)
-        self.btn_stop = ttk.Button(self.frm_opts, text="■ Dừng", command=self.stop_concat, state=tk.DISABLED)
-        self.btn_open = ttk.Button(self.frm_opts, text="📂 Mở thư mục lưu", command=self.open_output_folder)
+        # 3 nút thao tác
+        self.btn_concat = ttk.Button(self.frm_top, text="▶ Bắt đầu ghép", command=self.start_concat)
+        self.btn_stop = ttk.Button(self.frm_top, text="■ Dừng", command=self.stop_concat, state=tk.DISABLED)
+        self.btn_open = ttk.Button(self.frm_top, text="📂 Mở thư mục lưu", command=self.open_output_folder)
+        self.btn_clear_log = ttk.Button(self.frm_top, text="🗑 Xóa log", command=self.clear_log)
+    
+
+        # progress bar + status
+        self.progress = ttk.Progressbar(self.frm_top, orient=tk.HORIZONTAL, mode='determinate')
+        self.lbl_status = ttk.Label(self.frm_top, textvariable=self.status_var)
 
         # Thống kê
-        self.frm_stats = ttk.LabelFrame(self, text="Thống kê")
+        self.frm_stats = ttk.LabelFrame(self)
         self.val_total = ttk.Label(self.frm_stats, textvariable=self.total_mp4)
         self.val_groups = ttk.Label(self.frm_stats, textvariable=self.num_groups)
         self.val_done = ttk.Label(self.frm_stats, textvariable=self.groups_done)
-        self.progress = ttk.Progressbar(self.frm_stats, orient=tk.HORIZONTAL, mode='determinate')
-        self.lbl_status = ttk.Label(self.frm_stats, textvariable=self.status_var)
+
 
     def _layout(self):
         pad = dict(padx=6, pady=4)
@@ -91,11 +121,19 @@ class ConcatApp(tk.Tk):
         self.btn_bgm.grid(row=2, column=2, **pad)
         self.lbl_bgm.grid(row=2, column=3, sticky="w", **pad)
 
-        self.frm_opts.pack(fill=tk.X, **pad)
-        self.btn_concat.grid(row=0, column=0, **pad)
-        self.btn_stop.grid(row=0, column=1, **pad)
-        self.btn_open.grid(row=0, column=2, **pad)
+        # === hàng nút + progress bar ===
+        self.btn_concat.grid(row=3, column=0, **pad, sticky="w")
+        self.btn_stop.grid(row=3, column=1, **pad, sticky="w")
+        self.btn_open.grid(row=3, column=2, **pad, sticky="w")
 
+        # progress bar nằm bên phải các nút, chiếm phần còn lại
+        self.progress.grid(row=3, column=3, columnspan=2, sticky="we", **pad)
+        self.lbl_status.grid(row=3, column=5, sticky="w", **pad)
+
+        # cho cột 3 mở rộng để progress bar dãn ra
+        self.frm_top.columnconfigure(3, weight=1)
+
+        # === Thống kê ===
         self.frm_stats.pack(fill=tk.X, **pad)
         ttk.Label(self.frm_stats, text="Tổng MP4:").grid(row=0, column=0, sticky='e')
         self.val_total.grid(row=0, column=1, sticky='w')
@@ -104,8 +142,8 @@ class ConcatApp(tk.Tk):
         ttk.Label(self.frm_stats, text="Đã chạy:").grid(row=0, column=4, sticky='e')
         self.val_done.grid(row=0, column=5, sticky='w')
 
-        self.progress.grid(row=1, column=0, columnspan=6, sticky='we', **pad)
-        self.lbl_status.grid(row=2, column=0, columnspan=6, sticky='w', **pad)
+
+
 
     # ================= Config =================
     def load_config(self):
@@ -161,7 +199,7 @@ class ConcatApp(tk.Tk):
             messagebox.showerror("Lỗi", f"Đọc video lỗi: {e}")
             return
 
-        # === Đọc log JSON để loại video đã dùng ===
+        # loại bỏ video đã dùng trong log
         used_videos = set()
         log_dir = os.path.abspath("log")
         os.makedirs(log_dir, exist_ok=True)
@@ -175,11 +213,10 @@ class ConcatApp(tk.Tk):
                         if not line:
                             continue
                         try:
-                            data = json.loads(line)  # mỗi dòng 1 JSON object
+                            data = json.loads(line)
                             for p in data.get("inputs", []):
                                 used_videos.add(os.path.abspath(p))
                         except json.JSONDecodeError:
-                            # bỏ qua dòng log cũ không phải JSON
                             continue
             except Exception as e:
                 messagebox.showwarning("Log", f"Lỗi đọc log: {e}")
@@ -187,11 +224,17 @@ class ConcatApp(tk.Tk):
         # bỏ video đã dùng
         all_videos = [v for v in all_videos if os.path.abspath(v) not in used_videos]
 
+        # === Giới hạn số lượng video cần gen ===
+        limit = self.limit_videos_var.get()
+        if limit > 0 and len(all_videos) > limit:
+            all_videos = random.sample(all_videos, limit)
+
         gsize = self.group_size_var.get() or 6
         self.groups = get_all_random_video_groups(all_videos, group_size=gsize)
         self.total_mp4.set(str(len(all_videos)))
         self.num_groups.set(str(len(self.groups)))
         self.save_config()
+
 
 
     def start_concat(self):
@@ -286,6 +329,41 @@ class ConcatApp(tk.Tk):
         if path and os.path.isdir(path):
             os.startfile(path)
 
+    def clear_log(self):
+        log_dir = os.path.abspath("log")
+        log_path = os.path.join(log_dir, "log.txt")
+
+        if not os.path.exists(log_path):
+            messagebox.showinfo("Xóa log", "Không có file log để xóa.")
+            return
+
+        confirm = messagebox.askyesno("Xóa log", "Bạn có chắc muốn xóa toàn bộ dữ liệu log?")
+        if confirm:
+            try:
+                os.remove(log_path)
+                messagebox.showinfo("Xóa log", "Đã xóa dữ liệu log.")
+                # Reload lại nhóm vì có thể còn video
+                self.reload_groups()
+            except Exception as e:
+                messagebox.showerror("Xóa log", f"Lỗi khi xóa log: {e}")
+
+    def clear_log(self):
+        log_dir = os.path.abspath("log")
+        log_path = os.path.join(log_dir, "log.txt")
+
+        if not os.path.exists(log_path):
+            messagebox.showinfo("Xóa log", "Không có file log để xóa.")
+            return
+
+        confirm = messagebox.askyesno("Xóa log", "Bạn có chắc muốn xóa toàn bộ dữ liệu log?")
+        if confirm:
+            try:
+                os.remove(log_path)
+                messagebox.showinfo("Xóa log", "Đã xóa dữ liệu log.")
+                # Reload lại nhóm vì có thể còn video
+                self.reload_groups()
+            except Exception as e:
+                messagebox.showerror("Xóa log", f"Lỗi khi xóa log: {e}")
 
 if __name__ == '__main__':
     ConcatApp().mainloop()

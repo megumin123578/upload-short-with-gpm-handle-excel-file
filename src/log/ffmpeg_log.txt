@@ -8,15 +8,15 @@ ffmpeg version 2025-06-28-git-cfd1f81e7d-full_build-www.gyan.dev Copyright (c) 2
   libavfilter    11.  0.100 / 11.  0.100
   libswscale      9.  0.100 /  9.  0.100
   libswresample   6.  0.100 /  6.  0.100
-[mov,mp4,m4a,3gp,3g2,mj2 @ 0000010702d3aa00] Auto-inserting h264_mp4toannexb bitstream filter
+[mov,mp4,m4a,3gp,3g2,mj2 @ 000001b72635aa00] Auto-inserting h264_mp4toannexb bitstream filter
 Input #0, concat, from 'temp.txt':
-  Duration: N/A, start: -0.021333, bitrate: 11993 kb/s
-  Stream #0:0(eng): Video: h264 (Main) (avc1 / 0x31637661), yuv420p(progressive), 1080x1920 [SAR 1:1 DAR 9:16], 11827 kb/s, 60 fps, 60 tbr, 15360 tbn
+  Duration: N/A, start: -0.021333, bitrate: 12017 kb/s
+  Stream #0:0(eng): Video: h264 (Main) (avc1 / 0x31637661), yuv420p(progressive), 1080x1920 [SAR 1:1 DAR 9:16], 11849 kb/s, 60 fps, 60 tbr, 15360 tbn
     Metadata:
       handler_name    : ?Mainconcept Video Media Handler
       vendor_id       : [0][0][0][0]
       encoder         : Lavc62.4.100 h264_nvenc
-  Stream #0:1(eng): Audio: aac (LC) (mp4a / 0x6134706D), 48000 Hz, stereo, fltp, 166 kb/s, start -0.021333
+  Stream #0:1(eng): Audio: aac (LC) (mp4a / 0x6134706D), 48000 Hz, stereo, fltp, 167 kb/s, start -0.021333
     Metadata:
       handler_name    : #Mainconcept MP4 Sound Media Handler
       vendor_id       : [0][0][0][0]
@@ -26,16 +26,19 @@ Stream mapping:
 Output #0, mp4, to 'temp.mp4':
   Metadata:
     encoder         : Lavf62.1.101
-  Stream #0:0(eng): Video: h264 (Main) (avc1 / 0x31637661), yuv420p(progressive), 1080x1920 [SAR 1:1 DAR 9:16], q=2-31, 11827 kb/s, 60 fps, 60 tbr, 15360 tbn
+  Stream #0:0(eng): Video: h264 (Main) (avc1 / 0x31637661), yuv420p(progressive), 1080x1920 [SAR 1:1 DAR 9:16], q=2-31, 11849 kb/s, 60 fps, 60 tbr, 15360 tbn
     Metadata:
       handler_name    : ?Mainconcept Video Media Handler
       vendor_id       : [0][0][0][0]
       encoder         : Lavc62.4.100 h264_nvenc
-  Stream #0:1(eng): Audio: aac (LC) (mp4a / 0x6134706D), 48000 Hz, stereo, fltp, 166 kb/s
+  Stream #0:1(eng): Audio: aac (LC) (mp4a / 0x6134706D), 48000 Hz, stereo, fltp, 167 kb/s
     Metadata:
       handler_name    : #Mainconcept MP4 Sound Media Handler
       vendor_id       : [0][0][0][0]
 Press [q] to stop, [?] for help
-[mov,mp4,m4a,3gp,3g2,mj2 @ 0000010702db5780] Auto-inserting h264_mp4toannexb bitstream filter
-[out#0/mp4 @ 0000010702d9ea40] video:510619KiB audio:7010KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 0.110181%
-frame=21090 fps=0.0 q=-1.0 Lsize=  518199KiB time=00:05:51.48 bitrate=12077.7kbits/s speed= 703x elapsed=0:00:00.49    
+[mov,mp4,m4a,3gp,3g2,mj2 @ 000001b7263b7cc0] Auto-inserting h264_mp4toannexb bitstream filter
+[aost#0:1/copy @ 000001b726dce900] Non-monotonic DTS; previous: 7808000, current: 7807968; changing to 7808001. This may result in incorrect timestamps in the output file.
+frame=20397 fps=0.0 q=-1.0 size=  497152KiB time=00:05:39.93 bitrate=11980.6kbits/s speed= 666x elapsed=0:00:00.51    [mov,mp4,m4a,3gp,3g2,mj2 @ 000001b7263b6d00] Auto-inserting h264_mp4toannexb bitstream filter
+[aost#0:1/copy @ 000001b726dce900] Non-monotonic DTS; previous: 16318432, current: 16318416; changing to 16318433. This may result in incorrect timestamps in the output file.
+[out#0/mp4 @ 000001b7268479c0] video:743120KiB audio:10264KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 0.110617%
+frame=30841 fps=0.0 q=-1.0 Lsize=  754218KiB time=00:08:34.00 bitrate=12020.4kbits/s speed= 660x elapsed=0:00:00.77    
