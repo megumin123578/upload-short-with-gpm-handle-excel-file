@@ -29,15 +29,17 @@ def list_all_mp3_files(folder_path):
                 mp3_files.append(full_path)
     return mp3_files
 
-def get_all_random_video_groups(video_list, group_size=6):
-    import random
-    random.shuffle(video_list)
+
+def get_all_random_video_groups(videos, group_size=6):
+    """Chia danh sách video thành nhiều nhóm ngẫu nhiên với kích thước group_size"""
+    random.shuffle(videos)
     groups = []
-    for i in range(0, len(video_list), group_size):
-        group = video_list[i:i+group_size]
-        if len(group) == group_size:
+    for i in range(0, len(videos), group_size):
+        group = videos[i:i+group_size]
+        if len(group) == group_size:   # chỉ nhận nhóm đủ size
             groups.append(group)
     return groups
+
 
 
 

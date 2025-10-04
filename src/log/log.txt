@@ -1,0 +1,3 @@
+{"output": "E:\\New folder\\1.mp4", "inputs": ["E:\\storage\\77G.mp4", "E:\\storage\\71G.mp4"], "bgm": "C:\\Users\\Admin\\Music\\Hollow Coves - These Memories (Official Music Video).mp3"}
+{"output": "E:\\New folder\\2.mp4", "inputs": ["E:\\storage\\8G.mp4", "E:\\storage\\125G.mp4"], "bgm": "C:\\Users\\Admin\\Music\\Hollow Coves - These Memories (Official Music Video).mp3"}
+{"output": "E:\\New folder\\3.mp4", "inputs": ["E:\\storage\\58G.mp4", "E:\\storage\\64G.mp4"], "bgm": "C:\\Users\\Admin\\Music\\Cam_Tu_Cau_-_Remix_KLICKAUD.mp3"}
