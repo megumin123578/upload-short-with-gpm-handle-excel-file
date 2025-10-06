@@ -112,37 +112,46 @@ class ConcatApp(tk.Tk):
         self.lbl_status.grid(row=0, column=5, sticky="w", padx=6)
         self.frm_buttons.grid(row=5, column=0, columnspan=7, pady=(6, 4), sticky="we")
 
-        # ===== Thống kê =====
-        self.frm_stats = ttk.LabelFrame(self, text="Thống kê", padding=8)
-        ttk.Label(self.frm_stats, text="Tổng video còn lại:").grid(row=0, column=0, sticky="e", padx=6)
-        ttk.Label(self.frm_stats, textvariable=self.total_mp4).grid(row=0, column=1, sticky="w")
+        # ===== Log + Thống kê =====
+        self.frm_logstats = ttk.LabelFrame(self, text="📜 Log & Thống kê", padding=8)
 
-        ttk.Label(self.frm_stats, text="Số nhóm:").grid(row=0, column=2, sticky="e", padx=6)
-        ttk.Label(self.frm_stats, textvariable=self.num_groups).grid(row=0, column=3, sticky="w")
+        # --- Khung thống kê ---
+        stats_frame = ttk.Frame(self.frm_logstats)
+        stats_frame.pack(fill="x", pady=(0, 6))
 
-        ttk.Label(self.frm_stats, text="Đã ghép:").grid(row=0, column=4, sticky="e", padx=6)
-        ttk.Label(self.frm_stats, textvariable=self.groups_done).grid(row=0, column=5, sticky="w")
-        
+        ttk.Label(stats_frame, text="Tổng video còn lại:").grid(row=0, column=0, sticky="e", padx=6)
+        ttk.Label(stats_frame, textvariable=self.total_mp4).grid(row=0, column=1, sticky="w")
 
-        # ===== Log =====
-        self.frm_log = ttk.LabelFrame(self, text="📜 Log", padding=8)
-        log_frame = ttk.Frame(self.frm_log)
+        ttk.Label(stats_frame, text="Số nhóm:").grid(row=0, column=2, sticky="e", padx=6)
+        ttk.Label(stats_frame, textvariable=self.num_groups).grid(row=0, column=3, sticky="w")
+
+        ttk.Label(stats_frame, text="Đã ghép:").grid(row=0, column=4, sticky="e", padx=6)
+        ttk.Label(stats_frame, textvariable=self.groups_done).grid(row=0, column=5, sticky="w")
+
+        # --- Khung log ---
+        log_frame = ttk.Frame(self.frm_logstats)
         log_frame.pack(fill="both", expand=True)
         scrollbar = ttk.Scrollbar(log_frame, orient="vertical")
         scrollbar.pack(side="right", fill="y")
+
         self.txt_log = tk.Text(
             log_frame,
-            height=10,            
+            height=12,
             wrap="word",
             state="disabled",
             bg="#1e1e1e",
             fg="#dcdcdc",
-            font=("Consolas", 13, 'bold'),
-            yscrollcommand=scrollbar.set 
+            font=("Consolas", 12),
+            yscrollcommand=scrollbar.set
         )
         self.txt_log.pack(fill="both", expand=True)
-        scrollbar.config(command=self.txt_log.yview)  
-        self.txt_log.tag_configure("link", foreground="#03fc13", underline=True)
+        scrollbar.config(command=self.txt_log.yview)
+
+        # Tag cho link
+        self.txt_log.tag_configure("link", foreground="#4ea3ff", underline=True)
+
+        self.frm_logstats.pack(fill="both", expand=True, padx=10, pady=(4, 10))
+
 
 
     def _add_folder_row(self, label, var, row, reload=False, bgm=False):
@@ -155,8 +164,7 @@ class ConcatApp(tk.Tk):
 
     def _layout(self):
         self.frm_top.pack(fill="x", padx=10, pady=8)
-        self.frm_stats.pack(fill="x", padx=10, pady=(4, 10))
-        self.frm_log.pack(fill="both", expand=True, padx=10, pady=(4, 10))
+        self.frm_logstats.pack(fill="both", expand=True, padx=10, pady=(4, 10))
     
     def _update_volume_label(self, *args):
         val = self.bgm_volume_var.get()
@@ -256,7 +264,6 @@ class ConcatApp(tk.Tk):
         all_videos = [v for v in all_videos if os.path.abspath(v) not in used_videos]
         #limit gen
         limit_groups = self.limit_videos_var.get()
-        todo_groups = self.groups
         if limit_groups > 0:
             todo_groups = self.groups[:limit_groups]
 
@@ -385,23 +392,6 @@ class ConcatApp(tk.Tk):
         if path and os.path.isdir(path):
             os.startfile(path)
 
-    def clear_log(self):
-        log_dir = os.path.abspath("log")
-        log_path = os.path.join(log_dir, "log.txt")
-
-        if not os.path.exists(log_path):
-            messagebox.showinfo("Xóa log", "Không có file log để xóa.")
-            return
-
-        confirm = messagebox.askyesno("Xóa log", "Bạn có chắc muốn xóa toàn bộ dữ liệu log?")
-        if confirm:
-            try:
-                os.remove(log_path)
-                messagebox.showinfo("Xóa log", "Đã xóa dữ liệu log.")
-                # Reload lại nhóm vì có thể còn video
-                self.reload_groups()
-            except Exception as e:
-                messagebox.showerror("Xóa log", f"Lỗi khi xóa log: {e}")
 
     def clear_log(self):
         log_dir = os.path.abspath("log")

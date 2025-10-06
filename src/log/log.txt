@@ -22,3 +22,15 @@
 {"output": "E:\\ghep xong\\289.mp4", "inputs": ["E:\\storage\\348.mp4", "E:\\storage\\110.mp4"], "bgm": "C:\\Users\\Admin\\Music\\Hollow Coves - These Memories (Official Music Video).mp3"}
 {"output": "E:\\ghep xong\\290.mp4", "inputs": ["E:\\storage\\047.mp4", "E:\\storage\\247.mp4"], "bgm": "C:\\Users\\Admin\\Music\\Cam_Tu_Cau_-_Remix_KLICKAUD.mp3"}
 {"output": "E:\\ghep xong\\291.mp4", "inputs": ["E:\\storage\\770.mp4", "E:\\storage\\052.mp4"], "bgm": "C:\\Users\\Admin\\Music\\Hollow Coves - These Memories (Official Music Video).mp3"}
+{"output": "E:\\ghep xong\\292.mp4", "inputs": ["E:\\storage\\345.mp4", "E:\\storage\\349.mp4"], "bgm": "C:\\Users\\Admin\\Music\\Hollow Coves - These Memories (Official Music Video).mp3"}
+{"output": "E:\\ghep xong\\293.mp4", "inputs": ["E:\\storage\\254.mp4", "E:\\storage\\413.mp4"], "bgm": "C:\\Users\\Admin\\Music\\Hollow Coves - These Memories (Official Music Video).mp3"}
+{"output": "E:\\ghep xong\\294.mp4", "inputs": ["E:\\storage\\361.mp4", "E:\\storage\\099.mp4"], "bgm": "C:\\Users\\Admin\\Music\\Hollow Coves - These Memories (Official Music Video).mp3"}
+{"output": "E:\\ghep xong\\295.mp4", "inputs": ["E:\\storage\\912.mp4", "E:\\storage\\336.mp4"], "bgm": "C:\\Users\\Admin\\Music\\Hollow Coves - These Memories (Official Music Video).mp3"}
+{"output": "E:\\ghep xong\\296.mp4", "inputs": ["E:\\storage\\647.mp4", "E:\\storage\\920.mp4"], "bgm": "C:\\Users\\Admin\\Music\\Cam_Tu_Cau_-_Remix_KLICKAUD.mp3"}
+{"output": "E:\\ghep xong\\297.mp4", "inputs": ["E:\\storage\\115.mp4", "E:\\storage\\105.mp4"], "bgm": "C:\\Users\\Admin\\Music\\Hollow Coves - These Memories (Official Music Video).mp3"}
+{"output": "E:\\ghep xong\\298.mp4", "inputs": ["E:\\storage\\392.mp4", "E:\\storage\\428.mp4"], "bgm": "C:\\Users\\Admin\\Music\\Hollow Coves - These Memories (Official Music Video).mp3"}
+{"output": "E:\\ghep xong\\299.mp4", "inputs": ["E:\\storage\\422.mp4", "E:\\storage\\510.mp4"], "bgm": "C:\\Users\\Admin\\Music\\Cam_Tu_Cau_-_Remix_KLICKAUD.mp3"}
+{"output": "E:\\ghep xong\\300.mp4", "inputs": ["E:\\storage\\894.mp4", "E:\\storage\\125.mp4"], "bgm": "C:\\Users\\Admin\\Music\\Cam_Tu_Cau_-_Remix_KLICKAUD.mp3"}
+{"output": "E:\\ghep xong\\301.mp4", "inputs": ["E:\\storage\\126.mp4", "E:\\storage\\157.mp4"], "bgm": "C:\\Users\\Admin\\Music\\Cam_Tu_Cau_-_Remix_KLICKAUD.mp3"}
+{"output": "E:\\ghep xong\\302.mp4", "inputs": ["E:\\storage\\883.mp4", "E:\\storage\\533.mp4"], "bgm": "C:\\Users\\Admin\\Music\\Cam_Tu_Cau_-_Remix_KLICKAUD.mp3"}
+{"output": "E:\\ghep xong\\303.mp4", "inputs": ["E:\\storage\\751.mp4", "E:\\storage\\270.mp4"], "bgm": "C:\\Users\\Admin\\Music\\Cam_Tu_Cau_-_Remix_KLICKAUD.mp3"}
