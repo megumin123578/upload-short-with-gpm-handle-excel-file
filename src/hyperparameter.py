@@ -1,10 +1,6 @@
 import os
 
-<<<<<<< HEAD
 APP_VERSION = "1.0.6"
-=======
-APP_VERSION = "1.0.7"
->>>>>>> 7b5c859 (fixxing console pop up and update values combo_group_size realtime)
 UPDATE_MANIFEST = "https://raw.githubusercontent.com/megumin123578/upload-short-with-gpm-handle-excel-file/main/manifest.json"
 APP_TITLE = "AUTO GENERATE UPLOAD SHORT YOUTUBE"
 
