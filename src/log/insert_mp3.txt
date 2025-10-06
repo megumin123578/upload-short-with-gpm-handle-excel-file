@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ffmpeg version 2025-07-10-git-82aeee3c19-essentials_build-www.gyan.dev Copyright (c) 2000-2025 the FFmpeg developers
   built with gcc 15.1.0 (Rev6, Built by MSYS2 project)
   configuration: --enable-gpl --enable-version3 --enable-static --disable-w32threads --disable-autodetect --enable-fontconfig --enable-iconv --enable-gnutls --enable-libxml2 --enable-gmp --enable-bzlib --enable-lzma --enable-zlib --enable-libsrt --enable-libssh --enable-libzmq --enable-avisynth --enable-sdl2 --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxvid --enable-libaom --enable-libopenjpeg --enable-libvpx --enable-mediafoundation --enable-libass --enable-libfreetype --enable-libfribidi --enable-libharfbuzz --enable-libvidstab --enable-libvmaf --enable-libzimg --enable-amf --enable-cuda-llvm --enable-cuvid --enable-dxva2 --enable-d3d11va --enable-d3d12va --enable-ffnvcodec --enable-libvpl --enable-nvdec --enable-nvenc --enable-vaapi --enable-openal --enable-libgme --enable-libopenmpt --enable-libopencore-amrwb --enable-libmp3lame --enable-libtheora --enable-libvo-amrwbenc --enable-libgsm --enable-libopencore-amrnb --enable-libopus --enable-libspeex --enable-libvorbis --enable-librubberband
@@ -54,3 +55,64 @@ Output #0, mp4, to '//nasfmc/Ổ Sever Mới/Định/Satisfy ASMR/SHORT AI/ASMR/
 frame=  944 fps=0.0 q=-1.0 size=   22272KiB time=00:00:15.80 bitrate=11541.8kbits/s speed=31.5x elapsed=0:00:00.50    frame= 2077 fps=2033 q=-1.0 size=   47104KiB time=00:00:34.66 bitrate=11131.0kbits/s speed=33.9x elapsed=0:00:01.02    [out#0/mp4 @ 0000021d0e5ef940] video:63320KiB audio:778KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 0.119366%
 frame= 2880 fps=2123 q=-1.0 Lsize=   64175KiB time=00:00:47.97 bitrate=10959.1kbits/s speed=35.4x elapsed=0:00:01.35    
 [aac @ 0000021d0e8122c0] Qavg: 556.698
+=======
+ffmpeg version 2025-06-28-git-cfd1f81e7d-full_build-www.gyan.dev Copyright (c) 2000-2025 the FFmpeg developers
+  built with gcc 15.1.0 (Rev4, Built by MSYS2 project)
+  configuration: --enable-gpl --enable-version3 --enable-static --disable-w32threads --disable-autodetect --enable-fontconfig --enable-iconv --enable-gnutls --enable-lcms2 --enable-libxml2 --enable-gmp --enable-bzlib --enable-lzma --enable-libsnappy --enable-zlib --enable-librist --enable-libsrt --enable-libssh --enable-libzmq --enable-avisynth --enable-libbluray --enable-libcaca --enable-libdvdnav --enable-libdvdread --enable-sdl2 --enable-libaribb24 --enable-libaribcaption --enable-libdav1d --enable-libdavs2 --enable-libopenjpeg --enable-libquirc --enable-libuavs3d --enable-libxevd --enable-libzvbi --enable-liboapv --enable-libqrencode --enable-librav1e --enable-libsvtav1 --enable-libvvenc --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxavs2 --enable-libxeve --enable-libxvid --enable-libaom --enable-libjxl --enable-libvpx --enable-mediafoundation --enable-libass --enable-frei0r --enable-libfreetype --enable-libfribidi --enable-libharfbuzz --enable-liblensfun --enable-libvidstab --enable-libvmaf --enable-libzimg --enable-amf --enable-cuda-llvm --enable-cuvid --enable-dxva2 --enable-d3d11va --enable-d3d12va --enable-ffnvcodec --enable-libvpl --enable-nvdec --enable-nvenc --enable-vaapi --enable-libshaderc --enable-vulkan --enable-libplacebo --enable-opencl --enable-libcdio --enable-openal --enable-libgme --enable-libmodplug --enable-libopenmpt --enable-libopencore-amrwb --enable-libmp3lame --enable-libshine --enable-libtheora --enable-libtwolame --enable-libvo-amrwbenc --enable-libcodec2 --enable-libilbc --enable-libgsm --enable-liblc3 --enable-libopencore-amrnb --enable-libopus --enable-libspeex --enable-libvorbis --enable-ladspa --enable-libbs2b --enable-libflite --enable-libmysofa --enable-librubberband --enable-libsoxr --enable-chromaprint
+  libavutil      60.  3.100 / 60.  3.100
+  libavcodec     62.  4.100 / 62.  4.100
+  libavformat    62.  1.101 / 62.  1.101
+  libavdevice    62.  0.100 / 62.  0.100
+  libavfilter    11.  0.100 / 11.  0.100
+  libswscale      9.  0.100 /  9.  0.100
+  libswresample   6.  0.100 /  6.  0.100
+Input #0, mov,mp4,m4a,3gp,3g2,mj2, from 'temp.mp4':
+  Metadata:
+    major_brand     : isom
+    minor_version   : 512
+    compatible_brands: isomiso2avc1mp41
+    encoder         : Lavf62.1.101
+  Duration: 00:00:16.02, start: 0.000000, bitrate: 7223 kb/s
+  Stream #0:0[0x1](und): Video: h264 (Main) (avc1 / 0x31637661), yuv420p(progressive), 1080x1920 [SAR 1:1 DAR 9:16], 7116 kb/s, 60 fps, 60 tbr, 15360 tbn, start 0.021029 (default)
+    Metadata:
+      handler_name    : VideoHandler
+      vendor_id       : [0][0][0][0]
+      encoder         : Lavc62.4.100 h264_nvenc
+  Stream #0:1[0x2](und): Audio: aac (LC) (mp4a / 0x6134706D), 48000 Hz, stereo, fltp, 102 kb/s (default)
+    Metadata:
+      handler_name    : SoundHandler
+      vendor_id       : [0][0][0][0]
+Input #1, mp3, from 'C:/Users/Admin/Music\Hollow Coves - These Memories (Official Music Video).mp3':
+  Metadata:
+    major_brand     : dash
+    minor_version   : 0
+    compatible_brands: iso6mp41
+    encoder         : Lavf58.76.100
+  Duration: 00:05:13.38, start: 0.025057, bitrate: 128 kb/s
+  Stream #1:0: Audio: mp3 (mp3float), 44100 Hz, stereo, fltp, 128 kb/s, start 0.025057
+    Metadata:
+      encoder         : Lavc58.13
+Stream mapping:
+  Stream #0:1 (aac) -> amix
+  Stream #1:0 (mp3float) -> adelay:default
+  Stream #0:0 -> #0:0 (copy)
+  amix:default -> Stream #0:1 (aac)
+Press [q] to stop, [?] for help
+Output #0, mp4, to 'E:/ghep xong\14.mp4':
+  Metadata:
+    major_brand     : isom
+    minor_version   : 512
+    compatible_brands: isomiso2avc1mp41
+    encoder         : Lavf62.1.101
+  Stream #0:0(und): Video: h264 (Main) (avc1 / 0x31637661), yuv420p(progressive), 1080x1920 [SAR 1:1 DAR 9:16], q=2-31, 7116 kb/s, 60 fps, 60 tbr, 15360 tbn (default)
+    Metadata:
+      handler_name    : VideoHandler
+      vendor_id       : [0][0][0][0]
+      encoder         : Lavc62.4.100 h264_nvenc
+  Stream #0:1: Audio: aac (LC) (mp4a / 0x6134706D), 48000 Hz, stereo, fltp, 128 kb/s
+    Metadata:
+      encoder         : Lavc62.4.100 aac
+[out#0/mp4 @ 000001c0c6e80e80] video:13899KiB audio:240KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 0.186840%
+frame=  960 fps=0.0 q=-1.0 Lsize=   14166KiB time=00:00:15.97 bitrate=7266.0kbits/s speed=33.7x elapsed=0:00:00.47    
+[aac @ 000001c0c68adc80] Qavg: 6010.419
+>>>>>>> 7b5c859 (fixxing console pop up and update values combo_group_size realtime)

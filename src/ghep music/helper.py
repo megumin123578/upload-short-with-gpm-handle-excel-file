@@ -59,26 +59,34 @@ def get_next_output_filename(folder: str) -> str:
     next_index = max_index + 1
     return os.path.join(folder, f"{next_index}.mp4")
 
+
 def mix_audio_with_bgm_ffmpeg(
     input_video: str,
     bgm_audio: str,
     output_dir: str,
-    bgm_volume: float = 0.5
+    bgm_volume: float = 0.5,
+    max_start_delay: float = 10.0  # Maximum start delay for BGM in seconds
 ):
     output_video = get_next_output_filename(output_dir)
     temp_output = 'temp.mp4'
 
+    # Generate a random start delay for the BGM (in milliseconds for FFmpeg)
+    random_delay = random.uniform(0, max_start_delay) * 1000  # Convert seconds to milliseconds
+
+    # FFmpeg command with random delay for BGM
     cmd = [
         "ffmpeg", "-y",
-        "-i", input_video,                    # 0:v, 0:a (video gốc)
-        "-stream_loop", "-1", "-i", bgm_audio,  # 1:a (nhạc nền lặp vô hạn)
+        "-i", input_video,                    # 0:v, 0:a (original video and audio)
+        "-stream_loop", "-1", "-i", bgm_audio,  # 1:a (background music, looped)
         "-filter_complex",
-        f"[1:a]volume={bgm_volume}[a_bgm];[0:a][a_bgm]amix=inputs=2:duration=first:dropout_transition=3[aout]",
-        "-map", "0:v",                        # lấy video gốc
-        "-map", "[aout]",                     # âm thanh đã trộn
-        "-c:v", "copy",                       # không mã hóa lại video
-        "-c:a", "aac",                        # mã hóa âm thanh
-        "-shortest",                          # kết thúc khi video ngắn hơn
+        f"[1:a]adelay={random_delay}|{random_delay}[delayed_bgm];"  # Apply random delay to BGM
+        f"[delayed_bgm]volume={bgm_volume}[a_bgm];"
+        f"[0:a][a_bgm]amix=inputs=2:duration=first:dropout_transition=3[aout]",
+        "-map", "0:v",                        # Use original video stream
+        "-map", "[aout]",                     # Use mixed audio
+        "-c:v", "copy",                       # No video re-encoding
+        "-c:a", "aac",                        # Encode audio to AAC
+        "-shortest",                          # End when the shortest stream ends
         output_video
     ]
 
@@ -93,10 +101,10 @@ def mix_audio_with_bgm_ffmpeg(
     except subprocess.CalledProcessError as e:
         if os.path.exists(temp_output):
             os.remove(temp_output)
-        print(f"FFmpeg lỗi: {e}")
+        print(f"FFmpeg error: {e}")
         raise
     
-    print(f'Đã thêm nhạc vào video : {output_video}')
+    print(f'Added music to video: {output_video} (BGM start delayed by {random_delay/1000:.2f} seconds)')
     return output_video
 
 import os

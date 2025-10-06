@@ -57,12 +57,14 @@ class ConcatApp(tk.Tk):
             values=list(range(2, 101)), width=6, state="readonly"
         )
         self.combo_group_size.grid(row=0, column=1, sticky="w", pady=4)
+        self.combo_group_size.bind("<<ComboboxSelected>>", self._on_group_size_change)
 
         ttk.Label(self.frm_top, text="Số lượng video cần tạo:").grid(row=0, column=2, sticky="e", padx=4)
         #chọn lượng video
         limit_display = ["Ghép hết"] + [str(i) for i in range(1, 101)]
         self.combo_limit_videos = ttk.Combobox(
-            self.frm_top, width=8, state="readonly"
+            self.frm_top, width=8, state="readonly",
+            textvariable=tk.StringVar()
         )
         self.combo_limit_videos['values'] = limit_display
         self.combo_limit_videos.current(0)  
@@ -352,6 +354,14 @@ class ConcatApp(tk.Tk):
                 self.reload_groups()
             except Exception as e:
                 messagebox.showerror("Xóa log", f"Lỗi khi xóa log: {e}")
+
+    def _on_group_size_change(self, event=None):
+        try:
+            gsize = int(self.combo_group_size.get())
+            self.group_size_var.set(gsize)
+            self.reload_groups()
+        except ValueError:
+            pass
 
 if __name__ == '__main__':
     ConcatApp().mainloop()

@@ -26,6 +26,8 @@ from excel_helper import save_assignments_to_excel, combine_excels
 import tkinter.simpledialog as sd
 from hyperparameter import APP_VERSION, UPDATE_MANIFEST
 from update_manager import check_and_update, install_from_zip
+import sys,subprocess
+
 
 def _pythonw_exe():
     import sys, os
@@ -779,12 +781,20 @@ class App(tk.Tk):
 
 
     def _restart_app(self):
+<<<<<<< HEAD
         import sys, os
         import subprocess
         python = _pythonw_exe()
         script = os.path.abspath(sys.argv[0])
         args = sys.argv[1:]
         _popen_gui([python, script] + args)
+=======
+
+        python = sys.executable
+        script = os.path.abspath(sys.argv[0])
+        args = sys.argv[1:]
+        subprocess.Popen([python, script] + args, shell=False)
+>>>>>>> 7b5c859 (fixxing console pop up and update values combo_group_size realtime)
         self.destroy()
         sys.exit(0)
 
@@ -794,8 +804,12 @@ class App(tk.Tk):
         if not os.path.exists(script_path):
             messagebox.showerror("Not found", f"can't find file: \n{script_path}")
             return
+<<<<<<< HEAD
         py = _pythonw_exe()
         _popen_gui([py, script_path])
+=======
+        subprocess.Popen([sys.executable, script_path], shell=False)
+>>>>>>> 7b5c859 (fixxing console pop up and update values combo_group_size realtime)
 
 
 if __name__ == "__main__":
