@@ -14,8 +14,8 @@ class ConcatApp(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("🎬 Ghép Short Tự Động")
-        self.geometry("1000x300")  
-        self.minsize(900, 300)
+        self.geometry("1000x480")  
+        self.minsize(900,580)
 
         style = ttk.Style()
         style.theme_use("clam")
@@ -33,6 +33,7 @@ class ConcatApp(tk.Tk):
         self.num_groups = tk.StringVar(value="0")
         self.groups_done = tk.StringVar(value="0")
         self.status_var = tk.StringVar(value="Chưa bắt đầu")
+        self.last_output_var = tk.StringVar(value="(chưa có)")
 
         self.groups: list[list[str]] = []
         self.stop_flag = threading.Event()
@@ -112,7 +113,7 @@ class ConcatApp(tk.Tk):
         self.frm_buttons.grid(row=5, column=0, columnspan=7, pady=(6, 4), sticky="we")
 
         # ===== Thống kê =====
-        self.frm_stats = ttk.LabelFrame(self, text="📊 Thống kê", padding=8)
+        self.frm_stats = ttk.LabelFrame(self, text="Thống kê", padding=8)
         ttk.Label(self.frm_stats, text="Tổng video còn lại:").grid(row=0, column=0, sticky="e", padx=6)
         ttk.Label(self.frm_stats, textvariable=self.total_mp4).grid(row=0, column=1, sticky="w")
 
@@ -121,6 +122,28 @@ class ConcatApp(tk.Tk):
 
         ttk.Label(self.frm_stats, text="Đã ghép:").grid(row=0, column=4, sticky="e", padx=6)
         ttk.Label(self.frm_stats, textvariable=self.groups_done).grid(row=0, column=5, sticky="w")
+        
+
+        # ===== Log =====
+        self.frm_log = ttk.LabelFrame(self, text="📜 Log", padding=8)
+        log_frame = ttk.Frame(self.frm_log)
+        log_frame.pack(fill="both", expand=True)
+        scrollbar = ttk.Scrollbar(log_frame, orient="vertical")
+        scrollbar.pack(side="right", fill="y")
+        self.txt_log = tk.Text(
+            log_frame,
+            height=10,            
+            wrap="word",
+            state="disabled",
+            bg="#1e1e1e",
+            fg="#dcdcdc",
+            font=("Consolas", 13, 'bold'),
+            yscrollcommand=scrollbar.set 
+        )
+        self.txt_log.pack(fill="both", expand=True)
+        scrollbar.config(command=self.txt_log.yview)  
+        self.txt_log.tag_configure("link", foreground="#03fc13", underline=True)
+
 
     def _add_folder_row(self, label, var, row, reload=False, bgm=False):
         ttk.Label(self.frm_top, text=label).grid(row=row, column=0, sticky="e", padx=4, pady=3)
@@ -133,10 +156,40 @@ class ConcatApp(tk.Tk):
     def _layout(self):
         self.frm_top.pack(fill="x", padx=10, pady=8)
         self.frm_stats.pack(fill="x", padx=10, pady=(4, 10))
+        self.frm_log.pack(fill="both", expand=True, padx=10, pady=(4, 10))
     
     def _update_volume_label(self, *args):
         val = self.bgm_volume_var.get()
         self.lbl_volume.config(text=f"{val * 100:.0f}")
+
+    def _append_log(self, text: str):
+    
+        self.txt_log.configure(state="normal")
+
+        if text.startswith("Đã ghép xong: "):
+            path = text.replace("Đã ghép xong: ", "").strip()
+            tag_name = f"link_{hash(path)}"
+            self.txt_log.insert("end", "Đã ghép xong: ")
+            self.txt_log.insert("end", path + "\n", tag_name)
+            # Style
+            self.txt_log.tag_configure(tag_name, foreground="#03fc13", underline=True)
+            self.txt_log.tag_bind(tag_name, "<Enter>", lambda e: self.txt_log.config(cursor="hand2"))
+            self.txt_log.tag_bind(tag_name, "<Leave>", lambda e: self.txt_log.config(cursor=""))
+            self.txt_log.tag_bind(tag_name, "<Button-1>", lambda e, p=path: self._open_video_path(p))
+        else:
+            self.txt_log.insert("end", text + "\n")
+
+        self.txt_log.see("end")  #auto scroll
+        self.txt_log.configure(state="disabled")
+
+    def _open_video_path(self, path: str): #open video when click
+        if os.path.exists(path):
+            try:
+                os.startfile(path)
+            except Exception as e:
+                messagebox.showerror("Lỗi mở video", f"Không thể mở:\n{path}\n\n{e}")
+        else:
+            messagebox.showwarning("Không tìm thấy", f"File không tồn tại:\n{path}")
 
     def load_config(self):
         if os.path.exists(CONFIG_FILE):
@@ -202,9 +255,10 @@ class ConcatApp(tk.Tk):
         # bỏ video đã dùng
         all_videos = [v for v in all_videos if os.path.abspath(v) not in used_videos]
         #limit gen
-        limit = self.limit_videos_var.get()
-        if limit > 0 and len(all_videos) > limit:
-            all_videos = random.sample(all_videos, limit)
+        limit_groups = self.limit_videos_var.get()
+        todo_groups = self.groups
+        if limit_groups > 0:
+            todo_groups = self.groups[:limit_groups]
 
         gsize = self.group_size_var.get() or 6
         self.groups = get_all_random_video_groups(all_videos, group_size=gsize)
@@ -288,6 +342,9 @@ class ConcatApp(tk.Tk):
                         "bgm": os.path.abspath(bg_audio) if bg_audio else None
                     }
                     f_log.write(json.dumps(log_entry, ensure_ascii=False) + "\n")
+                    self.after(0, lambda path=output: self.last_output_var.set(path))
+                    self.after(0, lambda path=output: self._append_log(f"Đã ghép xong: {path}"))
+
 
                 except Exception as e:
                     log_entry = {
@@ -317,6 +374,8 @@ class ConcatApp(tk.Tk):
     def _poll_worker(self):
         if self.worker and self.worker.is_alive():
             self.after(200, self._poll_worker)
+        else:
+            self._on_done()
 
     def _enqueue(self, fn):
         self.after(0, fn)

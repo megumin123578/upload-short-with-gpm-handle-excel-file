@@ -60,54 +60,71 @@ def get_next_output_filename(folder: str) -> str:
     return os.path.join(folder, f"{next_index}.mp4")
 
 
+#musc helper functions
+def get_audio_duration(bgm_audio: str) -> float:
+    try:
+        result = subprocess.run(
+            [
+                "ffprobe", "-v", "error",
+                "-show_entries", "format=duration",
+                "-of", "default=noprint_wrappers=1:nokey=1",
+                bgm_audio
+            ],
+            capture_output=True,
+            text=True
+        )
+        return float(result.stdout.strip())
+    except Exception:
+        return 0.0
+
+
 def mix_audio_with_bgm_ffmpeg(
     input_video: str,
     bgm_audio: str,
     output_dir: str,
     bgm_volume: float = 0.5,
-    max_start_delay: float = 10.0  # Maximum start delay for BGM in seconds
 ):
     output_video = get_next_output_filename(output_dir)
-    temp_output = 'temp.mp4'
+    temp_output = "temp.mp4"
 
-    # Generate a random start delay for the BGM (in milliseconds for FFmpeg)
-    random_delay = random.uniform(0, max_start_delay) * 1000  # Convert seconds to milliseconds
+    # === lấy độ dài nhạc và chọn điểm bắt đầu random ===
+    bgm_duration = get_audio_duration(bgm_audio)
+    if bgm_duration > 10:  # chỉ random nếu nhạc dài hơn 10s
+        start_delay = random.uniform(0, bgm_duration - 10)
+    else:
+        start_delay = 0
 
-    # FFmpeg command with random delay for BGM
+    # === lệnh ffmpeg với đoạn random ===
     cmd = [
         "ffmpeg", "-y",
-        "-i", input_video,                    # 0:v, 0:a (original video and audio)
-        "-stream_loop", "-1", "-i", bgm_audio,  # 1:a (background music, looped)
+        "-i", input_video,                  # 0:v, 0:a
+        "-ss", str(start_delay),            # random start position
+        "-i", bgm_audio,                    # 1:a
         "-filter_complex",
-        f"[1:a]adelay={random_delay}|{random_delay}[delayed_bgm];"  # Apply random delay to BGM
-        f"[delayed_bgm]volume={bgm_volume}[a_bgm];"
+        f"[1:a]volume={bgm_volume}[a_bgm];"
         f"[0:a][a_bgm]amix=inputs=2:duration=first:dropout_transition=3[aout]",
-        "-map", "0:v",                        # Use original video stream
-        "-map", "[aout]",                     # Use mixed audio
-        "-c:v", "copy",                       # No video re-encoding
-        "-c:a", "aac",                        # Encode audio to AAC
-        "-shortest",                          # End when the shortest stream ends
+        "-map", "0:v",
+        "-map", "[aout]",
+        "-c:v", "copy",
+        "-c:a", "aac",
+        "-shortest",
         output_video
     ]
 
-    try:
-        with open("log/insert_mp3.txt", "w", encoding="utf-8") as log_file:
-            subprocess.run(
-                cmd,
-                check=True,
-                stdout=log_file,
-                stderr=log_file
-            )
-    except subprocess.CalledProcessError as e:
-        if os.path.exists(temp_output):
-            os.remove(temp_output)
-        print(f"FFmpeg error: {e}")
-        raise
-    
-    print(f'Added music to video: {output_video} (BGM start delayed by {random_delay/1000:.2f} seconds)')
+    os.makedirs("log", exist_ok=True)
+    with open("log/insert_mp3.txt", "w", encoding="utf-8") as log_file:
+        try:
+            subprocess.run(cmd, check=True, stdout=log_file, stderr=log_file)
+        except subprocess.CalledProcessError as e:
+            if os.path.exists(temp_output):
+                os.remove(temp_output)
+            print(f"FFmpeg error: {e}")
+            raise
+
+    print(f"Added random BGM from {start_delay:.1f}s → {output_video}")
     return output_video
 
-import os
+
 
 def read_used_source_videos(log_path: str):
     used_files = []
