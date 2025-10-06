@@ -1,15 +1,7 @@
 {
-<<<<<<< HEAD
-  "input_folder": "//nasfmc/Ổ Sever Mới/Định/Satisfy ASMR/SHORT AI/ASMR/Quay mới/30.09.25",
-  "save_folder": "//nasfmc/Ổ Sever Mới/Định/Satisfy ASMR/SHORT AI/ASMR/1.HOÀN THIỆN/AI ghép/30",
-  "bgm_folder": "//nasfmc/Ổ Sever Mới/Định/Satisfy ASMR/SHORT AI/render nhac",
-  "group_size": 6,
-  "bgm_volume": 1.0
-=======
   "input_folder": "E:/storage",
   "save_folder": "E:/ghep xong",
   "bgm_folder": "C:/Users/Admin/Music",
   "group_size": 2,
   "bgm_volume": 0.5
->>>>>>> 7b5c859 (fixxing console pop up and update values combo_group_size realtime)
 }

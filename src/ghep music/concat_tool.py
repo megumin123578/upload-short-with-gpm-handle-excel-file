@@ -237,16 +237,23 @@ class ConcatApp(tk.Tk):
             return messagebox.showwarning("Thiếu thư mục lưu", "Chọn thư mục lưu")
         os.makedirs(out_dir, exist_ok=True)
 
+        
+        
+        limit_groups = self.limit_videos_var.get()
+        todo_groups = self.groups
+        if limit_groups > 0:
+            todo_groups = self.groups[:limit_groups]
+
         self.stop_flag.clear()
         self.btn_concat.config(state=tk.DISABLED)
         self.btn_stop.config(state=tk.NORMAL)
         self.status_var.set("Đang ghép...")
 
-        self.progress['maximum'] = len(self.groups)
+        self.progress['maximum'] = len(todo_groups)
         self.progress['value'] = 0
         self.groups_done.set("0")
 
-        self.worker = threading.Thread(target=self._do_concat_worker, args=(self.groups, out_dir), daemon=True)
+        self.worker = threading.Thread(target=self._do_concat_worker, args=(todo_groups, out_dir), daemon=True)
         self.worker.start()
         self.after(200, self._poll_worker)
 
