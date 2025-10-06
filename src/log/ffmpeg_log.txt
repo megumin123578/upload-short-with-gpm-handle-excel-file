@@ -8,15 +8,15 @@ ffmpeg version 2025-06-28-git-cfd1f81e7d-full_build-www.gyan.dev Copyright (c) 2
   libavfilter    11.  0.100 / 11.  0.100
   libswscale      9.  0.100 /  9.  0.100
   libswresample   6.  0.100 /  6.  0.100
-[mov,mp4,m4a,3gp,3g2,mj2 @ 000001c548b0aac0] Auto-inserting h264_mp4toannexb bitstream filter
+[mov,mp4,m4a,3gp,3g2,mj2 @ 000002aa30e3aac0] Auto-inserting h264_mp4toannexb bitstream filter
 Input #0, concat, from 'temp.txt':
-  Duration: N/A, start: -0.021333, bitrate: 4926 kb/s
-  Stream #0:0(und): Video: h264 (Main) (avc1 / 0x31637661), yuv420p(progressive), 1080x1920 [SAR 1:1 DAR 9:16], 4851 kb/s, 60 fps, 60 tbr, 15360 tbn
+  Duration: N/A, start: -0.021333, bitrate: 7751 kb/s
+  Stream #0:0(und): Video: h264 (Main) (avc1 / 0x31637661), yuv420p(progressive), 1080x1920 [SAR 1:1 DAR 9:16], 7625 kb/s, 60 fps, 60 tbr, 15360 tbn
     Metadata:
       handler_name    : VideoHandler
       vendor_id       : [0][0][0][0]
       encoder         : Lavc62.4.100 h264_nvenc
-  Stream #0:1(und): Audio: aac (LC) (mp4a / 0x6134706D), 48000 Hz, stereo, fltp, 75 kb/s, start -0.021333
+  Stream #0:1(und): Audio: aac (LC) (mp4a / 0x6134706D), 48000 Hz, stereo, fltp, 126 kb/s, start -0.021333
     Metadata:
       handler_name    : SoundHandler
       vendor_id       : [0][0][0][0]
@@ -26,17 +26,18 @@ Stream mapping:
 Output #0, mp4, to 'temp.mp4':
   Metadata:
     encoder         : Lavf62.1.101
-  Stream #0:0(und): Video: h264 (Main) (avc1 / 0x31637661), yuv420p(progressive), 1080x1920 [SAR 1:1 DAR 9:16], q=2-31, 4851 kb/s, 60 fps, 60 tbr, 15360 tbn
+  Stream #0:0(und): Video: h264 (Main) (avc1 / 0x31637661), yuv420p(progressive), 1080x1920 [SAR 1:1 DAR 9:16], q=2-31, 7625 kb/s, 60 fps, 60 tbr, 15360 tbn
     Metadata:
       handler_name    : VideoHandler
       vendor_id       : [0][0][0][0]
       encoder         : Lavc62.4.100 h264_nvenc
-  Stream #0:1(und): Audio: aac (LC) (mp4a / 0x6134706D), 48000 Hz, stereo, fltp, 75 kb/s
+  Stream #0:1(und): Audio: aac (LC) (mp4a / 0x6134706D), 48000 Hz, stereo, fltp, 126 kb/s
     Metadata:
       handler_name    : SoundHandler
       vendor_id       : [0][0][0][0]
 Press [q] to stop, [?] for help
-[mov,mp4,m4a,3gp,3g2,mj2 @ 000001c5494f0d00] Auto-inserting h264_mp4toannexb bitstream filter
-    Last message repeated 2 times
-[out#0/mp4 @ 000001c548b29b00] video:27588KiB audio:372KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 0.190841%
-frame= 1920 fps=0.0 q=-1.0 Lsize=   28013KiB time=00:00:31.97 bitrate=7177.9kbits/s speed=300x elapsed=0:00:00.10    
+[mov,mp4,m4a,3gp,3g2,mj2 @ 000002aa30e42080] Auto-inserting h264_mp4toannexb bitstream filter
+[mov,mp4,m4a,3gp,3g2,mj2 @ 000002aa30e56e40] Auto-inserting h264_mp4toannexb bitstream filter
+[mov,mp4,m4a,3gp,3g2,mj2 @ 000002aa30e56200] Auto-inserting h264_mp4toannexb bitstream filter
+[out#0/mp4 @ 000002aa30e5a800] video:30414KiB audio:400KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 0.173165%
+frame= 1920 fps=0.0 q=-1.0 Lsize=   30867KiB time=00:00:31.97 bitrate=7909.2kbits/s speed= 390x elapsed=0:00:00.08    
