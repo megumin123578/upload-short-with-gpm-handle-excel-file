@@ -27,26 +27,6 @@ import tkinter.simpledialog as sd
 from hyperparameter import APP_VERSION, UPDATE_MANIFEST
 from update_manager import check_and_update, install_from_zip
 
-def _pythonw_exe():
-    import sys, os
-    exe = sys.executable
-    if os.name == "nt":
-        cand = os.path.join(os.path.dirname(exe), "pythonw.exe")
-        if os.path.exists(cand):
-            return cand
-    return exe  # fallback (không ưu tiên)
-
-def _popen_gui(args):
-    import subprocess, os
-    if os.name == "nt":
-        # Ẩn cửa sổ console của process con
-        return subprocess.Popen(
-            args,
-            shell=False,
-            creationflags=subprocess.CREATE_NO_WINDOW
-        )
-    else:
-        return subprocess.Popen(args, shell=False)
 
 class App(tk.Tk):
     def __init__(self):
@@ -369,9 +349,9 @@ class App(tk.Tk):
 
         self._last_assignments = extended
         if mode == "titles":
-            self._set_status(f"Previewed {len(assignments)} rows")
+            self._set_status(f"Previewed {len(assignments)} rows (title-driven; channels cycle if needed).")
         else:
-            self._set_status(f"Previewed {len(assignments)} rows")
+            self._set_status(f"Previewed {len(assignments)} rows (channel-driven).")
 
 
 
@@ -779,23 +759,23 @@ class App(tk.Tk):
 
 
     def _restart_app(self):
-        import sys, os
-        import subprocess
-        python = _pythonw_exe()
-        script = os.path.abspath(sys.argv[0])
+        import sys, os, subprocess
+        python = sys.executable
+        script = os.path.abspath(sys.argv[0])   # file main đang chạy
         args = sys.argv[1:]
-        _popen_gui([python, script] + args)
+        subprocess.Popen([python, script] + args, shell=True)
         self.destroy()
         sys.exit(0)
 
-
     def _open_concat_window(self):
+        import subprocess
         script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ghep music/concat_tool.py")
         if not os.path.exists(script_path):
             messagebox.showerror("Not found", f"can't find file: \n{script_path}")
             return
-        py = _pythonw_exe()
-        _popen_gui([py, script_path])
+        subprocess.Popen(["python", script_path], shell=True)
+
+
 
 
 if __name__ == "__main__":

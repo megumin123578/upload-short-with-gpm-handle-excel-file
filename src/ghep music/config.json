@@ -1,6 +1,7 @@
 {
-  "input_folder": "E:/storage",
-  "save_folder": "E:/New folder",
-  "bgm_folder": "C:/Users/Admin/Music",
-  "group_size": 3
+  "input_folder": "//nasfmc/Ổ Sever Mới/Định/Satisfy ASMR/SHORT AI/ASMR/Quay mới/30.09.25",
+  "save_folder": "//nasfmc/Ổ Sever Mới/Định/Satisfy ASMR/SHORT AI/ASMR/1.HOÀN THIỆN/AI ghép/30",
+  "bgm_folder": "//nasfmc/Ổ Sever Mới/Định/Satisfy ASMR/SHORT AI/render nhac",
+  "group_size": 6,
+  "bgm_volume": 1.0
 }

@@ -8,12 +8,14 @@ import shutil
 import random
 from helper import *
 
-CONFIG_FILE = "ghep music\config.json"
+CONFIG_FILE = "ghep music/config.json"
+
 class ConcatApp(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("Ghép Short")
-        self.minsize(800, 200)
+        self.title("🎬 Ghép Short Tự Động")
+        self.geometry("1000x300")  
+        self.minsize(900, 300)
 
         style = ttk.Style()
         style.theme_use("clam")
@@ -23,14 +25,14 @@ class ConcatApp(tk.Tk):
         self.save_folder = tk.StringVar()
         self.bgm_folder = tk.StringVar()
         self.group_size_var = tk.IntVar(value=6)
+        self.bgm_volume_var = tk.DoubleVar(value=0.5)
+        self.limit_videos_var = tk.IntVar(value=0)
 
         self.mp3_list: list[str] = []
         self.total_mp4 = tk.StringVar(value="0")
         self.num_groups = tk.StringVar(value="0")
         self.groups_done = tk.StringVar(value="0")
-        self.status_var = tk.StringVar(value="0%")
-        self.limit_videos_var = tk.IntVar(value=0)
-
+        self.status_var = tk.StringVar(value="Chưa bắt đầu")
 
         self.groups: list[list[str]] = []
         self.stop_flag = threading.Event()
@@ -40,112 +42,100 @@ class ConcatApp(tk.Tk):
         self._build_ui()
         self._layout()
 
-        self.load_config()   #load config
-        if self.input_folder.get():   
+        self.load_config()
+        if self.input_folder.get():
             self.reload_groups()
 
     # ================= UI =================
     def _build_ui(self):
-        self.frm_top = ttk.Frame(self)
+        self.frm_top = ttk.LabelFrame(self, text="⚙️ Cấu hình", padding=10)
 
-        # nhập số lượng video ghép
-        ttk.Label(self.frm_top, text="Số lượng để ghép / video:").grid(row=0, column=0, sticky='e')
+        # ===== Dòng 1: Tham số cơ bản =====
+        ttk.Label(self.frm_top, text="Số lượng video / nhóm:").grid(row=0, column=0, sticky="e", padx=4, pady=4)
         self.combo_group_size = ttk.Combobox(
-            self.frm_top,
-            textvariable=self.group_size_var,
-            values=list(range(2,100)),
-            width=5,
-            state="normal"
+            self.frm_top, textvariable=self.group_size_var,
+            values=list(range(2, 101)), width=6, state="readonly"
         )
-        self.combo_group_size.grid(row=0, column=1, sticky='w')
-        self.combo_group_size.bind("<<ComboboxSelected>>", lambda e: self.reload_groups())
+        self.combo_group_size.grid(row=0, column=1, sticky="w", pady=4)
 
-        ttk.Label(self.frm_top, text="Số video cần ghép:").grid(row=1, column=0, sticky='e', padx=(4,0))
+        ttk.Label(self.frm_top, text="Số lượng video cần tạo:").grid(row=0, column=2, sticky="e", padx=4)
+        #chọn lượng video
+        limit_display = ["Ghép hết"] + [str(i) for i in range(1, 101)]
         self.combo_limit_videos = ttk.Combobox(
-            self.frm_top,
-            textvariable=self.limit_videos_var,
-            values=list(range(100)),  # 0 = không giới hạn
-            width=6,
-            state="normal"
+            self.frm_top, width=8, state="readonly"
         )
-        self.combo_limit_videos.grid(row=1, column=1, sticky='w')
-        self.combo_limit_videos.bind("<<ComboboxSelected>>", lambda e: self.reload_groups())
+        self.combo_limit_videos['values'] = limit_display
+        self.combo_limit_videos.current(0)  
 
-        self.group_size_var.trace_add("write", lambda *a: self.reload_groups())
-        self.limit_videos_var.trace_add("write", lambda *a: self.reload_groups())
+        def on_limit_change(event=None):
+            val = self.combo_limit_videos.get()
+            if val == "Ghép hết":
+                self.limit_videos_var.set(0)
+            else:
+                self.limit_videos_var.set(int(val))
 
-        self.btn_clear_log = ttk.Button(self.frm_top, text="Clear data", command=self.clear_log)
-        self.btn_clear_log.grid(row=2, column=0, sticky='w', padx=(4,0), pady=4)
+        self.combo_limit_videos.bind("<<ComboboxSelected>>", on_limit_change)
+        self.combo_limit_videos.grid(row=0, column=3, sticky="w")
 
-        # Folder chọn + hiển thị path
-        self.btn_in = ttk.Button(self.frm_top, text="Chọn thư mục nguồn",
-                                command=lambda: self._choose_folder(self.input_folder, reload=True))
-        self.lbl_in = ttk.Label(self.frm_top, textvariable=self.input_folder, width=40, anchor="w")
 
-        self.btn_out = ttk.Button(self.frm_top, text="Chọn thư mục lưu",
-                                command=lambda: self._choose_folder(self.save_folder))
-        self.lbl_out = ttk.Label(self.frm_top, textvariable=self.save_folder, width=40, anchor="w")
+        ttk.Label(self.frm_top, text="Âm lượng:").grid(row=0, column=4, sticky="e", padx=4)
+        self.slider_volume = ttk.Scale(self.frm_top, from_=0.0, to=1.0, orient="horizontal",
+                                       variable=self.bgm_volume_var, length=120)
+        self.slider_volume.grid(row=0, column=5, sticky="w", padx=2)
 
-        self.btn_bgm = ttk.Button(self.frm_top, text="Chọn thư mục nhạc",
-                                command=lambda: self._choose_folder(self.bgm_folder, bgm=True))
-        self.lbl_bgm = ttk.Label(self.frm_top, textvariable=self.bgm_folder, width=40, anchor="w")
+        self.lbl_volume = ttk.Label(self.frm_top, width=5)
+        self.lbl_volume.grid(row=0, column=6, sticky="w")
+        # cập nhật giá trị hiển thị mỗi khi kéo slider
+        self.bgm_volume_var.trace_add("write", self._update_volume_label)
 
-        # 3 nút thao tác
-        self.btn_concat = ttk.Button(self.frm_top, text="▶ Bắt đầu ghép", command=self.start_concat)
-        self.btn_stop = ttk.Button(self.frm_top, text="■ Dừng", command=self.stop_concat, state=tk.DISABLED)
-        self.btn_open = ttk.Button(self.frm_top, text="📂 Mở thư mục lưu", command=self.open_output_folder)
-        self.btn_clear_log = ttk.Button(self.frm_top, text="🗑 Xóa log", command=self.clear_log)
-    
+        # ===== chọn thư mục =====
+        self._add_folder_row("📁 Thư mục nguồn:", self.input_folder, 1, reload=True)
+        self._add_folder_row("💾 Thư mục lưu:", self.save_folder, 2)
+        self._add_folder_row("🎵 Thư mục nhạc:", self.bgm_folder, 3, bgm=True)
 
-        # progress bar + status
-        self.progress = ttk.Progressbar(self.frm_top, orient=tk.HORIZONTAL, mode='determinate')
-        self.lbl_status = ttk.Label(self.frm_top, textvariable=self.status_var)
+        # ===== các nút thao tác =====
+        self.frm_buttons = ttk.Frame(self.frm_top)
+        self.btn_concat = ttk.Button(self.frm_buttons, text="▶ Bắt đầu ghép", command=self.start_concat)
+        self.btn_stop = ttk.Button(self.frm_buttons, text="■ Dừng", command=self.stop_concat, state=tk.DISABLED)
+        self.btn_open = ttk.Button(self.frm_buttons, text="📂 Mở thư mục lưu", command=self.open_output_folder)
+        self.btn_clear = ttk.Button(self.frm_buttons, text="🗑 Xóa log", command=self.clear_log)
 
-        # Thống kê
-        self.frm_stats = ttk.LabelFrame(self)
-        self.val_total = ttk.Label(self.frm_stats, textvariable=self.total_mp4)
-        self.val_groups = ttk.Label(self.frm_stats, textvariable=self.num_groups)
-        self.val_done = ttk.Label(self.frm_stats, textvariable=self.groups_done)
+        self.progress = ttk.Progressbar(self.frm_buttons, orient="horizontal", mode="determinate", length=280)
+        self.lbl_status = ttk.Label(self.frm_buttons, textvariable=self.status_var, width=15, anchor="w")
 
+        for i, btn in enumerate([self.btn_concat, self.btn_stop, self.btn_open, self.btn_clear]):
+            btn.grid(row=0, column=i, padx=6, pady=6)
+        self.progress.grid(row=0, column=4, sticky="we", padx=6)
+        self.lbl_status.grid(row=0, column=5, sticky="w", padx=6)
+        self.frm_buttons.grid(row=5, column=0, columnspan=7, pady=(6, 4), sticky="we")
+
+        # ===== Thống kê =====
+        self.frm_stats = ttk.LabelFrame(self, text="📊 Thống kê", padding=8)
+        ttk.Label(self.frm_stats, text="Tổng video còn lại:").grid(row=0, column=0, sticky="e", padx=6)
+        ttk.Label(self.frm_stats, textvariable=self.total_mp4).grid(row=0, column=1, sticky="w")
+
+        ttk.Label(self.frm_stats, text="Số nhóm:").grid(row=0, column=2, sticky="e", padx=6)
+        ttk.Label(self.frm_stats, textvariable=self.num_groups).grid(row=0, column=3, sticky="w")
+
+        ttk.Label(self.frm_stats, text="Đã ghép:").grid(row=0, column=4, sticky="e", padx=6)
+        ttk.Label(self.frm_stats, textvariable=self.groups_done).grid(row=0, column=5, sticky="w")
+
+    def _add_folder_row(self, label, var, row, reload=False, bgm=False):
+        ttk.Label(self.frm_top, text=label).grid(row=row, column=0, sticky="e", padx=4, pady=3)
+        entry = ttk.Entry(self.frm_top, textvariable=var, width=60)
+        entry.grid(row=row, column=1, columnspan=4, sticky="we", padx=4)
+        btn = ttk.Button(self.frm_top, text="Chọn thư mục", width=15,
+                         command=lambda: self._choose_folder(var, reload=reload, bgm=bgm))
+        btn.grid(row=row, column=5, columnspan=2, sticky="w", padx=4)
 
     def _layout(self):
-        pad = dict(padx=6, pady=4)
-        self.frm_top.pack(fill=tk.X, **pad)
+        self.frm_top.pack(fill="x", padx=10, pady=8)
+        self.frm_stats.pack(fill="x", padx=10, pady=(4, 10))
+    
+    def _update_volume_label(self, *args):
+        val = self.bgm_volume_var.get()
+        self.lbl_volume.config(text=f"{val * 100:.0f}")
 
-        self.btn_in.grid(row=0, column=2, **pad)
-        self.lbl_in.grid(row=0, column=3, sticky="w", **pad)
-
-        self.btn_out.grid(row=1, column=2, **pad)
-        self.lbl_out.grid(row=1, column=3, sticky="w", **pad)
-
-        self.btn_bgm.grid(row=2, column=2, **pad)
-        self.lbl_bgm.grid(row=2, column=3, sticky="w", **pad)
-
-        # === hàng nút + progress bar ===
-        self.btn_concat.grid(row=3, column=0, **pad, sticky="w")
-        self.btn_stop.grid(row=3, column=1, **pad, sticky="w")
-        self.btn_open.grid(row=3, column=2, **pad, sticky="w")
-
-        # progress bar nằm bên phải các nút, chiếm phần còn lại
-        self.progress.grid(row=3, column=3, columnspan=2, sticky="we", **pad)
-        self.lbl_status.grid(row=3, column=5, sticky="w", **pad)
-
-        # cho cột 3 mở rộng để progress bar dãn ra
-        self.frm_top.columnconfigure(3, weight=1)
-
-        # === Thống kê ===
-        self.frm_stats.pack(fill=tk.X, **pad)
-        ttk.Label(self.frm_stats, text="Tổng MP4:").grid(row=0, column=0, sticky='e')
-        self.val_total.grid(row=0, column=1, sticky='w')
-        ttk.Label(self.frm_stats, text="Số nhóm:").grid(row=0, column=2, sticky='e')
-        self.val_groups.grid(row=0, column=3, sticky='w')
-        ttk.Label(self.frm_stats, text="Đã chạy:").grid(row=0, column=4, sticky='e')
-        self.val_done.grid(row=0, column=5, sticky='w')
-
-
-
-
-    # ================= Config =================
     def load_config(self):
         if os.path.exists(CONFIG_FILE):
             try:
@@ -155,7 +145,7 @@ class ConcatApp(tk.Tk):
                 self.save_folder.set(cfg.get("save_folder", ""))
                 self.bgm_folder.set(cfg.get("bgm_folder", ""))
                 self.group_size_var.set(cfg.get("group_size", 2))
-
+                self.bgm_volume_var.set(cfg.get("bgm_volume", 0.5))
                 if self.bgm_folder.get():
                     self.mp3_list = list_all_mp3_files(self.bgm_folder.get())
             except Exception as e:
@@ -167,27 +157,13 @@ class ConcatApp(tk.Tk):
             "save_folder": self.save_folder.get(),
             "bgm_folder": self.bgm_folder.get(),
             "group_size": self.group_size_var.get(),
+            "bgm_volume": self.bgm_volume_var.get(),
         }
         try:
             with open(CONFIG_FILE, "w", encoding="utf-8") as f:
                 json.dump(cfg, f, indent=2, ensure_ascii=False)
         except Exception as e:
             messagebox.showerror("Config", f"Lỗi lưu config: {e}")
-
-    # ================= Logic =================
-    def _choose_folder(self, var: tk.StringVar, reload=False, bgm=False):
-        folder = filedialog.askdirectory(title="Chọn thư mục")
-        if folder:
-            var.set(folder)
-            if reload:
-                self.reload_groups()
-            if bgm:
-                try:
-                    self.mp3_list = list_all_mp3_files(folder)
-                    messagebox.showinfo("OK", f"Đã load {len(self.mp3_list)} file mp3.")
-                except Exception as e:
-                    messagebox.showerror("Lỗi", f"Không đọc được mp3: {e}")
-            self.save_config()   # lưu lại khi chọn mới
 
     def reload_groups(self):
         folder = self.input_folder.get()
@@ -223,8 +199,7 @@ class ConcatApp(tk.Tk):
 
         # bỏ video đã dùng
         all_videos = [v for v in all_videos if os.path.abspath(v) not in used_videos]
-
-        # === Giới hạn số lượng video cần gen ===
+        #limit gen
         limit = self.limit_videos_var.get()
         if limit > 0 and len(all_videos) > limit:
             all_videos = random.sample(all_videos, limit)
@@ -235,7 +210,20 @@ class ConcatApp(tk.Tk):
         self.num_groups.set(str(len(self.groups)))
         self.save_config()
 
-
+    
+    def _choose_folder(self, var: tk.StringVar, reload=False, bgm=False):
+        folder = filedialog.askdirectory(title="Chọn thư mục")
+        if folder:
+            var.set(folder)
+            if reload:
+                self.reload_groups()
+            if bgm:
+                try:
+                    self.mp3_list = list_all_mp3_files(folder)
+                    messagebox.showinfo("OK", f"Đã load {len(self.mp3_list)} file mp3.")
+                except Exception as e:
+                    messagebox.showerror("Lỗi", f"Không đọc được mp3: {e}")
+            self.save_config()   # lưu lại khi chọn mới
 
     def start_concat(self):
         if self.worker and self.worker.is_alive():
@@ -278,7 +266,7 @@ class ConcatApp(tk.Tk):
                     auto_concat(group, temp)
                     bg_audio = random.choice(self.mp3_list) if self.mp3_list else None
                     if bg_audio and os.path.isfile(bg_audio):
-                        output = mix_audio_with_bgm_ffmpeg(temp, bg_audio, out_dir, bgm_volume=0.9)
+                        output = mix_audio_with_bgm_ffmpeg(temp, bg_audio, out_dir, self.bgm_volume_var.get())
                     else:
                         output = get_next_output_filename(out_dir)
                         shutil.copy2(temp, output)
