@@ -340,3 +340,4 @@ def nvenc_supports_preset(preset: str) -> bool:
         return f"preset    {preset}".lower() in out or f"-preset {preset}".lower() in out
     except Exception:
         return False
+    

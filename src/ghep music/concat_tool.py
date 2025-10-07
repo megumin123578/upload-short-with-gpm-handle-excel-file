@@ -19,6 +19,7 @@ class ConcatApp(tk.Tk):
 
         style = ttk.Style()
         style.theme_use("clam")
+        style.configure("Accent.TButton", foreground="blue")
 
         # State
         self.input_folder = tk.StringVar()
@@ -88,7 +89,14 @@ class ConcatApp(tk.Tk):
 
         self.lbl_volume = ttk.Label(self.frm_top, width=5)
         self.lbl_volume.grid(row=0, column=6, sticky="w")
-        # cập nhật giá trị hiển thị mỗi khi kéo slider
+
+        self.frm_top.columnconfigure(6, weight=1)
+
+        #reload button
+        self.btn_reload = ttk.Button(self.frm_top, text="↻",width=3, command=self.reload_groups, style="Accent.TButton")
+        self.btn_reload.grid(row=0, column=7, sticky="w", padx=8)
+        
+        # cập nhật label âm lượng
         self.bgm_volume_var.trace_add("write", self._update_volume_label)
 
         # ===== chọn thư mục =====
@@ -102,6 +110,7 @@ class ConcatApp(tk.Tk):
         self.btn_stop = ttk.Button(self.frm_buttons, text="■ Dừng", command=self.stop_concat, state=tk.DISABLED)
         self.btn_open = ttk.Button(self.frm_buttons, text="📂 Mở thư mục lưu", command=self.open_output_folder)
         self.btn_clear = ttk.Button(self.frm_buttons, text="🗑 Xóa log", command=self.clear_log)
+        
 
         self.progress = ttk.Progressbar(self.frm_buttons, orient="horizontal", mode="determinate", length=280)
         self.lbl_status = ttk.Label(self.frm_buttons, textvariable=self.status_var, width=15, anchor="w")
@@ -111,6 +120,8 @@ class ConcatApp(tk.Tk):
         self.progress.grid(row=0, column=4, sticky="we", padx=6)
         self.lbl_status.grid(row=0, column=5, sticky="w", padx=6)
         self.frm_buttons.grid(row=5, column=0, columnspan=7, pady=(6, 4), sticky="we")
+        
+
 
         # ===== Log + Thống kê =====
         self.frm_logstats = ttk.LabelFrame(self, text="📜 Log & Thống kê", padding=8)
@@ -260,16 +271,21 @@ class ConcatApp(tk.Tk):
 
         # bỏ video đã dùng
         all_videos = [v for v in all_videos if os.path.abspath(v) not in used_videos]
-        #limit gen
-        limit_groups = self.limit_videos_var.get()
-        if limit_groups > 0:
-            todo_groups = self.groups[:limit_groups]
 
         gsize = self.group_size_var.get() or 6
-        self.groups = get_all_random_video_groups(all_videos, group_size=gsize)
+        all_groups = get_all_random_video_groups(all_videos, group_size=gsize)
+
+        # Giới hạn số lượng nhóm cần ghép
+        limit_groups = self.limit_videos_var.get()
+        if limit_groups > 0:
+            self.groups = all_groups[:limit_groups]
+        else:
+            self.groups = all_groups
+
         self.total_mp4.set(str(len(all_videos)))
         self.num_groups.set(str(len(self.groups)))
         self.save_config()
+
 
     
     def _choose_folder(self, var: tk.StringVar, reload=False, bgm=False):
@@ -290,7 +306,7 @@ class ConcatApp(tk.Tk):
         if self.worker and self.worker.is_alive():
             return messagebox.showinfo("Đang chạy", "Tiến trình đang chạy.")
         if not self.groups:
-            return messagebox.showwarning("Chưa có nhóm", "Hãy reload nhóm trước.")
+            return messagebox.showwarning("Đã chạy hết toàn bộ", "Hãy xóa log để gen lại.")
         out_dir = self.save_folder.get()
         if not out_dir:
             return messagebox.showwarning("Thiếu thư mục lưu", "Chọn thư mục lưu")
@@ -375,6 +391,8 @@ class ConcatApp(tk.Tk):
     def _on_done(self):
         self.btn_concat.config(state=tk.NORMAL)
         self.btn_stop.config(state=tk.DISABLED)
+        self.status_var.set("Hoàn thành" if not self.stop_flag.is_set() else "Đã dừng")
+        self.reload_groups()
 
     def _poll_worker(self):
         if self.worker and self.worker.is_alive():

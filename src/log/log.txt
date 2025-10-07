@@ -1,14 +1,1 @@
-{"output": "E:\\ghep xong\\306.mp4", "inputs": ["E:\\storage\\470.mp4", "E:\\storage\\298.mp4"], "bgm": "C:\\Users\\Admin\\Music\\Hollow Coves - These Memories (Official Music Video).mp3"}
-{"output": "E:\\ghep xong\\307.mp4", "inputs": ["E:\\storage\\530.mp4", "E:\\storage\\777.mp4"], "bgm": "C:\\Users\\Admin\\Music\\Hollow Coves - These Memories (Official Music Video).mp3"}
-{"output": "E:\\ghep xong\\308.mp4", "inputs": ["E:\\storage\\123.mp4", "E:\\storage\\112.mp4"], "bgm": "C:\\Users\\Admin\\Music\\Hollow Coves - These Memories (Official Music Video).mp3"}
-{"output": "E:\\ghep xong\\309.mp4", "inputs": ["E:\\storage\\009.mp4", "E:\\storage\\278.mp4"], "bgm": "C:\\Users\\Admin\\Music\\Hollow Coves - These Memories (Official Music Video).mp3"}
-{"output": "E:\\ghep xong\\310.mp4", "inputs": ["E:\\storage\\470.mp4", "E:\\storage\\298.mp4"], "bgm": "C:\\Users\\Admin\\Music\\Hollow Coves - These Memories (Official Music Video).mp3"}
-{"output": "E:\\ghep xong\\311.mp4", "inputs": ["E:\\storage\\530.mp4", "E:\\storage\\777.mp4"], "bgm": "C:\\Users\\Admin\\Music\\Cam_Tu_Cau_-_Remix_KLICKAUD.mp3"}
-{"output": "E:\\ghep xong\\312.mp4", "inputs": ["E:\\storage\\123.mp4", "E:\\storage\\112.mp4"], "bgm": "C:\\Users\\Admin\\Music\\Cam_Tu_Cau_-_Remix_KLICKAUD.mp3"}
-{"output": "E:\\ghep xong\\313.mp4", "inputs": ["E:\\storage\\009.mp4", "E:\\storage\\278.mp4"], "bgm": "C:\\Users\\Admin\\Music\\Hollow Coves - These Memories (Official Music Video).mp3"}
-{"output": "E:\\ghep xong\\314.mp4", "inputs": ["E:\\storage\\773.mp4", "E:\\storage\\561.mp4"], "bgm": "C:\\Users\\Admin\\Music\\Cam_Tu_Cau_-_Remix_KLICKAUD.mp3"}
-{"output": "E:\\ghep xong\\315.mp4", "inputs": ["E:\\storage\\591.mp4", "E:\\storage\\682.mp4"], "bgm": "C:\\Users\\Admin\\Music\\Cam_Tu_Cau_-_Remix_KLICKAUD.mp3"}
-{"output": "E:\\ghep xong\\316.mp4", "inputs": ["E:\\storage\\404.mp4", "E:\\storage\\722.mp4"], "bgm": "C:\\Users\\Admin\\Music\\Hollow Coves - These Memories (Official Music Video).mp3"}
-{"output": "E:\\ghep xong\\317.mp4", "inputs": ["E:\\storage\\686.mp4", "E:\\storage\\829.mp4"], "bgm": "C:\\Users\\Admin\\Music\\Hollow Coves - These Memories (Official Music Video).mp3"}
-{"output": "E:\\ghep xong\\318.mp4", "inputs": ["E:\\storage\\668.mp4", "E:\\storage\\336.mp4"], "bgm": "C:\\Users\\Admin\\Music\\Hollow Coves - These Memories (Official Music Video).mp3"}
-{"output": "E:\\ghep xong\\319.mp4", "inputs": ["E:\\storage\\556.mp4", "E:\\storage\\735.mp4"], "bgm": "C:\\Users\\Admin\\Music\\Hollow Coves - These Memories (Official Music Video).mp3"}
+{"output": "E:\\ghep xong\\365.mp4", "inputs": ["E:\\storage\\904.mp4", "E:\\storage\\905.mp4"], "bgm": "C:\\Users\\Admin\\Music\\Hollow Coves - These Memories (Official Music Video).mp3"}
