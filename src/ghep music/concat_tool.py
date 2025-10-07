@@ -150,8 +150,6 @@ class ConcatApp(tk.Tk):
         # Tag cho link
         self.txt_log.tag_configure("link", foreground="#4ea3ff", underline=True)
 
-        self.frm_logstats.pack(fill="both", expand=True, padx=10, pady=(4, 10))
-
 
 
     def _add_folder_row(self, label, var, row, reload=False, bgm=False):

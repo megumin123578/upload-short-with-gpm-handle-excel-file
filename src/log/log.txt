@@ -34,3 +34,5 @@
 {"output": "E:\\ghep xong\\301.mp4", "inputs": ["E:\\storage\\126.mp4", "E:\\storage\\157.mp4"], "bgm": "C:\\Users\\Admin\\Music\\Cam_Tu_Cau_-_Remix_KLICKAUD.mp3"}
 {"output": "E:\\ghep xong\\302.mp4", "inputs": ["E:\\storage\\883.mp4", "E:\\storage\\533.mp4"], "bgm": "C:\\Users\\Admin\\Music\\Cam_Tu_Cau_-_Remix_KLICKAUD.mp3"}
 {"output": "E:\\ghep xong\\303.mp4", "inputs": ["E:\\storage\\751.mp4", "E:\\storage\\270.mp4"], "bgm": "C:\\Users\\Admin\\Music\\Cam_Tu_Cau_-_Remix_KLICKAUD.mp3"}
+{"output": "E:\\ghep xong\\304.mp4", "inputs": ["E:\\storage\\331.mp4", "E:\\storage\\645.mp4"], "bgm": "C:\\Users\\Admin\\Music\\Cam_Tu_Cau_-_Remix_KLICKAUD.mp3"}
+{"output": "E:\\ghep xong\\305.mp4", "inputs": ["E:\\storage\\101.mp4", "E:\\storage\\011.mp4"], "bgm": "C:\\Users\\Admin\\Music\\Cam_Tu_Cau_-_Remix_KLICKAUD.mp3"}
