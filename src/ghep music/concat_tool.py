@@ -1,19 +1,10 @@
-import os
-import json
-import threading
-import queue
-import tkinter as tk
-from tkinter import ttk, filedialog, messagebox
-import shutil
-import random
-from helper import *
 
-CONFIG_FILE = "ghep music/config.json"
+from helper import *
 
 class ConcatApp(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("🎬 Ghép Short Tự Động")
+        self.title("Ghép Short Tự Động")
         self.geometry("1000x480")  
         self.minsize(900,580)
 
@@ -69,7 +60,9 @@ class ConcatApp(tk.Tk):
             textvariable=tk.StringVar()
         )
         self.combo_limit_videos['values'] = limit_display
-        self.combo_limit_videos.current(0)  
+        self.combo_limit_videos.current(0) 
+
+        ttk.Label(self.frm_top, text='')
 
         def on_limit_change(event=None):
             val = self.combo_limit_videos.get()
