@@ -1,7 +1,9 @@
 import os
 import webview
+import subprocess
 
 DEFAULT_FOLDER = r"manage_channel\data\cleaned html\Channel analytics"
+REFRESH_SCRIPT = r"manage_channel\data\refresh_data.py"
 
 # ---- API để tương tác giữa JS và Python ----
 class API:
@@ -19,6 +21,21 @@ class API:
                 return f.read()
         except Exception as e:
             return f"<h3 style='color:red'>Lỗi đọc file: {e}</h3>"
+        
+    def run_refresh_script(self):
+        """Chạy file Python khác khi ấn nút Refresh"""
+        try:
+            result = subprocess.run(
+                ["python", REFRESH_SCRIPT],
+                capture_output=True,
+                text=True,
+                check=True
+            )
+            return f"<pre style='color:green'>Đã chạy xong:\n{result.stdout}</pre>"
+        except subprocess.CalledProcessError as e:
+            return f"<pre style='color:red'>Lỗi:\n{e.stderr}</pre>"
+        except Exception as e:
+            return f"<pre style='color:red'>Lỗi không xác định: {e}</pre>"
 
 
 def generate_index_html(files):
@@ -109,7 +126,7 @@ def generate_index_html(files):
         <div id="viewer">
             <div id="viewer-header">
                 <span id="filenameLabel">Chưa chọn kênh</span>
-                <button id="reloadBtn" onclick="reloadCurrent()">Reload</button>
+                <button id="reloadBtn" onclick="runRefresh()">Refresh</button>
             </div>
             <iframe id="iframeViewer" srcdoc="<h3 style='text-align:center;margin-top:40px;'>Chọn một file để xem nội dung</h3>"></iframe>
         </div>
@@ -130,6 +147,16 @@ def generate_index_html(files):
                 loadFile(currentFile);
             }}
         }}
+
+        async function runRefresh() {{
+            const iframe = document.getElementById('iframeViewer');
+            iframe.srcdoc = "<h3 style='color:gray;text-align:center;margin-top:40px;'>Đang chạy refresh_data.py...</h3>";
+            const result = await window.pywebview.api.run_refresh_script();
+            iframe.srcdoc = result;
+        }}
+
+
+
         </script>
     </body>
     </html>
