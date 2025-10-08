@@ -1,109 +1,155 @@
 import os
-import tkinter as tk
-from tkinter import ttk, messagebox
 import webview
-import threading
 
-DEFAULT_FOLDER = r"manage_channel\data\cleaned html"
+DEFAULT_FOLDER = r"manage_channel\data\cleaned html\Channel analytics"
 
+# ---- API để tương tác giữa JS và Python ----
+class API:
+    def __init__(self, folder):
+        self.folder = folder
 
-class HTMLWebviewApp:
-    def __init__(self):
-        self.browser_window = None
-        self.root = None
-        self.folder_path = None
-        self.file_list = None
-        self.current_file = None
-
-        # chạy GUI trong thread phụ
-        threading.Thread(target=self.create_gui, daemon=True).start()
-
-    def create_gui(self):
-        self.root = tk.Tk()
-        self.root.title("HTML Folder Previewer (Chromium)")
-        self.root.geometry("1000x600")
-        self.root.minsize(900, 500)
-
-        # StringVar phải được tạo SAU khi có root
-        self.folder_path = tk.StringVar(master=self.root, value=DEFAULT_FOLDER)
-
-        self.create_widgets()
-        self.load_html_files()  # Tự tải file luôn khi khởi động
-        self.root.mainloop()
-
-    def create_widgets(self):
-        # --- Top bar ---
-        top = ttk.Frame(self.root)
-        top.pack(fill="x", padx=10, pady=5)
-
-        ttk.Label(top, text="Thư mục:").pack(side="left")
-        ttk.Entry(top, textvariable=self.folder_path, width=60, state="readonly").pack(
-            side="left", fill="x", expand=True, padx=5
-        )
-        ttk.Button(top, text="Tải danh sách", command=self.load_html_files).pack(side="left", padx=5)
-
-        # --- Main layout ---
-        body = ttk.Frame(self.root)
-        body.pack(fill="both", expand=True, padx=10, pady=5)
-
-        # Left: file list
-        left_frame = ttk.Frame(body, width=250)
-        left_frame.pack(side="left", fill="y")
-
-        ttk.Label(left_frame, text="Danh sách HTML:").pack(anchor="w")
-        self.file_list = tk.Listbox(left_frame)
-        self.file_list.pack(fill="both", expand=True, pady=3)
-        self.file_list.bind("<<ListboxSelect>>", self.on_file_select)
-
-        # Right placeholder
-        right_frame = ttk.Frame(body)
-        right_frame.pack(side="left", fill="both", expand=True, padx=(10, 0))
-        ttk.Label(right_frame, text="Nội dung hiển thị trong cửa sổ Chromium riêng").pack(
-            anchor="center", pady=50
-        )
-
-    def load_html_files(self):
-        folder = self.folder_path.get()
-        if not os.path.isdir(folder):
-            messagebox.showerror("Lỗi", f"Thư mục không tồn tại:\n{folder}")
-            return
-
-        files = [f for f in os.listdir(folder) if f.lower().endswith(".html")]
-        self.file_list.delete(0, tk.END)
-        if not files:
-            self.file_list.insert(tk.END, "(Không có file HTML)")
-        else:
-            for f in sorted(files):
-                self.file_list.insert(tk.END, f)
-
-    def on_file_select(self, event):
-        selection = self.file_list.curselection()
-        if not selection or not self.browser_window:
-            return
-
-        filename = self.file_list.get(selection[0])
-        if filename.startswith("("):
-            return
-
-        file_path = os.path.join(self.folder_path.get(), filename)
-        safe_path = os.path.abspath(file_path).replace("\\", "/")
-        file_url = f"file:///{safe_path}"
+    def load_html(self, filename):
+        """Đọc nội dung file và trả về dạng text"""
+        file_path = os.path.abspath(os.path.join(self.folder, filename))
+        if not os.path.isfile(file_path):
+            return "<h3 style='color:red'>Không tìm thấy file</h3>"
 
         try:
-            self.browser_window.load_url(file_url)
+            with open(file_path, "r", encoding="utf-8") as f:
+                return f.read()
         except Exception as e:
-            messagebox.showwarning("Cảnh báo", f"Không thể tải file: {e}")
+            return f"<h3 style='color:red'>Lỗi đọc file: {e}</h3>"
 
-    def run(self):
-        self.browser_window = webview.create_window(
-            "HTML Preview",
-            html="<h3>Chưa có file được chọn</h3>",
-            background_color="#FFFFFF",
-        )
-        webview.settings["ALLOW_DOWNLOADS"] = True
-        webview.start(gui="edgechromium" if os.name == "nt" else None)
+
+def generate_index_html(files):
+    """Giao diện danh sách + khung hiển thị (giữ sidebar + viewer cố định)"""
+    list_items = "".join(
+        f"<li><a href='#' onclick='loadFile(\"{f}\")'>{f}</a></li>" for f in files
+    )
+
+    html = f"""
+    <html>
+    <head>
+    <meta charset='utf-8'>
+    <title>HTML Folder Viewer</title>
+    <style>
+        body {{
+            font-family: Arial, sans-serif;
+            display: flex;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }}
+        #list {{
+            width: 25%;
+            background: #f3f3f3;
+            overflow-y: auto;
+            padding: 10px;
+            border-right: 1px solid #ccc;
+        }}
+        #viewer {{
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }}
+        #viewer-header {{
+            background: #fafafa;
+            border-bottom: 1px solid #ddd;
+            padding: 10px 12px;
+            font-size: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }}
+        #filenameLabel {{
+            font-weight: bold;
+            color: #333;
+        }}
+        #reloadBtn {{
+            background: #0078d7;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 6px 10px;
+            cursor: pointer;
+        }}
+        #reloadBtn:hover {{
+            background: #005a9e;
+        }}
+        iframe {{
+            flex: 1;
+            width: 100%;
+            border: none;
+            background: white;
+        }}
+        li {{ margin: 4px 0; }}
+        a {{
+            text-decoration: none;
+            color: #0078d7;
+            display: block;
+            padding: 6px 8px;
+            border-radius: 4px;
+            font-size: 15px;
+        }}
+        a:hover {{
+            background: #e6f0ff;
+        }}
+        h3 {{
+            margin-top: 0;
+        }}
+    </style>
+    </head>
+    <body>
+        <div id="list">
+            <h3>Danh sách kênh</h3>
+            <ul>{list_items}</ul>
+        </div>
+
+        <div id="viewer">
+            <div id="viewer-header">
+                <span id="filenameLabel">Chưa chọn kênh</span>
+                <button id="reloadBtn" onclick="reloadCurrent()">Reload</button>
+            </div>
+            <iframe id="iframeViewer" srcdoc="<h3 style='text-align:center;margin-top:40px;'>Chọn một file để xem nội dung</h3>"></iframe>
+        </div>
+
+        <script>
+        let currentFile = null;
+
+        async function loadFile(name) {{
+            const html = await window.pywebview.api.load_html(name);
+            currentFile = name;
+            document.getElementById('filenameLabel').innerText = name;
+            const iframe = document.getElementById('iframeViewer');
+            iframe.srcdoc = html;
+        }}
+
+        async function reloadCurrent() {{
+            if (currentFile) {{
+                loadFile(currentFile);
+            }}
+        }}
+        </script>
+    </body>
+    </html>
+    """
+    return html
 
 
 if __name__ == "__main__":
-    app = HTMLWebviewApp()
-    app.run()
+    files = sorted(
+        [f for f in os.listdir(DEFAULT_FOLDER) if f.lower().endswith(".html")]
+    )
+    api = API(DEFAULT_FOLDER)
+    html = generate_index_html(files)
+    
+    webview.create_window(
+        "HTML Folder Viewer",
+        html=html,
+        js_api=api,
+        width=1700,
+        height=1000,
+        resizable=True,
+    )
+    webview.start(gui="edgechromium" if os.name == "nt" else None)
