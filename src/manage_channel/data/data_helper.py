@@ -1,8 +1,16 @@
 
 from datetime import datetime
 import os
+import shutil
+
 FOLDER = os.path.join(os.path.expanduser("~"), "Downloads")
 LEGIT_FILENAME = ["audience","content","overview"]
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+print(BASE_DIR)
+
+def move_file():
+    pass
 
 def list_html_paths(folder):
     html_files = [
@@ -47,5 +55,6 @@ def delete_unwanted_files(files):
     print(f'Remaining files: ')
     for file in list_html_paths(FOLDER):
         print("•", file)
- 
+
+    return list_html_paths(FOLDER)
 #move file to correct location
