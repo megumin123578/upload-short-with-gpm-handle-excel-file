@@ -11,7 +11,6 @@ class API:
         self.folder = folder
 
     def list_dates(self):
-        """Trả về danh sách thư mục ngày"""
         try:
             dates = [
                 d for d in os.listdir(self.folder)

@@ -161,7 +161,7 @@ def generate_index_html():
             overflow: hidden;
         }
         #sidebar {
-            width: 25%;
+            width: 15%;
             background: #f3f3f3;
             overflow-y: auto;
             padding: 10px;
@@ -199,9 +199,7 @@ def generate_index_html():
             padding: 6px 10px;
             cursor: pointer;
         }
-        #reloadBtn:hover {
-            background: #005a9e;
-        }
+        #reloadBtn:hover { background: #005a9e; }
         iframe {
             flex: 1;
             width: 100%;
@@ -217,8 +215,14 @@ def generate_index_html():
             padding: 6px 8px;
             border-radius: 4px;
             font-size: 15px;
+            transition: background 0.15s;
         }
         a:hover { background: #e6f0ff; }
+        a.active {
+            background: #0078d7;
+            color: white;
+            font-weight: bold;
+        }
     </style>
     </head>
     <body>
@@ -251,13 +255,7 @@ def generate_index_html():
         let currentDate = "";
         let currentTab = "";
         let currentFile = "";
-
-        async function initDates() {
-            const dates = await window.pywebview.api.list_dates();
-            const sel = document.getElementById('dateSelect');
-            sel.innerHTML = "<option value=''>-- Chọn ngày --</option>" +
-                dates.map(d => `<option value='${d}'>${d}</option>`).join('');
-        }
+        const htmlCache = {}; // 🔥 cache tạm ở JS
 
         // Khi chọn ngày → load danh sách mục
         async function loadTabs() {
@@ -270,23 +268,27 @@ def generate_index_html():
             document.getElementById('fileList').innerHTML = "";
         }
 
-        // Khi chọn mục → load danh sách file và tự động mở file đầu tiên
+        // Khi chọn mục → load danh sách file
         async function loadFiles() {
             const tab = document.getElementById('tabSelect').value;
             currentTab = tab;
-            const files = await window.pywebview.api.list_files(currentDate, currentTab);
             const list = document.getElementById('fileList');
 
-            // hiển thị tên file không có đuôi .html
+            // 🧠 Skip re-render nếu date+tab trùng
+            if (list.dataset.lastKey === currentDate + "_" + currentTab) {
+                console.log("Danh sách không đổi, bỏ qua render lại");
+                return;
+            }
+            list.dataset.lastKey = currentDate + "_" + currentTab;
+
+            const files = await window.pywebview.api.list_files(currentDate, currentTab);
             list.innerHTML = files.map(f => {
-                const name = f.replace(/\.html$/i, "");
+                const name = f.replace(/\\.html$/i, "");
                 return `<li><a href='#' onclick='loadFile("${f}")'>${name}</a></li>`;
             }).join('');
 
-            // tự động load file đầu tiên nếu có
-            if (files.length > 0) {
-                loadFile(files[0]);
-            } else {
+            if (files.length > 0) loadFile(files[0]);
+            else {
                 document.getElementById('iframeViewer').srcdoc =
                     "<h3 style='text-align:center;margin-top:40px;color:gray;'>Không có file nào</h3>";
                 document.getElementById('filenameLabel').innerText = `${currentDate} / ${currentTab}`;
@@ -295,26 +297,79 @@ def generate_index_html():
 
         // Khi click chọn kênh (hoặc load tự động)
         async function loadFile(name) {
-            const html = await window.pywebview.api.load_html(currentDate, currentTab, name);
-            currentFile = name;
-            const cleanName = name.replace(/\.html$/i, "");
+            if (!name) return;
+            const cleanName = name.replace(/\\.html$/i, "");
             document.getElementById('filenameLabel').innerText =
                 `${currentDate} / ${currentTab} / ${cleanName}`;
-            document.getElementById('iframeViewer').srcdoc = html;
+
+            const iframe = document.getElementById('iframeViewer');
+            iframe.srcdoc = "<h3 style='text-align:center;margin-top:40px;color:gray;'>Đang tải...</h3>";
+
+            const cacheKey = currentDate + "_" + currentTab + "_" + name;
+            let html;
+
+            // ⚡ Lấy từ cache nếu có
+            if (htmlCache[cacheKey]) {
+                html = htmlCache[cacheKey];
+            } else {
+                html = await window.pywebview.api.load_html(currentDate, currentTab, name);
+                htmlCache[cacheKey] = html; // lưu cache
+            }
+
+            iframe.srcdoc = html;
+
+            // highlight link đang chọn
+            const links = document.querySelectorAll('#fileList a');
+            links.forEach(link => link.classList.remove('active'));
+            const activeLink = [...links].find(link => link.textContent === cleanName);
+            if (activeLink) activeLink.classList.add('active');
         }
 
         // Nút refresh
         async function runRefresh() {
             const iframe = document.getElementById('iframeViewer');
-            iframe.srcdoc = "<h3 style='color:gray;text-align:center;margin-top:40px;'>Đang xử lý, xin hãy đợi tí</h3>";
+            iframe.srcdoc = "<h3 style='color:gray;text-align:center;margin-top:40px;'>Đang xử lý, xin hãy đợi tí...</h3>";
             const result = await window.pywebview.api.run_refresh_script();
             iframe.srcdoc = result;
         }
 
-        // Gọi init sau khi pywebview sẵn sàng
-        window.addEventListener("pywebviewready", initDates);
-        </script>
+        // Khởi tạo: tự động chọn ngày mới nhất + mục overview
+        window.addEventListener("pywebviewready", async () => {
+            const dates = await window.pywebview.api.list_dates();
+            const sel = document.getElementById('dateSelect');
+            sel.innerHTML = "<option value=''>-- Chọn ngày --</option>" +
+                dates.map(d => `<option value='${d}'>${d}</option>`).join('');
 
+            if (dates.length > 0) {
+                const newest = dates[0];
+                sel.value = newest;
+                currentDate = newest;
+
+                const tabs = await window.pywebview.api.list_tabs(newest);
+                const tabSel = document.getElementById('tabSelect');
+                tabSel.innerHTML = "<option value=''>-- Chọn mục --</option>" +
+                    tabs.map(t => `<option value='${t}'>${t}</option>`).join('');
+
+                const defaultTab = tabs.includes("overview") ? "overview" : tabs[0];
+                tabSel.value = defaultTab;
+                currentTab = defaultTab;
+
+                const files = await window.pywebview.api.list_files(newest, defaultTab);
+                const list = document.getElementById('fileList');
+                list.innerHTML = files.map(f => {
+                    const name = f.replace(/\\.html$/i, "");
+                    return `<li><a href='#' onclick='loadFile("${f}")'>${name}</a></li>`;
+                }).join('');
+
+                if (files.length > 0) loadFile(files[0]);
+                else {
+                    document.getElementById('iframeViewer').srcdoc =
+                        "<h3 style='text-align:center;margin-top:40px;color:gray;'>Không có file nào</h3>";
+                    document.getElementById('filenameLabel').innerText = `${newest} / ${defaultTab}`;
+                }
+            }
+        });
+        </script>
     </body>
     </html>
     """
