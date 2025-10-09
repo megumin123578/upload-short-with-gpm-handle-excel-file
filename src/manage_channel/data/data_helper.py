@@ -255,7 +255,7 @@ def generate_index_html():
         let currentDate = "";
         let currentTab = "";
         let currentFile = "";
-        const htmlCache = {}; // 🔥 cache tạm ở JS
+        const htmlCache = {}; // cache tạm ở JS
 
         // Khi chọn ngày → load danh sách mục
         async function loadTabs() {
@@ -274,7 +274,7 @@ def generate_index_html():
             currentTab = tab;
             const list = document.getElementById('fileList');
 
-            // 🧠 Skip re-render nếu date+tab trùng
+            // Skip re-render nếu date+tab trùng
             if (list.dataset.lastKey === currentDate + "_" + currentTab) {
                 console.log("Danh sách không đổi, bỏ qua render lại");
                 return;
@@ -308,7 +308,7 @@ def generate_index_html():
             const cacheKey = currentDate + "_" + currentTab + "_" + name;
             let html;
 
-            // ⚡ Lấy từ cache nếu có
+            // Lấy từ cache nếu có
             if (htmlCache[cacheKey]) {
                 html = htmlCache[cacheKey];
             } else {
