@@ -1,10 +1,5 @@
-import os
-import webview
-import subprocess
-
-DEFAULT_FOLDER = r"manage_channel\data\cleaned html\Channel analytics"
-REFRESH_SCRIPT = r"manage_channel\data\refresh_data.py"
-
+from data_helper import *
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 class API:
     def __init__(self, folder):
         self.folder = folder
@@ -165,9 +160,9 @@ def generate_index_html(files):
 
 if __name__ == "__main__":
     files = sorted(
-        [f for f in os.listdir(DEFAULT_FOLDER) if f.lower().endswith(".html")]
+        [f for f in os.listdir(BASE_DIR) if f.lower().endswith(".html")]
     )
-    api = API(DEFAULT_FOLDER)
+    api = API(BASE_DIR)
     html = generate_index_html(files)
     
     webview.create_window(
