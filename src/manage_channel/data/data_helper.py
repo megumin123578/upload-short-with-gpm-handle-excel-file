@@ -8,10 +8,18 @@ FOLDER = os.path.join(os.path.expanduser("~"), "Downloads")
 LEGIT_FILENAME = ["audience","content","overview"]
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUTPUT_HTML_DIR = f'{BASE_DIR}/data/html'
-OUTPUT_CLEANED_HTML_DIR = f'{BASE_DIR}/data/cleaned_html'
+OUTPUT_CLEANED_HTML_DIR = f'{BASE_DIR}/data/cleaned html'
 
 
 print(OUTPUT_HTML_DIR)
+
+def list_html_paths(folder):
+    html_files = [
+        os.path.join(folder, f)
+        for f in os.listdir(folder)
+        if f.lower().endswith(".html")
+    ]
+    return html_files
 
 def move_file_to_html_folder(ls, dir=OUTPUT_HTML_DIR):
     # create folder if not exist
@@ -39,13 +47,7 @@ def move_file_to_html_folder(ls, dir=OUTPUT_HTML_DIR):
         except Exception as e:
             print(f"Lỗi khi chuyển {src}: {e}")
 
-def list_html_paths(folder):
-    html_files = [
-        os.path.join(folder, f)
-        for f in os.listdir(folder)
-        if f.lower().endswith(".html")
-    ]
-    return html_files
+
 
 def delete_unwanted_files(files):
     today = datetime.today().strftime("%Y-%m-%d")
@@ -86,36 +88,53 @@ def delete_unwanted_files(files):
     return list_html_paths(FOLDER)
 
 
-#remove abundant value
-def remove_abundant_value(ls, output_dir):
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
-    for file in ls:
-        with open(html, 'r', encoding='utf-8') as f:
+def clean_html_file(file, output_dir):
+    try:
+        base = os.path.basename(file)
+        parts = base.split("_")
+        if len(parts) < 3:
+            return f"Wrong name format: {base}"
+
+        date = parts[0]
+        name_channel = "_".join(parts[1:-1])
+        tab_part = parts[-1]
+        tab = tab_part.replace(".html", "")
+
+        date_tab_dir = os.path.join(output_dir, date, tab)
+        os.makedirs(date_tab_dir, exist_ok=True)
+
+        # đọc file
+        with open(file, 'r', encoding='utf-8') as f:
             html = f.read()
-        
-        soup = BeautifulSoup(html,'lxml')
 
-        #delete header
-        for header in soup.find_all("header",class_= "ytcpAppHeaderHeader"):
-            header.decompose()
+        # parse & làm sạch
+        soup = BeautifulSoup(html, 'lxml')
+        for tag in soup.find_all(["header", "ytcp-navigation-drawer", "ytcp-primary-action-bar", "script"]):
+            tag.decompose()
 
-        for drawer in soup.find_all("ytcp-navigation-drawer"):
-            drawer.decompose()
-
-        for actionbar in soup.find_all("ytcp-primary-action-bar"):
-            actionbar.decompose()
-
-        for script in soup.find_all("script"):
-            script.decompose()
-        
         head = soup.find("head")
         if head and not head.find("meta", attrs={"charset": True}):
             meta = soup.new_tag("meta", charset="utf-8")
             head.insert(0, meta)
-        
-        
+
+        # lưu file
+        save_path = os.path.join(date_tab_dir, f"{name_channel}.html")
+        with open(save_path, "w", encoding="utf-8") as f:
+            f.write(str(soup))
+
+        return f"Saved: {save_path}"
+
+    except Exception as e:
+        return f"Error when handling {file}: {e}"
 
 
+def remove_abundant_value(ls, output_dir=OUTPUT_CLEANED_HTML_DIR, max_workers=8):
+    ls = [file for file in ls if os.path.isfile(file)]
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = {executor.submit(clean_html_file, file, output_dir): file for file in ls}
+        for future in as_completed(futures):
+            print(future.result())
 
 
-#move file to correct location

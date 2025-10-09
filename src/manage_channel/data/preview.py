@@ -5,7 +5,6 @@ import subprocess
 DEFAULT_FOLDER = r"manage_channel\data\cleaned html\Channel analytics"
 REFRESH_SCRIPT = r"manage_channel\data\refresh_data.py"
 
-# ---- API để tương tác giữa JS và Python ----
 class API:
     def __init__(self, folder):
         self.folder = folder
