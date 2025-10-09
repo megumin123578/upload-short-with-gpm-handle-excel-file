@@ -35,20 +35,20 @@ def move_file_to_html_folder(ls, dir=OUTPUT_HTML_DIR):
             try:
                 os.remove(path)
             except Exception as e:
-                print(f"Không thể xóa {path}: {e}")
+                print(f"Can't delete {path}: {e}")
 
     # move file from ls to html folder
     for src in ls:
         if not os.path.isfile(src):
-            print(f"Bỏ qua: {src} (không tồn tại hoặc không phải file)")
+            print(f"Skip: {src} (non exist or not file)")
             continue
 
         dest = os.path.join(dir, os.path.basename(src))
         try:
             shutil.move(src, dest)
-            print(f"Đã chuyển: {src} → {dest}")
+            print(f"Moved: {src} → {dest}")
         except Exception as e:
-            print(f"Lỗi khi chuyển {src}: {e}")
+            print(f"Error when move {src}: {e}")
 
 
 
@@ -128,9 +128,11 @@ def clean_html_file(file, output_dir):
             f.write(str(soup))
 
         return f"Saved: {save_path}"
-
+    
     except Exception as e:
         return f"Error when handling {file}: {e}"
+    
+    
 
 
 def remove_abundant_value(ls, output_dir=OUTPUT_CLEANED_HTML_DIR, max_workers=8):
@@ -139,5 +141,8 @@ def remove_abundant_value(ls, output_dir=OUTPUT_CLEANED_HTML_DIR, max_workers=8)
         futures = {executor.submit(clean_html_file, file, output_dir): file for file in ls}
         for future in as_completed(futures):
             print(future.result())
+
+    print("!!DONE!!")
+    print("!!SUCCESFULLY!!")
 
 

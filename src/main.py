@@ -75,6 +75,12 @@ class App(tk.Tk):
         concat_menu.add_command(label="Concat video + music", command=self._open_concat_window)
         menubar.add_cascade(label="Video and Music", menu=concat_menu)
 
+        #manage channels
+        manage_menu = tk.Menu(menubar, tearoff=0)
+        manage_menu.add_command(label="Manage Channel", command=self._open_manage_channel_window)
+        menubar.add_cascade(label="Manage Channel", menu=manage_menu)
+
+
         # Menu Help
         help_menu = tk.Menu(menubar, tearoff=0)
         help_menu.add_command(label="Check for Updates (Default)...", command=self._check_for_updates)
@@ -792,6 +798,13 @@ class App(tk.Tk):
 
     def _open_concat_window(self):
         script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ghep music/concat_tool.py")
+        if not os.path.exists(script_path):
+            messagebox.showerror("Not found", f"can't find file: \n{script_path}")
+            return
+        subprocess.Popen([sys.executable, script_path], shell=False)
+    
+    def _open_manage_channel_window(self):
+        script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "manage_channel\data\preview.py")
         if not os.path.exists(script_path):
             messagebox.showerror("Not found", f"can't find file: \n{script_path}")
             return
