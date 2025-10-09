@@ -2,15 +2,42 @@
 from datetime import datetime
 import os
 import shutil
+from bs4 import BeautifulSoup
 
 FOLDER = os.path.join(os.path.expanduser("~"), "Downloads")
 LEGIT_FILENAME = ["audience","content","overview"]
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+OUTPUT_HTML_DIR = f'{BASE_DIR}/data/html'
+OUTPUT_CLEANED_HTML_DIR = f'{BASE_DIR}/data/cleaned_html'
 
-print(BASE_DIR)
 
-def move_file():
-    pass
+print(OUTPUT_HTML_DIR)
+
+def move_file_to_html_folder(ls, dir=OUTPUT_HTML_DIR):
+    # create folder if not exist
+    os.makedirs(dir, exist_ok=True)
+
+    # delete all file in html folder
+    for filename in os.listdir(dir):
+        path = os.path.join(dir, filename)
+        if os.path.isfile(path):
+            try:
+                os.remove(path)
+            except Exception as e:
+                print(f"Không thể xóa {path}: {e}")
+
+    # move file from ls to html folder
+    for src in ls:
+        if not os.path.isfile(src):
+            print(f"Bỏ qua: {src} (không tồn tại hoặc không phải file)")
+            continue
+
+        dest = os.path.join(dir, os.path.basename(src))
+        try:
+            shutil.move(src, dest)
+            print(f"Đã chuyển: {src} → {dest}")
+        except Exception as e:
+            print(f"Lỗi khi chuyển {src}: {e}")
 
 def list_html_paths(folder):
     html_files = [
@@ -57,4 +84,38 @@ def delete_unwanted_files(files):
         print("•", file)
 
     return list_html_paths(FOLDER)
+
+
+#remove abundant value
+def remove_abundant_value(ls, output_dir):
+
+    for file in ls:
+        with open(html, 'r', encoding='utf-8') as f:
+            html = f.read()
+        
+        soup = BeautifulSoup(html,'lxml')
+
+        #delete header
+        for header in soup.find_all("header",class_= "ytcpAppHeaderHeader"):
+            header.decompose()
+
+        for drawer in soup.find_all("ytcp-navigation-drawer"):
+            drawer.decompose()
+
+        for actionbar in soup.find_all("ytcp-primary-action-bar"):
+            actionbar.decompose()
+
+        for script in soup.find_all("script"):
+            script.decompose()
+        
+        head = soup.find("head")
+        if head and not head.find("meta", attrs={"charset": True}):
+            meta = soup.new_tag("meta", charset="utf-8")
+            head.insert(0, meta)
+        
+        
+
+
+
+
 #move file to correct location
