@@ -69,7 +69,7 @@ def _version_tuple(v: str):
 def is_newer(remote: str, current: str) -> bool:
     return _version_tuple(remote) > _version_tuple(current)
 
-def check_and_update(manifest_src: str, current_version: str, verify_hash: bool=True) -> str:
+def check_and_update(manifest_src: str, current_version: str, verify_hash: bool = True) -> str:
     info = _read_json_any(manifest_src)
     remote_ver = info.get("version") or info.get("latest") or ""
     zip_src = info.get("zip_url") or info.get("zip_path")
@@ -81,7 +81,9 @@ def check_and_update(manifest_src: str, current_version: str, verify_hash: bool=
     if not is_newer(remote_ver, current_version):
         return f"Đang ở bản mới nhất ({current_version})."
 
-    tmp_zip = tempfile.mkstemp(prefix="update_", suffix=".zip")
+    fd, tmp_zip = tempfile.mkstemp(prefix="update_", suffix=".zip")
+    os.close(fd)  # đóng handle
+
     download_to_any(zip_src, tmp_zip)
 
     if verify_hash and sha:
