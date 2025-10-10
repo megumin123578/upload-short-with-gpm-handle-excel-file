@@ -1,1 +1,0 @@
-{"output": "E:\\ghep xong\\365.mp4", "inputs": ["E:\\storage\\904.mp4", "E:\\storage\\905.mp4"], "bgm": "C:\\Users\\Admin\\Music\\Hollow Coves - These Memories (Official Music Video).mp3"}
