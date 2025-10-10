@@ -22,7 +22,6 @@ class API:
             return [f"Lỗi: {e}"]
 
     def list_tabs(self, date_folder):
-        """Trả về các thư mục con trong ngày (audience, content, overview)"""
         path = os.path.join(self.folder, date_folder)
         try:
             tabs = [
@@ -34,7 +33,6 @@ class API:
             return []
 
     def list_files(self, date_folder, tab):
-        """Trả về danh sách file HTML trong thư mục ngày/tab"""
         path = os.path.join(self.folder, date_folder, tab)
         try:
             return [
@@ -45,7 +43,6 @@ class API:
             return []
 
     def load_html(self, date_folder, tab, filename):
-        """Đọc nội dung file"""
         file_path = os.path.join(self.folder, date_folder, tab, filename)
         if not os.path.isfile(file_path):
             return "<h3 style='color:red'>Không tìm thấy file</h3>"
@@ -56,7 +53,6 @@ class API:
             return f"<h3 style='color:red'>Lỗi đọc file: {e}</h3>"
 
     def run_refresh_script(self):
-        """Chạy file Python khác khi ấn nút Refresh"""
         try:
             result = subprocess.run(
                 ["python", REFRESH_SCRIPT],
@@ -70,6 +66,15 @@ class API:
         except Exception as e:
             return f"<pre style='color:red'>Lỗi không xác định: {e}</pre>"
 
+def on_loaded():
+    w = webview.windows[0]
+    try:
+        w.maximize()
+    except:
+        # fallback nếu GUI không hỗ trợ maximize
+        width, height = w.screen_size
+        w.resize(width, height)
+
 if __name__ == "__main__":
     api = API(MAIN_DIR)
     html = generate_index_html()
@@ -81,4 +86,4 @@ if __name__ == "__main__":
         height=1000,
         resizable=True,
     )
-    webview.start(gui="edgechromium" if os.name == "nt" else None)
+    webview.start(on_loaded, gui="edgechromium" if os.name == "nt" else None)

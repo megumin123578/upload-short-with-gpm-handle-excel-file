@@ -28,7 +28,6 @@ from hyperparameter import APP_VERSION, UPDATE_MANIFEST
 from update_manager import check_and_update, install_from_zip
 import sys,subprocess
 
-
 def _pythonw_exe():
     import sys, os
     exe = sys.executable
