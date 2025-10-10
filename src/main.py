@@ -77,6 +77,7 @@ class App(tk.Tk):
         #manage channels
         manage_menu = tk.Menu(menubar, tearoff=0)
         manage_menu.add_command(label="Manage Channel", command=self._open_manage_channel_window)
+        manage_menu.add_command(label="Statistics", command=self.__open_statistics_channel_window)
         menubar.add_cascade(label="Manage Channel", menu=manage_menu)
 
 
@@ -809,6 +810,12 @@ class App(tk.Tk):
             return
         subprocess.Popen([sys.executable, script_path], shell=False)
 
+    def __open_statistics_channel_window(self):
+        script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "statistics\crawl_data.py")
+        if not os.path.exists(script_path):
+            messagebox.showerror("Not found", f"can't find file: \n{script_path}")
+            return
+        subprocess.Popen([sys.executable, script_path], shell=False)
 
 if __name__ == "__main__":
     app = App()
