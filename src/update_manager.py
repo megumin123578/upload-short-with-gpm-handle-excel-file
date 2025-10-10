@@ -81,7 +81,7 @@ def check_and_update(manifest_src: str, current_version: str, verify_hash: bool=
     if not is_newer(remote_ver, current_version):
         return f"Đang ở bản mới nhất ({current_version})."
 
-    tmp_zip = tempfile.mktemp(prefix="update_", suffix=".zip")
+    tmp_zip = tempfile.mkstemp(prefix="update_", suffix=".zip")
     download_to_any(zip_src, tmp_zip)
 
     if verify_hash and sha:
