@@ -2,7 +2,22 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 import datetime
 import pandas as pd
+import os, sys
 from data_crawler_module import *
+
+
+# === Redirect print ra Text widget ===
+class TextRedirector:
+    def __init__(self, widget):
+        self.widget = widget
+
+    def write(self, message):
+        self.widget.insert("end", message)
+        self.widget.see("end")
+
+    def flush(self):
+        pass
+
 
 def run_process():
     year = year_var.get()
@@ -14,26 +29,28 @@ def run_process():
     month_str = f"{year}-{int(month):02d}"
 
     try:
-        # === 1. Crawl & clean dữ liệu ===
-        crawl_data()
-        clean_data() 
+        log_text.delete("1.0", "end")
+        print(f"=== BẮT ĐẦU XỬ LÝ DỮ LIỆU CHO THÁNG {month_str} ===\n")
 
-        # === 2. Chuyển link thành tên kênh cho đúng tháng ===
+        crawl_data()
+        clean_data()
+
         df = pd.read_csv("statistics/data/orders_clean.csv", encoding="utf-8")
         replace_link_with_channel(df, month_str)
 
-        # === 3. Hiển thị kết quả sau khi xử lý ===
-        messagebox.showinfo("Hoàn tất", f"Đã xử lý dữ liệu cho tháng {month_str}")
+        print(f"\nĐã xử lý dữ liệu cho tháng {month_str}")
         load_data(month_str)
+
+        messagebox.showinfo("Hoàn tất", f"Đã xử lý dữ liệu cho tháng {month_str}")
 
     except Exception as e:
         messagebox.showerror("Lỗi", str(e))
+        print(f"[LỖI] {e}")
 
 
 def load_data(month_str=None):
     """Đọc CSV và hiển thị dữ liệu theo tháng đã chọn"""
     try:
-        # Ưu tiên đọc file đã đổi tên kênh nếu có
         file_path = f"statistics/data/orders_with_channels_{month_str}.csv"
         if not os.path.exists(file_path):
             file_path = CLEAN_CSV_PATH
@@ -41,16 +58,16 @@ def load_data(month_str=None):
         df = pd.read_csv(file_path, encoding="utf-8-sig")
     except Exception as e:
         messagebox.showerror("Lỗi đọc file", str(e))
+        print(f"[LỖI] Không đọc được file: {e}")
         return
 
     if "Date" not in df.columns:
         messagebox.showerror("Lỗi", "Không tìm thấy cột 'Date' trong file CSV.")
         return
 
-    # Lọc theo tháng nếu có
-    if month_str and "Date" in df.columns:
-        df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
-        df = df[df["Date"].dt.strftime("%Y-%m") == month_str]
+    # Lọc theo tháng
+    df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
+    df = df[df["Date"].dt.strftime("%Y-%m") == month_str]
 
     # Xóa dữ liệu cũ
     for row in tree.get_children():
@@ -62,6 +79,23 @@ def load_data(month_str=None):
 
     count_label.config(text=f"Hiển thị {len(df)} dòng dữ liệu cho {month_str}")
 
+    # === Thống kê tổng charge theo kênh ===
+    try:
+        df["Charge"] = pd.to_numeric(df["Charge"], errors="coerce").fillna(0)
+
+        df["Link"] = df["Link"].fillna("").replace("", "Unidentified")
+
+        total_by_channel = df.groupby("Link")["Charge"].sum().sort_values(ascending=False)
+        total_sum = df["Charge"].sum()
+
+        print("\n=== Thống kê tổng Chi phí theo kênh ===")
+        for link, charge in total_by_channel.items():
+            print(f"{link:50} : $ {charge:,.2f}")
+        print(f"\nTổng toàn bộ Chi phí: $ {total_sum:,.2f}\n")
+
+    except Exception as e:
+        print(f"[CẢNH BÁO] Không tính được tổng chi phí: {e}")
+
 
 def on_month_year_change(event=None):
     year = year_var.get()
@@ -71,9 +105,11 @@ def on_month_year_change(event=None):
     month_str = f"{year}-{int(month):02d}"
     load_data(month_str)
 
+
+# === Giao diện chính ===
 root = tk.Tk()
 root.title("Crawl & Xem dữ liệu theo tháng")
-root.state("zoomed") 
+root.state("zoomed")
 root.minsize(850, 500)
 
 style = ttk.Style()
@@ -82,7 +118,7 @@ style.configure("Treeview.Heading", font=("Segoe UI", 10, "bold"))
 style.configure("Treeview", rowheight=22, font=("Segoe UI", 10))
 style.configure("TButton", font=("Segoe UI", 10))
 
-#chọn tháng năm
+# ==== Thanh chọn tháng/năm ====
 top_frame = ttk.Frame(root, padding=10)
 top_frame.pack(fill="x")
 
@@ -101,7 +137,6 @@ year_cb.grid(row=0, column=3, padx=5)
 
 ttk.Button(top_frame, text="Update dữ liệu", command=run_process).grid(row=0, column=4, padx=15)
 
-# Gắn sự kiện thay đổi tháng/năm
 month_cb.bind("<<ComboboxSelected>>", on_month_year_change)
 year_cb.bind("<<ComboboxSelected>>", on_month_year_change)
 
@@ -115,16 +150,24 @@ for col in columns:
     tree.heading(col, text=col)
     tree.column(col, width=100, anchor="w")
 
-# Thanh cuộn ngang + dọc
 scroll_y = ttk.Scrollbar(frame_table, orient="vertical", command=tree.yview)
 scroll_x = ttk.Scrollbar(frame_table, orient="horizontal", command=tree.xview)
 tree.configure(yscrollcommand=scroll_y.set, xscrollcommand=scroll_x.set)
-
 scroll_y.pack(side="right", fill="y")
 scroll_x.pack(side="bottom", fill="x")
 tree.pack(expand=True, fill="both")
 
-# Label đếm dòng
+# ==== Ô log ====
+log_frame = ttk.LabelFrame(root, text="Log tiến trình", padding=5)
+log_frame.pack(fill="both", expand=False, padx=10, pady=5)
+
+log_text = tk.Text(log_frame, height=20, wrap="word", font=("Consolas", 9))
+log_text.pack(expand=True, fill="both")
+
+# redirect print -> log_text
+sys.stdout = TextRedirector(log_text)
+sys.stderr = TextRedirector(log_text)
+
 count_label = ttk.Label(root, text="Chưa tải dữ liệu", font=("Segoe UI", 9, "italic"), padding=5)
 count_label.pack(anchor="e")
 
