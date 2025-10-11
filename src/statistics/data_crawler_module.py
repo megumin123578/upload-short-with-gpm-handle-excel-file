@@ -8,9 +8,7 @@ import pandas as pd
 CSV_PATH = r"statistics\data\orders_all.csv"
 CLEAN_CSV_PATH = r"statistics\data\orders_clean.csv"
 session = requests.Session()
-cookies = {
-    "PHPSESSID": "hp4055kjcj3po9pon4qv5sonlt",
-}
+
 headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
     "Accept-Language": "en-US,en;q=0.9",
@@ -18,7 +16,7 @@ headers = {
 }
 #read older csv
 existing_ids = set()
-
+COOKIE_TXT = "statistics\cookie.txt"
 API_KEY = "AIzaSyDwWltIR-XP9V61V7RNTTz-G04mVfHKlsQ"
 
 def url_to_channel(url: str):
@@ -37,8 +35,33 @@ def url_to_channel(url: str):
     else:
         return "Unidentified"
 
+def read_cookie_from_txt(path=COOKIE_TXT):
+    """Đọc chuỗi cookie dài từ file txt và trả về dạng dict"""
+    if not os.path.exists(path):
+        raise FileNotFoundError(f"Không tìm thấy file cookie: {path}")
+
+    with open(path, "r", encoding="utf-8") as f:
+        raw_cookie = f.read().strip()
+
+    cookies = {}
+    for pair in raw_cookie.split(";"):
+        if "=" in pair:
+            name, value = pair.strip().split("=", 1)
+            cookies[name] = value
+    return cookies
 
 def crawl_data(csv_path=CSV_PATH):
+
+    #đọc cookies từ file
+    try:
+        cookies = read_cookie_from_txt()
+        print(f"Đã đọc cookie từ file: {len(cookies)} mục.")
+        if "PHPSESSID" in cookies:
+            print(f"PHPSESSID = {cookies['PHPSESSID']}")
+    except Exception as e:
+        print(f"[LỖI] Không đọc được cookies.txt: {e}")
+        return
+
     if os.path.exists(csv_path):
         with open(csv_path, newline="", encoding="utf-8") as f:
             reader = csv.reader(f)
@@ -73,7 +96,7 @@ def crawl_data(csv_path=CSV_PATH):
             if not cols:
                 continue
 
-            # ✅ Bỏ cột rỗng ở cuối (ngăn sinh dấu phẩy thừa)
+           
             while cols and cols[-1] == "":
                 cols.pop()
 
@@ -187,3 +210,15 @@ def replace_link_with_channel(df, month, max_workers=10):
     df.to_csv(output_file, index=False, encoding="utf-8")
     print(f"Đã xử lý {len(df)} dòng trong tháng {month}, lưu tại: {output_file}")
     return df
+
+
+
+
+def extract_phpsessid_dict(cookie_str: str):
+
+    match = re.search(r"(?:^|;\s*)PHPSESSID=([^;]+)", cookie_str, flags=re.IGNORECASE)
+    if match:
+        phpsessid = match.group(1).strip()
+        return {"PHPSESSID": phpsessid}
+    else:
+        return {"PHPSESSID": None}

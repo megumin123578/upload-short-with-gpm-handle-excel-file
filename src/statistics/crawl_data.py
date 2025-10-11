@@ -4,16 +4,44 @@ import datetime
 import pandas as pd
 import os, sys
 from data_crawler_module import *
+import threading
 
 
-# === Redirect print ra Text widget ===
+# === Redirect print ra 2 Text widget riêng biệt ===
 class TextRedirector:
-    def __init__(self, widget):
-        self.widget = widget
+    def __init__(self, process_widget, stat_widget):
+        self.process_widget = process_widget
+        self.stat_widget = stat_widget
+
+        for widget in (self.process_widget, self.stat_widget):
+            widget.tag_config("INFO", foreground="#00ff9f")
+            widget.tag_config("ERROR", foreground="#ff5555")
+            widget.tag_config("WARNING", foreground="#ffcc00")
+            widget.tag_config("TITLE", foreground="#00bfff", font=("Consolas", 10, "bold"))
 
     def write(self, message):
-        self.widget.insert("end", message)
-        self.widget.see("end")
+        tag = "INFO"
+        if "[LỖI]" in message or "Error" in message:
+            tag = "ERROR"
+        elif "CẢNH BÁO" in message or "Warning" in message:
+            tag = "WARNING"
+        elif "===" in message:
+            tag = "TITLE"
+
+        # Chọn log bên nào hiển thị
+        target_widget = self.process_widget
+        if any(kw in message for kw in ("Chi phí", "Charge", "Tổng", "Unidentified", "$ ")):
+            target_widget = self.stat_widget
+
+        # Ghi log có timestamp
+        for line in message.splitlines():
+            if not line.strip():
+                target_widget.insert("end", "\n")
+                continue
+            timestamp = datetime.datetime.now().strftime("[%H:%M:%S] ")
+            target_widget.insert("end", timestamp, "INFO")
+            target_widget.insert("end", line + "\n", tag)
+            target_widget.see("end")
 
     def flush(self):
         pass
@@ -28,8 +56,16 @@ def run_process():
 
     month_str = f"{year}-{int(month):02d}"
 
+    process_text.delete("1.0", "end")
+    stat_text.delete("1.0", "end")
+    root.after(100, lambda: process_text.yview_moveto(0))
+    thread = threading.Thread(target=process_worker, args=(month_str,), daemon=True)
+    thread.start()
+
+
+def process_worker(month_str):
+    """Chạy trong thread riêng, log realtime"""
     try:
-        log_text.delete("1.0", "end")
         print(f"=== BẮT ĐẦU XỬ LÝ DỮ LIỆU CHO THÁNG {month_str} ===\n")
 
         crawl_data()
@@ -42,10 +78,10 @@ def run_process():
         load_data(month_str)
 
         messagebox.showinfo("Hoàn tất", f"Đã xử lý dữ liệu cho tháng {month_str}")
-
     except Exception as e:
         messagebox.showerror("Lỗi", str(e))
         print(f"[LỖI] {e}")
+
 
 
 def load_data(month_str=None):
@@ -82,9 +118,7 @@ def load_data(month_str=None):
     # === Thống kê tổng charge theo kênh ===
     try:
         df["Charge"] = pd.to_numeric(df["Charge"], errors="coerce").fillna(0)
-
         df["Link"] = df["Link"].fillna("").replace("", "Unidentified")
-
         total_by_channel = df.groupby("Link")["Charge"].sum().sort_values(ascending=False)
         total_sum = df["Charge"].sum()
 
@@ -95,6 +129,50 @@ def load_data(month_str=None):
 
     except Exception as e:
         print(f"[CẢNH BÁO] Không tính được tổng chi phí: {e}")
+
+
+def extract_cookie_action():
+    """Xử lý nút Extract PHPSESSID"""
+    raw_cookie = cookie_entry.get("1.0", "end").strip()
+    if not raw_cookie:
+        messagebox.showwarning("Thiếu cookie", "Vui lòng nhập chuỗi cookie vào ô bên trên!")
+        return
+
+    try:
+        cookies = extract_phpsessid_dict(raw_cookie)
+        print(f"\nKết quả extract cookie:\n{cookies}\n")
+
+        # === Lưu vào file cookie.txt ===
+        save_path = os.path.join(os.getcwd(), COOKIE_TXT)
+        with open(save_path, "w", encoding="utf-8") as f:
+            for k, v in cookies.items():
+                f.write(f"{k}={v}\n")
+
+        messagebox.showinfo(
+            "Kết quả",
+            f"Đã lấy PHPSESSID:\n{cookies}\n\nĐã lưu tại:\n{save_path}"
+        )
+        update_cookie_label()
+
+    except Exception as e:
+        print(f"[LỖI] Khi extract cookie: {e}")
+        messagebox.showerror("Lỗi", str(e))
+
+
+def update_cookie_label():
+    """Hiển thị cookie hiện tại trong file"""
+    try:
+        cookies = read_cookie_from_txt()
+        if cookies:
+            display = "; ".join([f"{k}={v}" for k, v in cookies.items()])
+        else:
+            display = "Chưa có cookies trong bộ nhớ"
+    except FileNotFoundError:
+        display = "⚠️ Chưa có file cookie.txt"
+    except Exception as e:
+        display = f"Lỗi khi đọc cookies: {e}"
+
+    cookie_status_label.config(text=f"Cookies hiện tại: {display}")
 
 
 def on_month_year_change(event=None):
@@ -140,6 +218,21 @@ ttk.Button(top_frame, text="Update dữ liệu", command=run_process).grid(row=0
 month_cb.bind("<<ComboboxSelected>>", on_month_year_change)
 year_cb.bind("<<ComboboxSelected>>", on_month_year_change)
 
+# ==== Ô nhập cookie & nút extract ====
+cookie_frame = ttk.LabelFrame(root, text="Nhập chuỗi Cookie để lấy PHPSESSID", padding=10)
+cookie_frame.pack(fill="x", padx=10, pady=(0, 10))
+
+cookie_entry = tk.Text(cookie_frame, height=4, wrap="word", font=("Consolas", 9))
+cookie_entry.pack(side="left", expand=True, fill="x")
+
+extract_btn = ttk.Button(cookie_frame, text="Extract PHPSESSID", command=extract_cookie_action)
+extract_btn.pack(side="right", padx=10)
+
+cookie_status_label = ttk.Label(root, text="Cookies hiện tại: (chưa có)", wraplength=1000)
+cookie_status_label.pack(fill="x", padx=10, pady=(0, 10))
+
+update_cookie_label()
+
 # ==== Khu vực bảng ====
 frame_table = ttk.Frame(root, padding=(10, 5))
 frame_table.pack(expand=True, fill="both")
@@ -157,16 +250,33 @@ scroll_y.pack(side="right", fill="y")
 scroll_x.pack(side="bottom", fill="x")
 tree.pack(expand=True, fill="both")
 
-# ==== Ô log ====
-log_frame = ttk.LabelFrame(root, text="Log tiến trình", padding=5)
-log_frame.pack(fill="both", expand=False, padx=10, pady=5)
+# ==== Hai vùng log song song ====
+log_frame = ttk.LabelFrame(root, text="Log tiến trình & Thống kê chi phí", padding=5)
+log_frame.pack(fill="both", expand=True, padx=10, pady=5)
+log_frame.columnconfigure(0, weight=1)
+log_frame.columnconfigure(1, weight=1)
 
-log_text = tk.Text(log_frame, height=20, wrap="word", font=("Consolas", 9))
-log_text.pack(expand=True, fill="both")
+# Bên trái
+process_frame = ttk.Frame(log_frame)
+process_frame.grid(row=0, column=0, sticky="nsew", padx=(0, 5))
+ttk.Label(process_frame, text="📜 Tiến trình xử lý", font=("Segoe UI", 10, "bold")).pack(anchor="w", padx=5)
 
-# redirect print -> log_text
-sys.stdout = TextRedirector(log_text)
-sys.stderr = TextRedirector(log_text)
+process_text = tk.Text(process_frame, height=20, wrap="word", font=("Consolas", 9),
+                       bg="#1e1e1e", fg="#dcdcdc", insertbackground="white")
+process_text.pack(expand=True, fill="both")
+
+# Bên phải
+stat_frame = ttk.Frame(log_frame)
+stat_frame.grid(row=0, column=1, sticky="nsew", padx=(5, 0))
+ttk.Label(stat_frame, text="📊 Thống kê chi phí", font=("Segoe UI", 10, "bold")).pack(anchor="w", padx=5)
+
+stat_text = tk.Text(stat_frame, height=20, wrap="word", font=("Consolas", 9),
+                    bg="#1e1e1e", fg="#dcdcdc", insertbackground="white")
+stat_text.pack(expand=True, fill="both")
+
+# Gắn redirect stdout/stderr
+sys.stdout = TextRedirector(process_text, stat_text)
+sys.stderr = TextRedirector(process_text, stat_text)
 
 count_label = ttk.Label(root, text="Chưa tải dữ liệu", font=("Segoe UI", 9, "italic"), padding=5)
 count_label.pack(anchor="e")
