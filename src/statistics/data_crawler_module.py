@@ -72,6 +72,7 @@ def crawl_data(csv_path=CSV_PATH):
 
     all_rows = []
     page = 1
+    max_page = 50
     stop_flag = False
 
     while not stop_flag:
@@ -119,6 +120,8 @@ def crawl_data(csv_path=CSV_PATH):
             break
 
         page += 1
+        if page == max_page:
+            stop_flag = True
 
     if all_rows:
         headers_list = ["ID", "Date", "Link", "Charge", "Start count",
