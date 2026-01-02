@@ -92,7 +92,7 @@ def _spawn_updater_and_exit(stage_dir: str):
     )
 
     # Thoát NGAY tiến trình chính để nhả lock (kể cả pyarmor_runtime.pyd)
-    # os._exit(0)
+    os._exit(0)
 
 
 def _is_url(x: str) -> bool:
