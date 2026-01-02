@@ -12,21 +12,21 @@ class ConcatPage(tk.Frame):
         # Configure style
         style = ttk.Style()
         style.theme_use("clam")
-        style.configure("Accent.TButton", font=("Segoe UI", 10, "bold"), foreground="#ffffff", background="#4CAF50", padding=6)
-        style.configure("Stop.TButton", font=("Segoe UI", 10, "bold"), foreground="#ffffff", background="#F44336", padding=6)
-        style.configure("Secondary.TButton", font=("Segoe UI", 10), foreground="#ffffff", background="#2196F3", padding=6)
-        style.configure("TLabel", font=("Segoe UI", 10))
-        style.configure("TEntry", font=("Segoe UI", 10))
-        style.configure("TCombobox", font=("Segoe UI", 10))
+        style.configure("Accent.TButton", font=("Trebuchet MS", 10, "bold"), foreground="#ffffff", background="#4CAF50", padding=6)
+        style.configure("Stop.TButton", font=("Trebuchet MS", 10, "bold"), foreground="#ffffff", background="#F44336", padding=6)
+        style.configure("Secondary.TButton", font=("Trebuchet MS", 10), foreground="#ffffff", background="#2196F3", padding=6)
+        style.configure("TLabel", font=("Trebuchet MS", 10))
+        style.configure("TEntry", font=("Trebuchet MS", 10))
+        style.configure("TCombobox", font=("Trebuchet MS", 10))
 
-        style.configure("NvencOn.TButton", font=("Segoe UI", 10, "bold"), foreground="#ffffff", background="#4CAF50")
+        style.configure("NvencOn.TButton", font=("Trebuchet MS", 10, "bold"), foreground="#ffffff", background="#4CAF50")
         style.map("NvencOn.TButton", background=[("active", "#45a049")])
 
-        style.configure("NvencOff.TButton", font=("Segoe UI", 10, "bold"), foreground="#ffffff", background="#d32f2f")
+        style.configure("NvencOff.TButton", font=("Trebuchet MS", 10, "bold"), foreground="#ffffff", background="#d32f2f")
         style.map("NvencOff.TButton", background=[("active", "#b71c1c")])
         style.configure(
             "Advanced.TButton",
-            font=("Segoe UI", 10, "bold"),
+            font=("Trebuchet MS", 10, "bold"),
             foreground="#ffffff",
             background="#D13BFF",
             padding=6,
@@ -38,7 +38,7 @@ class ConcatPage(tk.Frame):
 
         style.configure(
             "Advanced.On.TButton",
-            font=("Segoe UI", 10, "bold"),
+            font=("Trebuchet MS", 10, "bold"),
             foreground="#ffffff",
             background="#8BC34A",   
             padding=6,
@@ -111,17 +111,17 @@ class ConcatPage(tk.Frame):
         for c in (1, 2, 4, 6, 7):
             channel_frame.grid_columnconfigure(c, weight=1)
 
-        ttk.Label(channel_frame, text="Profile:", font=("Segoe UI", 10, "bold")).grid(row=0, column=0, sticky="e", padx=5)
+        ttk.Label(channel_frame, text="Profile:", font=("Trebuchet MS", 10, "bold")).grid(row=0, column=0, sticky="e", padx=5)
         self.combo_channel = ttk.Combobox(
             channel_frame, textvariable=self.selected_channel, values=self._list_channels(),
-            width=25, state="readonly", font=("Segoe UI", 10)
+            width=25, state="readonly", font=("Trebuchet MS", 10)
         )
         self.combo_channel.grid(row=0, column=1, sticky="ew", padx=5)
         self.combo_channel.bind("<<ComboboxSelected>>", self._on_channel_change)
         self._add_right_click_menu(self.combo_channel,[("🗑 Delete Channel", self._clear_channel_selection),])
 
         # --- Input để nhập tên channel mới ---
-        self.entry_new_channel = ttk.Entry(channel_frame, width=20, font=("Segoe UI", 10))
+        self.entry_new_channel = ttk.Entry(channel_frame, width=20, font=("Trebuchet MS", 10))
         self.entry_new_channel.grid(row=0, column=2, sticky="ew", padx=5)
 
         def on_focus_in(e):
@@ -138,9 +138,9 @@ class ConcatPage(tk.Frame):
         self.entry_new_channel.bind("<Return>", self._create_channel_from_entry)
 
         # --- Concat mode ngay cạnh ---
-        ttk.Label(channel_frame, text="Concat mode:", font=("Segoe UI", 10, "bold")).grid(row=0, column=3, sticky="e", padx=(15,5))
+        ttk.Label(channel_frame, text="Concat mode:", font=("Trebuchet MS", 10, "bold")).grid(row=0, column=3, sticky="e", padx=(15,5))
         self.combo_mode = ttk.Combobox(
-            channel_frame, textvariable=self.concat_mode, state="readonly", width=60,justify='center', font=("Segoe UI", 10),
+            channel_frame, textvariable=self.concat_mode, state="readonly", width=60,justify='center', font=("Trebuchet MS", 10),
             values=[
                 "Concat with music background",
                 "Concat with outro music",
@@ -167,16 +167,16 @@ class ConcatPage(tk.Frame):
         param_frame.grid_columnconfigure(5, weight=1)   
         param_frame.grid_columnconfigure(1, weight=0)  
 
-        self.lbl_group_size = ttk.Label(param_frame, text="Videos per Group:", font=("Segoe UI", 10, "bold"))
+        self.lbl_group_size = ttk.Label(param_frame, text="Videos per Group:", font=("Trebuchet MS", 10, "bold"))
         self.lbl_group_size.grid(row=0, column=0, sticky="e", padx=5)
         self.combo_group_size = ttk.Combobox(
             param_frame, textvariable=self.group_size_var, values=list(range(2, 101)),
-            width=6, state="readonly", font=("Segoe UI", 10)
+            width=6, state="readonly", font=("Trebuchet MS", 10)
         )
         self.combo_group_size.grid(row=0, column=1, sticky="w", padx=5)
         self.combo_group_size.bind("<<ComboboxSelected>>", self._on_group_size_change)
 
-        ttk.Label(param_frame, text="Total Videos to Export:", font=("Segoe UI", 10, "bold"))\
+        ttk.Label(param_frame, text="Total Videos to Export:", font=("Trebuchet MS", 10, "bold"))\
             .grid(row=0, column=2, sticky="e", padx=(10, 4))
         
         limit_display = ["All"] + [str(i) for i in range(1, 101)]
@@ -197,7 +197,7 @@ class ConcatPage(tk.Frame):
         self.combo_limit_videos.grid(row=0, column=3, sticky="ew", padx=5)
 
         # --- Time limit (minutes) - chỉ hiện ở "Concat with time limit"
-        self.lbl_time_limit = ttk.Label(param_frame, text="Time limit (min):", font=("Segoe UI", 10, "bold"))
+        self.lbl_time_limit = ttk.Label(param_frame, text="Time limit (min):", font=("Trebuchet MS", 10, "bold"))
         self.lbl_time_limit.grid(row=0, column=4, sticky="e", padx=(15,5))
 
         self.combo_time_limit = ttk.Combobox(
@@ -254,7 +254,7 @@ class ConcatPage(tk.Frame):
         self.lbl_volume.grid(row=0, column=6, sticky="ew", padx=5)
 
         # --- Main Video Volume Slider ---
-        self.lbl_main_video_vol = ttk.Label(param_frame, text="Video Volume:", font=("Segoe UI", 10, "bold"))
+        self.lbl_main_video_vol = ttk.Label(param_frame, text="Video Volume:", font=("Trebuchet MS", 10, "bold"))
         self.lbl_main_video_vol.grid(row=2, column=4, sticky="e", padx=5)
 
         self.slider_main_video_vol = ttk.Scale(
@@ -266,7 +266,7 @@ class ConcatPage(tk.Frame):
         self.lbl_main_video_vol_value.grid(row=2, column=6, sticky="ew", padx=5)
 
         # --- Video Volume Slider ---
-        self.lbl_video_vol = ttk.Label(param_frame, text="Outro Volume:", font=("Segoe UI", 10, "bold"))
+        self.lbl_video_vol = ttk.Label(param_frame, text="Outro Volume:", font=("Trebuchet MS", 10, "bold"))
         self.lbl_video_vol.grid(row=1, column=4, sticky="e", padx=5)
 
         self.slider_video_vol = ttk.Scale(
@@ -278,7 +278,7 @@ class ConcatPage(tk.Frame):
         self.lbl_video_vol_value.grid(row=1, column=6, sticky="w", padx=5)
 
         # --- Outro Length (seconds) ---
-        self.lbl_outro_dur = ttk.Label(param_frame, text="Outro length (s):", font=("Segoe UI", 10, "bold"))
+        self.lbl_outro_dur = ttk.Label(param_frame, text="Outro length (s):", font=("Trebuchet MS", 10, "bold"))
         self.lbl_outro_dur.grid(row=1, column=7, sticky="e", padx=5)
 
         self.cbo_outro_dur = ttk.Combobox(
@@ -292,11 +292,11 @@ class ConcatPage(tk.Frame):
         self.video_volume_var.trace_add("write", self._update_video_volume_label)
         self.bgm_volume_var.trace_add("write", self._update_volume_label)
 
-        self.lbl_bgm_text = ttk.Label(param_frame, text="BGM Volume:", font=("Segoe UI", 10, "bold"))
+        self.lbl_bgm_text = ttk.Label(param_frame, text="BGM Volume:", font=("Trebuchet MS", 10, "bold"))
         self.lbl_bgm_text.grid(row=0, column=4, sticky="e", padx=5)
 
         # --- Outro Mode ---
-        self.lbl_outro_mode = ttk.Label(channel_frame, text="Outro mode:", font=("Segoe UI", 10, "bold"))
+        self.lbl_outro_mode = ttk.Label(channel_frame, text="Outro mode:", font=("Trebuchet MS", 10, "bold"))
         self.lbl_outro_mode.grid(row=0, column=5, sticky="e", padx=(10, 5))
         self.combo_outro_mode = ttk.Combobox(
             channel_frame,
@@ -323,7 +323,7 @@ class ConcatPage(tk.Frame):
         a_bitrate_values = ["96k", "128k", "160k", "192k", "256k", "320k"]
 
         # Hàng 1
-        ttk.Label(self.video_frame, text="Resolution:", font=("Segoe UI", 10, "bold")).grid(row=0, column=0, sticky="e", padx=5)
+        ttk.Label(self.video_frame, text="Resolution:", font=("Trebuchet MS", 10, "bold")).grid(row=0, column=0, sticky="e", padx=5)
         ttk.Combobox(
             self.video_frame, textvariable=self.resolution_var, width=10, state="readonly",
             values=[
@@ -333,11 +333,11 @@ class ConcatPage(tk.Frame):
             ]
         ).grid(row=0, column=1, sticky="w")
 
-        ttk.Label(self.video_frame, text="FPS:", font=("Segoe UI", 10, "bold")).grid(row=0, column=2, sticky="e", padx=5)
+        ttk.Label(self.video_frame, text="FPS:", font=("Trebuchet MS", 10, "bold")).grid(row=0, column=2, sticky="e", padx=5)
         ttk.Combobox(self.video_frame, textvariable=self.fps_var, width=5, state="readonly",
                     values=[24, 30, 60, 120]).grid(row=0, column=3, sticky="w")
 
-        ttk.Label(self.video_frame, text="CQ / CRF:", font=("Segoe UI", 10, "bold")).grid(row=0, column=4, sticky="e", padx=5)
+        ttk.Label(self.video_frame, text="CQ / CRF:", font=("Trebuchet MS", 10, "bold")).grid(row=0, column=4, sticky="e", padx=5)
         self.cbo_cq = ttk.Combobox(self.video_frame, textvariable=self.cq_var, width=5, state="readonly", values=cq_values)
         self.cbo_cq.grid(row=0, column=5, sticky="w")
 
@@ -351,15 +351,15 @@ class ConcatPage(tk.Frame):
         self.use_nvenc_var.trace_add("write", self._update_nvenc_button)
 
         # Hàng 2
-        ttk.Label(self.video_frame, text="Video Bitrate:", font=("Segoe UI", 10, "bold")).grid(row=1, column=0, sticky="e", padx=5)
+        ttk.Label(self.video_frame, text="Video Bitrate:", font=("Trebuchet MS", 10, "bold")).grid(row=1, column=0, sticky="e", padx=5)
         self.cbo_vbit = ttk.Combobox(self.video_frame, textvariable=self.v_bitrate_var, width=8, state="readonly", values=v_bitrate_values)
         self.cbo_vbit.grid(row=1, column=1, sticky="w")
 
-        ttk.Label(self.video_frame, text="Audio Bitrate:", font=("Segoe UI", 10, "bold")).grid(row=1, column=2, sticky="e", padx=5)
+        ttk.Label(self.video_frame, text="Audio Bitrate:", font=("Trebuchet MS", 10, "bold")).grid(row=1, column=2, sticky="e", padx=5)
         self.cbo_abit = ttk.Combobox(self.video_frame, textvariable=self.a_bitrate_var, width=8, state="readonly", values=a_bitrate_values)
         self.cbo_abit.grid(row=1, column=3, sticky="w")
 
-        ttk.Label(self.video_frame, text="Preset:", font=("Segoe UI", 10, "bold")).grid(row=1, column=4, sticky="e", padx=5)
+        ttk.Label(self.video_frame, text="Preset:", font=("Trebuchet MS", 10, "bold")).grid(row=1, column=4, sticky="e", padx=5)
         ttk.Combobox(self.video_frame, textvariable=self.nvenc_preset_var, width=6, state="readonly",
                     values=["p1","p2","p3","p4","p5","p6","p7","medium"]).grid(row=1, column=5, sticky="w")
 
@@ -382,53 +382,58 @@ class ConcatPage(tk.Frame):
         self._add_folder_row("Source Folder:", self.input_folder, 0, folder_frame, reload=True)
         self._add_folder_row("Save Folder:", self.save_folder, 1, folder_frame)
         self.music_widgets = self._add_folder_row("Music Folder:", self.bgm_folder, 2, folder_frame, bgm=True)
-
         # Action buttons and progress
         action_frame = ttk.Frame(self.frm_top)
         action_frame.grid(row=4, column=0, columnspan=4, sticky="we", pady=10)
+        action_frame.grid_columnconfigure(0, weight=0)
+        action_frame.grid_columnconfigure(1, weight=0)
+        action_frame.grid_columnconfigure(2, weight=0)
+        action_frame.grid_columnconfigure(3, weight=0)
         action_frame.grid_columnconfigure(4, weight=1)
-        action_frame.grid_columnconfigure(5, weight=1)
-        self.btn_concat = ttk.Button(action_frame, text="▶ Start", style="Accent.TButton", command=self.start_concat)
-        self.btn_concat.grid(row=0, column=0, padx=5)
-        self.btn_stop = ttk.Button(action_frame, text="■ Stop", style="Stop.TButton", command=self.stop_concat, state=tk.DISABLED)
-        self.btn_stop.grid(row=0, column=1, padx=5)
-        self.btn_open = ttk.Button(action_frame, text="📂 Open Folder", style="Secondary.TButton", command=self.open_output_folder)
-        self.btn_open.grid(row=0, column=2, padx=5)
-        self.btn_clear = ttk.Button(action_frame, text="🗑 Clear Log", style="Secondary.TButton", command=self.clear_log)
-        self.btn_clear.grid(row=0, column=3, padx=5)
-        
-        self.progress = ttk.Progressbar(action_frame, orient="horizontal", mode="determinate", length=300)
-        self.progress.grid(row=0, column=4, padx=5, sticky="ew")
+        action_frame.grid_columnconfigure(5, weight=0)
+
+        self.btn_concat = ttk.Button(action_frame, text="Start", style="Accent.TButton", command=self.start_concat)
+        self.btn_concat.grid(row=0, column=0, padx=5, pady=(0, 6), sticky="w")
+        self.btn_stop = ttk.Button(action_frame, text="Stop", style="Stop.TButton", command=self.stop_concat, state=tk.DISABLED)
+        self.btn_stop.grid(row=0, column=1, padx=5, pady=(0, 6), sticky="w")
+        self.btn_open = ttk.Button(action_frame, text="Open Folder", style="Secondary.TButton", command=self.open_output_folder)
+        self.btn_open.grid(row=0, column=2, padx=5, pady=(0, 6), sticky="w")
+        self.btn_clear = ttk.Button(action_frame, text="Clear Log", style="Secondary.TButton", command=self.clear_log)
+        self.btn_clear.grid(row=0, column=3, padx=5, pady=(0, 6), sticky="w")
+
+        self.progress = ttk.Progressbar(action_frame, orient="horizontal", mode="determinate")
+        self.progress.grid(row=1, column=0, columnspan=5, padx=5, sticky="ew")
+        self.lbl_status = ttk.Label(action_frame, textvariable=self.status_var, font=("Trebuchet MS", 10, "italic"))
+        self.lbl_status.grid(row=1, column=5, padx=(6, 0), sticky="w")
 
         self.progress_infor_var = tk.StringVar(value='')
         self.lbl_progress_info = ttk.Label(
-            action_frame, textvariable=self.progress_infor_var, font=("Segoe UI",9, "italic")
+            action_frame, textvariable=self.progress_infor_var, font=("Trebuchet MS", 9, "italic")
         )
-        self.lbl_progress_info.grid(row=1, column=4, columnspan=2, padx=5, pady=(3,0), sticky='w')
-        self.lbl_status = ttk.Label(action_frame, textvariable=self.status_var, font=("Segoe UI", 10, "italic"))
-        self.lbl_status.grid(row=0, column=5, padx=5, sticky="ew")
+        self.lbl_progress_info.grid(row=2, column=0, columnspan=5, padx=5, pady=(2, 0), sticky='w')
 
-        #Job progress
+        # Job progress
         self.job_info_var = tk.StringVar(value='')
-        self.progress_job = ttk.Progressbar(action_frame, orient="horizontal", mode='determinate', length=300, maximum=100, value=0)
-        self.progress_job.grid(row=2, column=4, padx=5, sticky='ew')
+        self.progress_job = ttk.Progressbar(action_frame, orient="horizontal", mode='determinate', maximum=100, value=0)
+        self.progress_job.grid(row=3, column=0, columnspan=5, padx=5, sticky='ew')
 
-        self.lbl_job_info = ttk.Label(action_frame, textvariable=self.job_info_var, font=("Segoe UI",9, "italic"))
-        self.lbl_job_info.grid(row=3, column=4, columnspan=2, padx=5, pady=(3,0), sticky='w')
+        self.lbl_job_info = ttk.Label(action_frame, textvariable=self.job_info_var, font=("Trebuchet MS", 9, "italic"))
+        self.lbl_job_info.grid(row=4, column=0, columnspan=5, padx=5, pady=(2, 0), sticky='w')
 
         self.progress_job.grid_remove()
         self.lbl_job_info.grid_remove()
+
 
         # Log and stats frame
         self.frm_logstats = ttk.LabelFrame(self, text="📜 Log & Statistics", padding=(10, 10))
         stats_frame = ttk.Frame(self.frm_logstats)
         stats_frame.pack(fill="x", pady=(0, 10))
         
-        ttk.Label(stats_frame, text="Total Videos:", font=("Segoe UI", 10, "bold")).grid(row=0, column=0, sticky="e", padx=5)
+        ttk.Label(stats_frame, text="Total Videos:", font=("Trebuchet MS", 10, "bold")).grid(row=0, column=0, sticky="e", padx=5)
         ttk.Label(stats_frame, textvariable=self.total_mp4).grid(row=0, column=1, sticky="w", padx=5)
-        ttk.Label(stats_frame, text="Groups Remaining:", font=("Segoe UI", 10, "bold")).grid(row=0, column=2, sticky="e", padx=5)
+        ttk.Label(stats_frame, text="Groups Remaining:", font=("Trebuchet MS", 10, "bold")).grid(row=0, column=2, sticky="e", padx=5)
         ttk.Label(stats_frame, textvariable=self.num_groups).grid(row=0, column=3, sticky="w", padx=5)
-        ttk.Label(stats_frame, text="Groups Done:", font=("Segoe UI", 10, "bold")).grid(row=0, column=4, sticky="e", padx=5)
+        ttk.Label(stats_frame, text="Groups Done:", font=("Trebuchet MS", 10, "bold")).grid(row=0, column=4, sticky="e", padx=5)
         ttk.Label(stats_frame, textvariable=self.groups_done).grid(row=0, column=5, sticky="w", padx=5)
 
         log_frame = ttk.Frame(self.frm_logstats)
@@ -449,7 +454,7 @@ class ConcatPage(tk.Frame):
         lbl = ttk.Label(parent, text=label)
         lbl.grid(row=row, column=0, sticky="e", padx=5, pady=3)
 
-        entry = ttk.Entry(parent, textvariable=var, width=50, font=("Segoe UI", 10))
+        entry = ttk.Entry(parent, textvariable=var, width=50, font=("Trebuchet MS", 10))
         entry.grid(row=row, column=1, columnspan=2, sticky="we", padx=5, pady=3)
         self._add_right_click_menu(entry, [("❌ Clear Path", lambda v=var: v.set(""))])
 

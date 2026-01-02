@@ -35,17 +35,36 @@ def safe_remove(path, attempts=10, delay=0.2):
         except FileNotFoundError: return True
         except (PermissionError, OSError): gc.collect(); time.sleep(delay)
     return False
+_mp4_cache = {}
 
-def list_all_mp4_files(folder_path):
+def list_all_mp4_files(folder_path, use_cache: bool = True, cache_ttl: float = 2.0):
     if not os.path.isdir(folder_path):
-        raise ValueError(f"Không tìm thấy thư mục: {folder_path}")
-    
+        raise ValueError(f"Khong tim thay thu muc: {folder_path}")
+
+    now = time.time()
+    if use_cache:
+        cached = _mp4_cache.get(folder_path)
+        if cached and (now - cached[0]) <= cache_ttl:
+            return list(cached[1])
+
     mp4_files = []
-    for root, _, files in os.walk(folder_path):
-        for file in files:
-            if file.lower().endswith(".mp4"):
-                full_path = os.path.join(root, file)
-                mp4_files.append(full_path)
+    stack = [folder_path]
+    while stack:
+        cur = stack.pop()
+        try:
+            with os.scandir(cur) as it:
+                for entry in it:
+                    try:
+                        if entry.is_dir(follow_symlinks=False):
+                            stack.append(entry.path)
+                        elif entry.is_file(follow_symlinks=False) and entry.name.lower().endswith(".mp4"):
+                            mp4_files.append(entry.path)
+                    except OSError:
+                        continue
+        except OSError:
+            continue
+
+    _mp4_cache[folder_path] = (now, list(mp4_files))
     return mp4_files
 
 def list_all_mp3_files(folder_path):
