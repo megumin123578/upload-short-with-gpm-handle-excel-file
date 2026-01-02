@@ -521,6 +521,7 @@ class ConcatPage(tk.Frame):
         self.num_groups.set("Loading...")
 
         used_videos = self._get_used_videos_from_log()
+        used_videos_lower = {p.lower() for p in used_videos}
         limit_groups = self.limit_videos_var.get()
         mode = self.concat_mode.get()
         gsize = self.group_size_var.get() or 6
@@ -529,8 +530,7 @@ class ConcatPage(tk.Frame):
 
         def worker():
             try:
-                all_videos = list_all_mp4_files(folder)
-                all_videos = [v for v in all_videos if os.path.abspath(v) not in used_videos]
+                all_videos = list_all_mp4_files(folder, exclude_set=used_videos_lower)
 
                 groups: list[list[str]] = []
                 total_mp4 = len(all_videos)
@@ -628,9 +628,9 @@ class ConcatPage(tk.Frame):
         
         if mode == "Loop":
             folder = self.input_folder.get()
-            all_videos = list_all_mp4_files(folder) if folder and os.path.isdir(folder) else []
-            used_global = self._get_used_videos_from_log()
-            pool = [v for v in all_videos if os.path.abspath(v) not in used_global]
+            used_global = {p.lower() for p in self._get_used_videos_from_log()}
+            all_videos = list_all_mp4_files(folder, exclude_set=used_global) if folder and os.path.isdir(folder) else []
+            pool = all_videos
 
             count = limit_groups if limit_groups > 0 else len(pool)
             if count <= 0:
@@ -639,7 +639,8 @@ class ConcatPage(tk.Frame):
 
         elif mode == "Concat with time limit" or mode == "Tuan Seo Custom":
             folder = self.input_folder.get()
-            all_videos = list_all_mp4_files(folder) if folder and os.path.isdir(folder) else []
+            used_global = {p.lower() for p in self._get_used_videos_from_log()}
+            all_videos = list_all_mp4_files(folder, exclude_set=used_global) if folder and os.path.isdir(folder) else []
 
             if mode == "Tuan Seo Custom":
                 all_videos = [
@@ -647,8 +648,7 @@ class ConcatPage(tk.Frame):
                     if os.path.basename(os.path.dirname(v)).lower() != "ok"
                 ]
 
-            used_global = self._get_used_videos_from_log()
-            pool = [v for v in all_videos if os.path.abspath(v) not in used_global]
+            pool = all_videos
 
             target_seconds = float(self.time_limit_min_var.get()) * 60.0 + float(self.time_limit_sec_var.get())
             estimated = estimate_time_limit_groups(pool, target_seconds)

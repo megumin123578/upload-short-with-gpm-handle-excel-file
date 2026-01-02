@@ -37,15 +37,22 @@ def safe_remove(path, attempts=10, delay=0.2):
     return False
 _mp4_cache = {}
 
-def list_all_mp4_files(folder_path, use_cache: bool = True, cache_ttl: float = 2.0):
+def list_all_mp4_files(folder_path, use_cache: bool = True, cache_ttl: float = 2.0, exclude_set=None):
     if not os.path.isdir(folder_path):
         raise ValueError(f"Khong tim thay thu muc: {folder_path}")
+
+    exclude = None
+    if exclude_set:
+        exclude = {p.lower() for p in exclude_set}
 
     now = time.time()
     if use_cache:
         cached = _mp4_cache.get(folder_path)
         if cached and (now - cached[0]) <= cache_ttl:
-            return list(cached[1])
+            cached_list = list(cached[1])
+            if exclude:
+                cached_list = [p for p in cached_list if p.lower() not in exclude]
+            return cached_list
 
     mp4_files = []
     stack = [folder_path]
@@ -64,7 +71,9 @@ def list_all_mp4_files(folder_path, use_cache: bool = True, cache_ttl: float = 2
         except OSError:
             continue
 
-    _mp4_cache[folder_path] = (now, list(mp4_files))
+    _mp4_cache[folder_path] = (time.time(), list(mp4_files))
+    if exclude:
+        mp4_files = [p for p in mp4_files if p.lower() not in exclude]
     return mp4_files
 
 def list_all_mp3_files(folder_path):
