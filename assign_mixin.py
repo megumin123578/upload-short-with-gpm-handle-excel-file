@@ -170,8 +170,6 @@ class AssignMixin:
         top_row = ttk.Frame(container)
         top_row.pack(fill="x", pady=(0, 8))
 
-        btn_ai_title = ttk.Button(top_row, text="Generate", command=self._ai_generate_titles_and_descs)
-        btn_ai_title.pack(side="left", padx=6)
         # ======== PANED WINDOW (pack) ========
         paned = tk.PanedWindow(container, orient=tk.HORIZONTAL,
                             sashrelief=tk.RAISED, sashwidth=6)

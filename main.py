@@ -1318,18 +1318,6 @@ class App(tk.Tk, AssignMixin):
         except Exception as e:
             print("Error refreshing channel stats:", e)
 
-    def _ai_generate_titles_and_descs(self):
-        from gemini_helper import generate_titles_and_descs
-        topic = sd.askstring("Prompt", "Enter topic to generate Titles + Descriptions:")
-        if not topic:
-            return
-        titles_text, descs_text = generate_titles_and_descs(topic)
-        self.txt_titles.delete("1.0", tk.END)
-        self.txt_titles.insert("1.0", titles_text)
-        self.txt_descs.delete("1.0", tk.END)
-        self.txt_descs.insert("1.0", descs_text)
-        self._schedule_preview()
-
 if __name__ == "__main__":
     rearrange_and_delete_junk_files() # rearrange files first
     app = App()
