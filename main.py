@@ -71,6 +71,7 @@ class App(tk.Tk, AssignMixin):
         config_menu = tk.Menu(menubar, tearoff=0)
 
         def _set_api_key():
+            from orders.ssm_page import get_api_key
             key = get_api_key(interactive=True, force_edit=True)
             if key:
                 try:
@@ -88,13 +89,15 @@ class App(tk.Tk, AssignMixin):
 
         # ====== PAGES ======
         self.pages = {}
-        self._build_assign_page()     
-        self._build_concat_page()     
-        self._build_manage_page()      
-        self._build_statistics_page()
-        self._build_orders_page()
-        self._build_chat_page()   
-        
+        self._lazy_page_builders = {
+            "concat": self._build_concat_page,
+            "stats": self._build_statistics_page,
+            "orders": self._build_orders_page,
+            "chat": self._build_chat_page,
+        }
+        self._build_assign_page()
+        self._build_manage_page()
+
         self.bind_all("<Control-b>", self._on_hotkey_paste) #ctrl +b to paste values from clipboard
         self.bind_all("<Control-s>", self._on_hotkey_save) #ctrl +s save to save excel
         # Hiển thị page mặc định
@@ -164,10 +167,19 @@ class App(tk.Tk, AssignMixin):
             else:
                 btn.configure(bg=self._sidebar.cget("bg"), fg="#ffffff")  
 
+    def _ensure_page_built(self, key: str):
+        if key in self.pages:
+            return
+        builder = self._lazy_page_builders.get(key)
+        if builder:
+            builder()
+
     def _show_page(self, key: str):
+        self._ensure_page_built(key)
         for k, f in self.pages.items():
             f.pack_forget()
-        self.pages[key].pack(fill="both", expand=True)
+        if key in self.pages:
+            self.pages[key].pack(fill="both", expand=True)
         self._highlight_nav(key)
 
     def _build_assign_page(self):
@@ -180,6 +192,7 @@ class App(tk.Tk, AssignMixin):
         self._build_footer(parent=page)
 
     def _build_concat_page(self):
+        from ghep_music.concat_page import ConcatPage
         page = ttk.Frame(self._content)       # khung trang
         self.pages["concat"] = page
         # Nhúng UI concat
@@ -187,6 +200,7 @@ class App(tk.Tk, AssignMixin):
         self.concat_page.pack(fill="both", expand=True)
 
     def _build_orders_page(self):
+        from orders.ssm_page import OrdersPage
         page = ttk.Frame(self._content)
         self.pages["orders"] = page
 
@@ -203,6 +217,7 @@ class App(tk.Tk, AssignMixin):
                    command=self._open_manage_channel_window).pack(anchor="w", pady=6)
 
     def _build_statistics_page(self):
+        from thong_ke.stats_page import StatisticsPage
         page = ttk.Frame(self._content)
         self.pages["stats"] = page
 
@@ -210,6 +225,7 @@ class App(tk.Tk, AssignMixin):
         self.stats_page.pack(fill="both", expand=True)
     
     def _build_chat_page(self):
+        from ai_chat.chat_page import ChatPage
         page = ChatPage(self._content)
         self.pages["chat"] = page
         page.pack(fill="both", expand=True)
@@ -230,7 +246,7 @@ class App(tk.Tk, AssignMixin):
         self.txt_times.bind("<<Modified>>", on_change)
         self.txt_dates.bind("<<Modified>>", on_change)
 
-    def _refresh_group_files(self):
+    def _refresh_group_files(self, load_channels: bool = True):
         files = list_group_csvs(GROUPS_DIR)
         groups = [os.path.splitext(f)[0] for f in files]
 
@@ -246,7 +262,8 @@ class App(tk.Tk, AssignMixin):
         if cur not in groups:
             self.group_file_var.set(groups[0])
 
-        self._load_channels()
+        if load_channels:
+            self._load_channels()
 
     def _load_channels(self):
         name = self.group_file_var.get().strip()
@@ -1079,19 +1096,21 @@ class App(tk.Tk, AssignMixin):
 
     def _finish_startup_safe(self):
         try:
-            # B1: nạp danh sách group trước
-            self._refresh_group_files()
+            # B1: load group list on UI thread
+            self.after(0, lambda: self._refresh_group_files(load_channels=False))
 
-            # B2: nếu có last_group.txt → tự động chọn lại và load
+            # B2: restore last group, then load channels after UI is visible
+            last_group = ""
             last_group_path = os.path.join(os.path.dirname(__file__), "last_group.txt")
             if os.path.exists(last_group_path):
                 with open(last_group_path, "r", encoding="utf-8") as f:
                     last_group = f.read().strip()
-                if last_group:
-                    self.after(0, lambda: self.group_file_var.set(last_group))
-                    self.after(100, lambda: self._load_channels())
 
-            # B3: khởi tạo preview binding và auto update
+            if last_group:
+                self.after(0, lambda: self.group_file_var.set(last_group))
+            self.after(100, self._load_channels)
+
+            # B3: init preview binding and auto update
             self.after(0, self._bind_text_preview)
             self.after(1500, self._auto_check_update)
         except Exception as e:
@@ -1361,6 +1380,7 @@ class App(tk.Tk, AssignMixin):
             print("Error refreshing channel stats:", e)
 
     def _ai_generate_titles_and_descs(self):
+        from gemini_helper import generate_titles_and_descs
         topic = sd.askstring("Prompt", "Enter topic to generate Titles + Descriptions:")
         if not topic:
             return
