@@ -67,23 +67,6 @@ class App(tk.Tk, AssignMixin):
 
         help_menu.add_command(label=f"About (v{APP_VERSION})", command=_show_about)
         menubar.add_cascade(label="Help", menu=help_menu)
-        # ====== CONFIG MENU ======
-        config_menu = tk.Menu(menubar, tearoff=0)
-
-        def _set_api_key():
-            from orders.ssm_page import get_api_key
-            key = get_api_key(interactive=True, force_edit=True)
-            if key:
-                try:
-                    if hasattr(self, "orders_page"):
-                        self.orders_page.auto_get_balance()
-                        threading.Thread(target=self.orders_page._load_services, daemon=True).start()
-                        self._set_status("Reloaded balance and services after saving API key.")
-                except Exception as e:
-                    print("Error reloading after saving API key:", e)
-
-        config_menu.add_command(label="Set SMMStore API Key...", command=_set_api_key)
-        menubar.add_cascade(label="Config", menu=config_menu)
 
         self._build_shell()
 
@@ -91,12 +74,8 @@ class App(tk.Tk, AssignMixin):
         self.pages = {}
         self._lazy_page_builders = {
             "concat": self._build_concat_page,
-            "stats": self._build_statistics_page,
-            "orders": self._build_orders_page,
-            "chat": self._build_chat_page,
         }
         self._build_assign_page()
-        self._build_manage_page()
 
         self.bind_all("<Control-b>", self._on_hotkey_paste) #ctrl +b to paste values from clipboard
         self.bind_all("<Control-s>", self._on_hotkey_save) #ctrl +s save to save excel
@@ -149,10 +128,6 @@ class App(tk.Tk, AssignMixin):
 
         add_btn("Auto Upload", "assign", lambda: self._show_page("assign"))
         add_btn("Concatenation", "concat", lambda: self._show_page("concat"))
-        add_btn("Manage Channels", "manage", lambda: self._show_page("manage"))
-        add_btn("Statistics", "stats", lambda: self._show_page("stats"))
-        add_btn("SMM Orders", 'orders', lambda: self._show_page('orders'))
-        add_btn("AI Chat", "chat", lambda: self._show_page("chat"))
 
         # Status bar
         bar = ttk.Frame(self, relief=tk.SUNKEN, padding=6)
@@ -199,39 +174,10 @@ class App(tk.Tk, AssignMixin):
         self.concat_page = ConcatPage(page) 
         self.concat_page.pack(fill="both", expand=True)
 
-    def _build_orders_page(self):
-        from orders.ssm_page import OrdersPage
-        page = ttk.Frame(self._content)
-        self.pages["orders"] = page
-
-        self.orders_page = OrdersPage(page)
-        self.orders_page.pack(fill = 'both', expand=True)
-
-    def _build_manage_page(self):
-        page = ttk.Frame(self._content, padding=16)
-        self.pages["manage"] = page
-
-        ttk.Label(page, text="Manage channel", font=("Segoe UI", 14, "bold")).pack(anchor="w")
-
-        ttk.Button(page, text="Open manage channel app",
-                   command=self._open_manage_channel_window).pack(anchor="w", pady=6)
-
-    def _build_statistics_page(self):
-        from thong_ke.stats_page import StatisticsPage
-        page = ttk.Frame(self._content)
-        self.pages["stats"] = page
-
-        self.stats_page = StatisticsPage(page)  # nhúng trang thống kê
-        self.stats_page.pack(fill="both", expand=True)
-    
-    def _build_chat_page(self):
-        from ai_chat.chat_page import ChatPage
-        page = ChatPage(self._content)
-        self.pages["chat"] = page
-        page.pack(fill="both", expand=True)
 
 
-    # Logic
+
+
     def _schedule_preview(self):
         if hasattr(self, "_preview_job"):
             self.after_cancel(self._preview_job)
@@ -868,13 +814,6 @@ class App(tk.Tk, AssignMixin):
         self.destroy()
         sys.exit(0)
 
-
-    def _open_manage_channel_window(self):
-        script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "manage_channel\data\manage_page.py")
-        if not os.path.exists(script_path):
-            messagebox.showerror("Not found", f"can't find file: \n{script_path}")
-            return
-        subprocess.Popen([sys.executable, script_path], shell=False)
 
     def _auto_check_update(self):
         def worker():
