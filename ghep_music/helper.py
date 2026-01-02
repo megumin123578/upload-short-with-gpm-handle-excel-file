@@ -330,6 +330,50 @@ def read_log_info(log_path: str):
 
 
 
+def _sanitize_hex_color(value: str) -> str:
+    if not value:
+        return "000000"
+    v = value.strip().lstrip("#")
+    if len(v) == 3:
+        v = "".join(ch * 2 for ch in v)
+    if len(v) != 6:
+        return "000000"
+    for ch in v:
+        if ch not in "0123456789abcdefABCDEF":
+            return "000000"
+    return v.lower()
+
+
+def _build_overlay_vf(base_vf: str, width: int, height: int, overlay: dict) -> str:
+    if not overlay or not overlay.get("enabled"):
+        return base_vf
+
+    mode = (overlay.get("type") or "Solid").lower()
+    color1 = _sanitize_hex_color(overlay.get("color") or "000000")
+    color2 = _sanitize_hex_color(overlay.get("color2") or color1)
+    opacity = float(overlay.get("opacity", 0.2))
+    if opacity < 0:
+        opacity = 0.0
+    if opacity > 1:
+        opacity = 1.0
+
+    base = f"{base_vf},format=rgba [v]"
+    if mode == "gradient":
+        r0, g0, b0 = int(color1[0:2], 16), int(color1[2:4], 16), int(color1[4:6], 16)
+        r1, g1, b1 = int(color2[0:2], 16), int(color2[2:4], 16), int(color2[4:6], 16)
+        alpha = int(opacity * 255)
+        ol = (
+            f"nullsrc=s={width}x{height},format=rgba,"
+            f"geq=r='({r0}+({r1}-{r0})*Y/H)':"
+            f"g='({g0}+({g1}-{g0})*Y/H)':"
+            f"b='({b0}+({b1}-{b0})*Y/H)':"
+            f"a='{alpha}' [ol]"
+        )
+        return f"{base}; {ol}; [v][ol] overlay=0:0"
+
+    return f"{base}; color=c=0x{color1}@{opacity}:s={width}x{height} [ol]; [v][ol] overlay=0:0"
+
+
 def normalize_video(
     input_path,
     output_path,
@@ -341,6 +385,7 @@ def normalize_video(
     v_bitrate="12M",
     a_bitrate="160k",
     nvenc_preset="p4",   
+    overlay=None,
 ):
     # Path chuẩn/Unicode OK
     in_p  = pathlib.Path(input_path)
@@ -359,6 +404,7 @@ def normalize_video(
         nvenc_preset = "medium"
 
     vf = f"fps={fps},scale={width}:{height}:flags=lanczos"
+    vf = _build_overlay_vf(vf, width, height, overlay)
 
     if use_nv:
         video_args = [
