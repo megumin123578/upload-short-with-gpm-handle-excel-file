@@ -192,7 +192,7 @@ class ConcatPage(tk.Frame):
             val = self.combo_limit_videos.get()
             self.limit_videos_var.set(0 if val == "All" else int(val))
             self.reload_groups()
-            self.save_channel_config()
+            self.save_channel_config(force=True)
         self.combo_limit_videos.bind("<<ComboboxSelected>>", on_limit_change)
         self.combo_limit_videos.grid(row=0, column=3, sticky="ew", padx=5)
 
@@ -238,7 +238,7 @@ class ConcatPage(tk.Frame):
 
             self.time_limit_min_var.set(str(m_i))
             self.time_limit_sec_var.set(str(s_i))
-            self.save_channel_config()
+            self.save_channel_config(force=True)
             self.reload_groups() 
         
         self.combo_time_limit.bind("<FocusOut>", _commit_time_limit)
@@ -599,7 +599,7 @@ class ConcatPage(tk.Frame):
                     messagebox.showinfo("OK", f"Đã load {len(self.mp3_list)} file mp3.")
                 except Exception as e:
                     messagebox.showerror("Lỗi", f"Không đọc được mp3: {e}")
-            self.save_channel_config()
+            self.save_channel_config(force=True)
 
     def start_concat(self):
         self.start_time = time.time()
@@ -1022,7 +1022,7 @@ class ConcatPage(tk.Frame):
             gsize = int(self.combo_group_size.get())
             self.group_size_var.set(gsize)
             self.reload_groups()
-            self.save_channel_config()
+            self.save_channel_config(force=True)
         except ValueError:
             pass
 
@@ -1044,7 +1044,7 @@ class ConcatPage(tk.Frame):
         if ch:
             self.load_channel_config(ch)
             self.save_last_channel(ch)
-            self.save_channel_config()
+            self.save_channel_config(force=True)
 
     def load_last_channel(self):
         if os.path.exists(LAST_CHANNEL_FILE):
@@ -1127,8 +1127,8 @@ class ConcatPage(tk.Frame):
 
         self._update_mode_visibility()
 
-    def save_channel_config(self):
-        if getattr(self, "_loading", False):
+    def save_channel_config(self, force: bool = False):
+        if getattr(self, "_loading", False) and not force:
             return
         ch = self.selected_channel.get()
         if not ch:
@@ -1180,7 +1180,7 @@ class ConcatPage(tk.Frame):
             self.selected_channel.set(name)
             self.load_channel_config(name)
             self.save_last_channel(name)
-            self.save_channel_config()
+            self.save_channel_config(force=True)
             messagebox.showinfo("Thành công", f"Đã tạo channel mới: {name}")
         except Exception as e:
             messagebox.showerror("Lỗi", f"Không thể tạo channel '{name}': {e}")
