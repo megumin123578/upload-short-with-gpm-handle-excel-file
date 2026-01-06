@@ -5,6 +5,7 @@ import shutil
 import re
 import subprocess
 import tempfile
+import sys
 import json
 from datetime import datetime
 
@@ -68,14 +69,19 @@ def copy_and_bump_version(src_path=TARGET_FILE, dest_dir=TEMP_DIR):
 
 def run_pyarmor(out_dir: str):
     print("Đang chạy PyArmor để mã hóa source...")
-    cmd = [
-        "pyarmor", "gen", "-r",
-        "--exclude", "./hyperparameter.py",
-        "-O", out_dir, "."
+    cmd_variants = [
+        [sys.executable, "-m", "pyarmor.cli", "gen", "-r",
+         "--exclude", "./hyperparameter.py", "-O", out_dir, "."],
+        [sys.executable, "-m", "pyarmor", "gen", "-r",
+         "--exclude", "./hyperparameter.py", "-O", out_dir, "."],
     ]
-    result = subprocess.run(cmd, check=False)
-    if result.returncode != 0:
-        raise RuntimeError("PyArmor thất bại!")
+    last_code = None
+    for cmd in cmd_variants:
+        result = subprocess.run(cmd, check=False)
+        last_code = result.returncode
+        if result.returncode == 0:
+            return
+    raise RuntimeError("PyArmor thất bại!")
 
 
 def zip_dir(src_dir: str, zip_path: str):
