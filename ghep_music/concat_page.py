@@ -93,9 +93,20 @@ class ConcatPage(tk.Frame):
         self.outro_mode_var = tk.StringVar(value="By group count")
         self.outro_duration_var = tk.IntVar(value=15)
 
+        self.cut_head_var = tk.BooleanVar(value=False)
+        self.cut_tail_var = tk.BooleanVar(value=False)
+        self.cut_both_var = tk.BooleanVar(value=False)
+        self.cut_frame_first_var = tk.StringVar(value="")
+        self.cut_frame_all_var = tk.StringVar(value="")
+
         self._tag_id = 0
 
         self._build_ui()
+        self.cut_head_var.trace_add("write", lambda *_: self.save_channel_config())
+        self.cut_tail_var.trace_add("write", lambda *_: self.save_channel_config())
+        self.cut_both_var.trace_add("write", lambda *_: self.save_channel_config())
+        self.cut_frame_first_var.trace_add("write", lambda *_: self.save_channel_config())
+        self.cut_frame_all_var.trace_add("write", lambda *_: self.save_channel_config())
         self._layout()
         self.bind("<Delete>", self._on_global_delete) 
 
@@ -364,6 +375,23 @@ class ConcatPage(tk.Frame):
                     values=["p1","p2","p3","p4","p5","p6","p7","medium"]).grid(row=1, column=5, sticky="w")
 
         # ẨN mặc định (giữ logic Advanced)
+        cut_frame = ttk.Frame(self.video_frame)
+        cut_frame.grid(row=2, column=0, columnspan=7, sticky="w", pady=(6, 0))
+        ttk.Label(cut_frame, text="Cut:", font=("Trebuchet MS", 10, "bold")).pack(side=tk.LEFT)
+        ttk.Checkbutton(cut_frame, text="Cut start", variable=self.cut_head_var).pack(side=tk.LEFT, padx=(6, 0))
+        ttk.Checkbutton(cut_frame, text="Cut end", variable=self.cut_tail_var).pack(side=tk.LEFT, padx=(6, 0))
+        ttk.Checkbutton(
+            cut_frame,
+            text="Cut both",
+            variable=self.cut_both_var,
+            command=self._on_cut_both_toggle,
+        ).pack(side=tk.LEFT, padx=(6, 12))
+
+        ttk.Label(cut_frame, text="Frame (first):").pack(side=tk.LEFT)
+        ttk.Entry(cut_frame, textvariable=self.cut_frame_first_var, width=6).pack(side=tk.LEFT, padx=(6, 12))
+        ttk.Label(cut_frame, text="Frame (all):").pack(side=tk.LEFT)
+        ttk.Entry(cut_frame, textvariable=self.cut_frame_all_var, width=6).pack(side=tk.LEFT, padx=(6, 0))
+
         self.video_frame.grid_remove()
 
         # Đảm bảo giá trị hiện tại được chọn ngay cả khi không nằm trong preset
@@ -686,6 +714,7 @@ class ConcatPage(tk.Frame):
 
     def _encode_group_to_temp(self, group: list[str], temp: str):
         width, height = map(int, self.resolution_var.get().split("x"))
+        trim_specs = self._build_trim_specs(group)
 
         auto_concat(
             group, temp,
@@ -698,6 +727,7 @@ class ConcatPage(tk.Frame):
             v_bitrate=self.v_bitrate_var.get(),
             a_bitrate=self.a_bitrate_var.get(),
             nvenc_preset=self.nvenc_preset_var.get(),
+            trim_specs=trim_specs,
         )
 
     #==============Switch mode================
@@ -786,6 +816,7 @@ class ConcatPage(tk.Frame):
                         used_this_run.update(os.path.abspath(p) for p in group)
 
                     elif mode == "Concat and Reverse":
+                        trim_specs = self._build_trim_specs(group)
                         base = concat_reverse(
                             group, out_dir,
                             width=int(self.resolution_var.get().split("x")[0]),
@@ -796,7 +827,8 @@ class ConcatPage(tk.Frame):
                             v_bitrate=self.v_bitrate_var.get(),
                             a_bitrate=self.a_bitrate_var.get(),
                             preset=self.nvenc_preset_var.get(),
-                            speed_reverse=3.0
+                            speed_reverse=3.0,
+                            trim_specs=trim_specs
                         )
 
                         bg_audio = random.choice(self.mp3_list) if self.mp3_list else None
@@ -870,6 +902,9 @@ class ConcatPage(tk.Frame):
 
                         one_video = random.choice(pool)
                         group = [one_video]
+                        trim_specs = self._build_trim_specs(group)
+                        trim_start = trim_specs[0][0] if trim_specs and trim_specs[0] else None
+                        trim_duration = trim_specs[0][1] if trim_specs and trim_specs[0] else None
 
                         # thời lượng mục tiêu (nếu = 0 thì chỉ copy y như cũ)
                         target_seconds = float(self.time_limit_min_var.get()) * 60.0 + float(self.time_limit_sec_var.get())
@@ -884,11 +919,23 @@ class ConcatPage(tk.Frame):
                                     src=one_video,
                                     dst=desired,
                                     target_seconds=target_seconds,
-                                    progress_cb = _cb
+                                    trim_start=trim_start,
+                                    trim_duration=trim_duration,
+                                    progress_cb=_cb
                                 )
                             else:
                                 # Không set time limit -> copy nguyên bản
-                                shutil.copy2(one_video, desired)
+                                if trim_start or trim_duration:
+                                    self._loop_video_to_duration(
+                                        src=one_video,
+                                        dst=desired,
+                                        target_seconds=float(trim_duration or 0),
+                                        trim_start=trim_start,
+                                        trim_duration=trim_duration,
+                                        progress_cb=_cb
+                                    )
+                                else:
+                                    shutil.copy2(one_video, desired)
 
                             output = desired
                             used_this_run.update(os.path.abspath(p) for p in group)
@@ -1109,6 +1156,14 @@ class ConcatPage(tk.Frame):
             if str(odv) not in [str(v) for v in self.cbo_outro_dur["values"]]:
                 self.cbo_outro_dur["values"] = [odv] + list(self.cbo_outro_dur["values"])
 
+            self.cut_head_var.set(bool(cfg.get("cut_head", False)))
+            self.cut_tail_var.set(bool(cfg.get("cut_tail", False)))
+            self.cut_both_var.set(bool(cfg.get("cut_both", False)))
+            frame_first = cfg.get("cut_frame_first", "")
+            frame_all = cfg.get("cut_frame_all", "")
+            self.cut_frame_first_var.set("" if frame_first in (None, "") else str(frame_first))
+            self.cut_frame_all_var.set("" if frame_all in (None, "") else str(frame_all))
+
             self._update_mode_visibility()
 
 
@@ -1146,6 +1201,11 @@ class ConcatPage(tk.Frame):
             "video_volume": self.video_volume_var.get(),
             "outro_mode": self.outro_mode_var.get(),
             "outro_duration": int(self.outro_duration_var.get() or 15),
+            "cut_head": bool(self.cut_head_var.get()),
+            "cut_tail": bool(self.cut_tail_var.get()),
+            "cut_both": bool(self.cut_both_var.get()),
+            "cut_frame_first": self.cut_frame_first_var.get().strip(),
+            "cut_frame_all": self.cut_frame_all_var.get().strip(),
             "video_settings": {
                 "resolution": self.resolution_var.get(),
                 "fps": self.fps_var.get(),
@@ -1351,11 +1411,74 @@ class ConcatPage(tk.Frame):
         self.lbl_main_video_vol_value.config(text=f"{val * 100:.0f}%")
         self.save_channel_config()
 
+    def _on_cut_both_toggle(self):
+        if self.cut_both_var.get():
+            self.cut_head_var.set(True)
+            self.cut_tail_var.set(True)
+
+    def _get_cut_settings(self):
+        cut_head = bool(self.cut_head_var.get())
+        cut_tail = bool(self.cut_tail_var.get())
+        cut_both = bool(self.cut_both_var.get() or (cut_head and cut_tail))
+        if cut_both:
+            cut_head = True
+            cut_tail = True
+
+        def _parse_frames(v):
+            v = (v or "").strip()
+            return int(v) if v.isdigit() else 0
+
+        frame_first = _parse_frames(self.cut_frame_first_var.get())
+        frame_all = _parse_frames(self.cut_frame_all_var.get())
+        return cut_head, cut_tail, cut_both, frame_first, frame_all
+
+    def _build_trim_specs(self, videos: list[str]):
+        cut_head, cut_tail, cut_both, frame_first, frame_all = self._get_cut_settings()
+        if not (cut_head or cut_tail or cut_both):
+            return None
+
+        fps = int(self.fps_var.get() or 0)
+        fps = fps if fps > 0 else 1
+
+        specs = []
+        for i, path in enumerate(videos):
+            frames = frame_first if (i == 0 and frame_first > 0) else frame_all
+            if frames <= 0:
+                specs.append(None)
+                continue
+
+            start_cut = (frames / fps) if cut_head else 0.0
+            end_cut = (frames / fps) if cut_tail else 0.0
+            if start_cut <= 0 and end_cut <= 0:
+                specs.append(None)
+                continue
+
+            dur = get_video_duration(path)
+            if dur <= 0:
+                specs.append(None)
+                continue
+            trim_dur = dur - start_cut - end_cut
+            if trim_dur <= 0.05:
+                specs.append(None)
+                continue
+
+            specs.append((start_cut, trim_dur))
+
+        return specs if any(specs) else None
+
     def _get_used_videos_from_log(self) -> set[str]:
         ch = self.selected_channel.get().strip() or "default"
         return get_used_videos_from_log(ch)
     
-    def _loop_video_to_duration(self, src: str, dst: str, target_seconds: float, progress_cb=None):
+    def _loop_video_to_duration(
+        self,
+        src: str,
+        dst: str,
+        target_seconds: float,
+        trim_start: float | None = None,
+        trim_duration: float | None = None,
+        progress_cb=None
+    ):
         loop_video_to_duration(
             src=src,
             dst=dst,
@@ -1367,6 +1490,8 @@ class ConcatPage(tk.Frame):
             v_bitrate=self.v_bitrate_var.get(),
             fps=int(self.fps_var.get()),
             a_bitrate=self.a_bitrate_var.get(),
+            trim_start=trim_start,
+            trim_duration=trim_duration,
             on_progress=progress_cb
         )    
     
@@ -1375,4 +1500,3 @@ class ConcatPage(tk.Frame):
             return
         self.save_channel_config()
         self.reload_groups()
-

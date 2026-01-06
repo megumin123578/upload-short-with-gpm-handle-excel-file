@@ -386,6 +386,8 @@ def normalize_video(
     a_bitrate="160k",
     nvenc_preset="p4",   
     overlay=None,
+    trim_start=None,
+    trim_duration=None,
 ):
     # Path chuẩn/Unicode OK
     in_p  = pathlib.Path(input_path)
@@ -432,6 +434,12 @@ def normalize_video(
         "ffmpeg", "-y",
         "-fflags", "+genpts",
         "-i", str(in_p),
+    ]
+    if trim_start and trim_start > 0:
+        cmd += ["-ss", str(trim_start)]
+    if trim_duration and trim_duration > 0:
+        cmd += ["-t", str(trim_duration)]
+    cmd += [
         "-vf", vf,
         *video_args,
         "-pix_fmt", "yuv420p",
@@ -439,7 +447,7 @@ def normalize_video(
         "-c:a", "aac",
         "-ar", "48000",
         "-b:a", a_bitrate,
-        str(out_p)
+        str(out_p),
     ]
 
     try:
@@ -461,6 +469,12 @@ def normalize_video(
                 "ffmpeg", "-y",
                 "-fflags", "+genpts",
                 "-i", str(in_p),
+            ]
+            if trim_start and trim_start > 0:
+                cmd2 += ["-ss", str(trim_start)]
+            if trim_duration and trim_duration > 0:
+                cmd2 += ["-t", str(trim_duration)]
+            cmd2 += [
                 "-vf", vf,
                 *video_args,
                 "-pix_fmt", "yuv420p",
@@ -468,7 +482,7 @@ def normalize_video(
                 "-c:a", "aac",
                 "-ar", "48000",
                 "-b:a", a_bitrate,
-                str(out_p)
+                str(out_p),
             ]
             run_ffmpeg(cmd2)
         else:
@@ -502,12 +516,30 @@ def auto_concat(input_videos, output_path,
                 num_threads=8, width=1080, height=1920,
                 fps=60, use_nvenc=True, cq=23,
                 v_bitrate="12M", a_bitrate="160k",
-                nvenc_preset="p4"):
+                nvenc_preset="p4",
+                trim_specs=None):
     normalized_paths = []
 
     def normalize_and_collect(i, path):
         fixed = f"normalized_{i}.mp4"
-        normalize_video(path, fixed, width, height, fps, use_nvenc, cq, v_bitrate, a_bitrate, nvenc_preset)
+        trim_start = None
+        trim_duration = None
+        if trim_specs and i < len(trim_specs) and trim_specs[i]:
+            trim_start, trim_duration = trim_specs[i]
+        normalize_video(
+            path,
+            fixed,
+            width,
+            height,
+            fps,
+            use_nvenc,
+            cq,
+            v_bitrate,
+            a_bitrate,
+            nvenc_preset,
+            trim_start=trim_start,
+            trim_duration=trim_duration,
+        )
         return fixed
 
     with ThreadPoolExecutor(max_workers=num_threads) as executor:
@@ -566,13 +598,20 @@ def concat_reverse(
     v_bitrate: str = "12M",
     a_bitrate: str = "160k",
     preset: str = "p4",
-    speed_reverse: float = 3.0) -> str:
+    speed_reverse: float = 3.0,
+    trim_specs=None) -> str:
     os.makedirs(out_dir, exist_ok=True)
     out = os.path.join(out_dir, f"pal_{int(time.time()*1000)}.mp4")
 
     # inputs
     cmd = ["ffmpeg", "-y"]
-    for p in inputs:
+    for i, p in enumerate(inputs):
+        if trim_specs and i < len(trim_specs) and trim_specs[i]:
+            trim_start, trim_duration = trim_specs[i]
+            if trim_start and trim_start > 0:
+                cmd += ["-ss", str(trim_start)]
+            if trim_duration and trim_duration > 0:
+                cmd += ["-t", str(trim_duration)]
         cmd += ["-i", p]
 
     # build filter graph
@@ -661,6 +700,8 @@ def loop_video_to_duration(
     v_bitrate: str = "12M",
     fps: int = 60,
     a_bitrate: str = "160k",
+    trim_start: float | None = None,
+    trim_duration: float | None = None,
     on_progress=None,
 ):
     # tổng thời lượng cần lặp
@@ -675,7 +716,14 @@ def loop_video_to_duration(
         "-progress", "pipe:1",    # xuất tiến trình ra stdout
         "-nostats",               # tránh spam
         "-loglevel", "error",     # chỉ log lỗi
-        "-stream_loop", "-1", "-i", src,
+        "-stream_loop", "-1",
+    ]
+    if trim_start and trim_start > 0:
+        args += ["-ss", str(trim_start)]
+    if trim_duration and trim_duration > 0:
+        args += ["-t", str(trim_duration)]
+    args += [
+        "-i", src,
         "-t", str(t),
     ]
 

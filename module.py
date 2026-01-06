@@ -8,7 +8,6 @@ import threading
 import datetime
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
-import openai
 from tkcalendar  import DateEntry
 import sys,subprocess
 import tkinter.simpledialog as sd
