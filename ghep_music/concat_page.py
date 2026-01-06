@@ -1,6 +1,7 @@
 from .helper import *
 from .concat_page_ui import ConcatPageUIMixin
 from ui_theme import setup_theme
+from typing import Optional
 
 class ConcatPage(tk.Frame, ConcatPageUIMixin):
     def __init__(self, parent):
@@ -8,7 +9,7 @@ class ConcatPage(tk.Frame, ConcatPageUIMixin):
 
         self._loading = False
         self._reload_token = 0
-        self._reload_thread: threading.Thread | None = None
+        self._reload_thread: Optional[threading.Thread] = None
 
         # Configure style
         style = ttk.Style()
@@ -82,7 +83,7 @@ class ConcatPage(tk.Frame, ConcatPageUIMixin):
         self.last_output_var = tk.StringVar(value="(chưa có)")
         self.groups: list[list[str]] = []
         self.stop_flag = threading.Event()
-        self.worker: threading.Thread | None = None
+        self.worker: Optional[threading.Thread] = None
         self.log_q: queue.Queue[str] = queue.Queue()
         os.makedirs(CONFIG_DIR, exist_ok=True)
         self.selected_channel = tk.StringVar()
@@ -1119,8 +1120,8 @@ class ConcatPage(tk.Frame, ConcatPageUIMixin):
         src: str,
         dst: str,
         target_seconds: float,
-        trim_start: float | None = None,
-        trim_duration: float | None = None,
+        trim_start: Optional[float] = None,
+        trim_duration: Optional[float] = None,
         progress_cb=None
     ):
         loop_video_to_duration(

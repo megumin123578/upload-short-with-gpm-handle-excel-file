@@ -700,8 +700,8 @@ def loop_video_to_duration(
     v_bitrate: str = "12M",
     fps: int = 60,
     a_bitrate: str = "160k",
-    trim_start: float | None = None,
-    trim_duration: float | None = None,
+    trim_start: Optional[float] = None,
+    trim_duration: Optional[float] = None,
     on_progress=None,
 ):
     # tổng thời lượng cần lặp
