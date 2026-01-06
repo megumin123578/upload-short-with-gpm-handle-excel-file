@@ -1,7 +1,7 @@
 [BUG]: out of license
 
 ## Command Line
-C:\Users\Admin\AppData\Local\Programs\Python\Python314\Lib\site-packages\pyarmor\cli\__main__.py gen -r --exclude ./hyperparameter.py -O C:\Users\Admin\AppData\Local\Temp\obf_out_drnl9pg9 .
+C:\Users\Admin\AppData\Local\Programs\Python\Python314\Lib\site-packages\pyarmor\cli\__main__.py gen -r --exclude ./hyperparameter.py -O C:\Users\Admin\AppData\Local\Temp\obf_out_hzsmokni .
 
 ## Environments
 Python 3.14.2
