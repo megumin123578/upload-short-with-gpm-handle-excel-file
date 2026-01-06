@@ -95,18 +95,16 @@ class ConcatPage(tk.Frame):
 
         self.cut_head_var = tk.BooleanVar(value=False)
         self.cut_tail_var = tk.BooleanVar(value=False)
-        self.cut_both_var = tk.BooleanVar(value=False)
         self.cut_frame_first_var = tk.StringVar(value="")
-        self.cut_frame_all_var = tk.StringVar(value="")
+        self.cut_frame_last_var = tk.StringVar(value="")
 
         self._tag_id = 0
 
         self._build_ui()
         self.cut_head_var.trace_add("write", lambda *_: self.save_channel_config())
         self.cut_tail_var.trace_add("write", lambda *_: self.save_channel_config())
-        self.cut_both_var.trace_add("write", lambda *_: self.save_channel_config())
         self.cut_frame_first_var.trace_add("write", lambda *_: self.save_channel_config())
-        self.cut_frame_all_var.trace_add("write", lambda *_: self.save_channel_config())
+        self.cut_frame_last_var.trace_add("write", lambda *_: self.save_channel_config())
         self._layout()
         self.bind("<Delete>", self._on_global_delete) 
 
@@ -378,19 +376,14 @@ class ConcatPage(tk.Frame):
         cut_frame = ttk.Frame(self.video_frame)
         cut_frame.grid(row=2, column=0, columnspan=7, sticky="w", pady=(6, 0))
         ttk.Label(cut_frame, text="Cut:", font=("Trebuchet MS", 10, "bold")).pack(side=tk.LEFT)
-        ttk.Checkbutton(cut_frame, text="Cut start", variable=self.cut_head_var).pack(side=tk.LEFT, padx=(6, 0))
-        ttk.Checkbutton(cut_frame, text="Cut end", variable=self.cut_tail_var).pack(side=tk.LEFT, padx=(6, 0))
-        ttk.Checkbutton(
-            cut_frame,
-            text="Cut both",
-            variable=self.cut_both_var,
-            command=self._on_cut_both_toggle,
-        ).pack(side=tk.LEFT, padx=(6, 12))
+        self._build_pretty_checkbox(cut_frame, "Cut start", self.cut_head_var).pack(side=tk.LEFT, padx=(8, 4))
+        self._build_pretty_checkbox(cut_frame, "Cut end", self.cut_tail_var).pack(side=tk.LEFT, padx=(8, 12))
+        # Cut both is implied when both start/end are enabled.
 
         ttk.Label(cut_frame, text="Frame (first):").pack(side=tk.LEFT)
         ttk.Entry(cut_frame, textvariable=self.cut_frame_first_var, width=6).pack(side=tk.LEFT, padx=(6, 12))
-        ttk.Label(cut_frame, text="Frame (all):").pack(side=tk.LEFT)
-        ttk.Entry(cut_frame, textvariable=self.cut_frame_all_var, width=6).pack(side=tk.LEFT, padx=(6, 0))
+        ttk.Label(cut_frame, text="Frame (last):").pack(side=tk.LEFT)
+        ttk.Entry(cut_frame, textvariable=self.cut_frame_last_var, width=6).pack(side=tk.LEFT, padx=(6, 0))
 
         self.video_frame.grid_remove()
 
@@ -1158,11 +1151,10 @@ class ConcatPage(tk.Frame):
 
             self.cut_head_var.set(bool(cfg.get("cut_head", False)))
             self.cut_tail_var.set(bool(cfg.get("cut_tail", False)))
-            self.cut_both_var.set(bool(cfg.get("cut_both", False)))
             frame_first = cfg.get("cut_frame_first", "")
-            frame_all = cfg.get("cut_frame_all", "")
+            frame_last = cfg.get("cut_frame_last", cfg.get("cut_frame_all", ""))
             self.cut_frame_first_var.set("" if frame_first in (None, "") else str(frame_first))
-            self.cut_frame_all_var.set("" if frame_all in (None, "") else str(frame_all))
+            self.cut_frame_last_var.set("" if frame_last in (None, "") else str(frame_last))
 
             self._update_mode_visibility()
 
@@ -1203,9 +1195,8 @@ class ConcatPage(tk.Frame):
             "outro_duration": int(self.outro_duration_var.get() or 15),
             "cut_head": bool(self.cut_head_var.get()),
             "cut_tail": bool(self.cut_tail_var.get()),
-            "cut_both": bool(self.cut_both_var.get()),
             "cut_frame_first": self.cut_frame_first_var.get().strip(),
-            "cut_frame_all": self.cut_frame_all_var.get().strip(),
+            "cut_frame_last": self.cut_frame_last_var.get().strip(),
             "video_settings": {
                 "resolution": self.resolution_var.get(),
                 "fps": self.fps_var.get(),
@@ -1411,29 +1402,49 @@ class ConcatPage(tk.Frame):
         self.lbl_main_video_vol_value.config(text=f"{val * 100:.0f}%")
         self.save_channel_config()
 
-    def _on_cut_both_toggle(self):
-        if self.cut_both_var.get():
-            self.cut_head_var.set(True)
-            self.cut_tail_var.set(True)
+    def _build_pretty_checkbox(self, parent, text, var, command=None):
+        frame = ttk.Frame(parent)
+        canvas = tk.Canvas(frame, width=18, height=18, highlightthickness=0, bd=0)
+        canvas.pack(side=tk.LEFT)
+        label = ttk.Label(frame, text=text, font=("Trebuchet MS", 10))
+        label.pack(side=tk.LEFT, padx=(6, 0))
+
+        def draw():
+            canvas.delete("all")
+            checked = bool(var.get())
+            fill = "#2AA50F" if checked else "#FFFFFF"
+            border = "#1F7A0B" if checked else "#9AA0A6"
+            canvas.create_oval(1, 1, 17, 17, fill=fill, outline=border)
+            if checked:
+                canvas.create_oval(6, 6, 12, 12, fill="#FFFFFF", outline="#FFFFFF")
+
+        def toggle():
+            var.set(not var.get())
+            if command:
+                command()
+
+        canvas.bind("<Button-1>", lambda e: toggle())
+        label.bind("<Button-1>", lambda e: toggle())
+        frame.bind("<Button-1>", lambda e: toggle())
+        var.trace_add("write", lambda *_: draw())
+        draw()
+        return frame
 
     def _get_cut_settings(self):
         cut_head = bool(self.cut_head_var.get())
         cut_tail = bool(self.cut_tail_var.get())
-        cut_both = bool(self.cut_both_var.get() or (cut_head and cut_tail))
-        if cut_both:
-            cut_head = True
-            cut_tail = True
+        cut_both = bool(cut_head and cut_tail)
 
         def _parse_frames(v):
             v = (v or "").strip()
             return int(v) if v.isdigit() else 0
 
         frame_first = _parse_frames(self.cut_frame_first_var.get())
-        frame_all = _parse_frames(self.cut_frame_all_var.get())
-        return cut_head, cut_tail, cut_both, frame_first, frame_all
+        frame_last = _parse_frames(self.cut_frame_last_var.get())
+        return cut_head, cut_tail, cut_both, frame_first, frame_last
 
     def _build_trim_specs(self, videos: list[str]):
-        cut_head, cut_tail, cut_both, frame_first, frame_all = self._get_cut_settings()
+        cut_head, cut_tail, cut_both, frame_first, frame_last = self._get_cut_settings()
         if not (cut_head or cut_tail or cut_both):
             return None
 
@@ -1442,7 +1453,7 @@ class ConcatPage(tk.Frame):
 
         specs = []
         for i, path in enumerate(videos):
-            frames = frame_first if (i == 0 and frame_first > 0) else frame_all
+            frames = frame_first if (i == 0 and frame_first > 0) else frame_last
             if frames <= 0:
                 specs.append(None)
                 continue
