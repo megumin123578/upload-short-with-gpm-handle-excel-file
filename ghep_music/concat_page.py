@@ -93,16 +93,13 @@ class ConcatPage(tk.Frame):
         self.outro_mode_var = tk.StringVar(value="By group count")
         self.outro_duration_var = tk.IntVar(value=15)
 
-        self.cut_head_var = tk.BooleanVar(value=False)
-        self.cut_tail_var = tk.BooleanVar(value=False)
-        self.cut_frame_first_var = tk.StringVar(value="")
-        self.cut_frame_last_var = tk.StringVar(value="")
+        self.cut_scope_var = tk.StringVar(value="first")
+        self.cut_frame_first_var = tk.IntVar(value=0)
+        self.cut_frame_last_var = tk.IntVar(value=0)
 
         self._tag_id = 0
 
         self._build_ui()
-        self.cut_head_var.trace_add("write", lambda *_: self.save_channel_config())
-        self.cut_tail_var.trace_add("write", lambda *_: self.save_channel_config())
         self.cut_frame_first_var.trace_add("write", lambda *_: self.save_channel_config())
         self.cut_frame_last_var.trace_add("write", lambda *_: self.save_channel_config())
         self._layout()
@@ -375,15 +372,26 @@ class ConcatPage(tk.Frame):
         # ẨN mặc định (giữ logic Advanced)
         cut_frame = ttk.Frame(self.video_frame)
         cut_frame.grid(row=2, column=0, columnspan=7, sticky="w", pady=(6, 0))
-        ttk.Label(cut_frame, text="Cut:", font=("Trebuchet MS", 10, "bold")).pack(side=tk.LEFT)
-        self._build_pretty_checkbox(cut_frame, "Cut start", self.cut_head_var).pack(side=tk.LEFT, padx=(8, 4))
-        self._build_pretty_checkbox(cut_frame, "Cut end", self.cut_tail_var).pack(side=tk.LEFT, padx=(8, 12))
-        # Cut both is implied when both start/end are enabled.
+        ttk.Label(cut_frame, text="Cut:", font=("Trebuchet MS", 10, "bold")).grid(row=0, column=0, sticky="w")
+        ttk.Radiobutton(
+            cut_frame,
+            text="Apply first video",
+            variable=self.cut_scope_var,
+            value="first",
+            command=self._on_cut_scope_change,
+        ).grid(row=0, column=1, sticky="w", padx=(8, 12))
+        ttk.Radiobutton(
+            cut_frame,
+            text="Apply all videos",
+            variable=self.cut_scope_var,
+            value="all",
+            command=self._on_cut_scope_change,
+        ).grid(row=0, column=2, sticky="w", padx=(8, 12))
 
-        ttk.Label(cut_frame, text="Frame (first):").pack(side=tk.LEFT)
-        ttk.Entry(cut_frame, textvariable=self.cut_frame_first_var, width=6).pack(side=tk.LEFT, padx=(6, 12))
-        ttk.Label(cut_frame, text="Frame (last):").pack(side=tk.LEFT)
-        ttk.Entry(cut_frame, textvariable=self.cut_frame_last_var, width=6).pack(side=tk.LEFT, padx=(6, 0))
+        ttk.Label(cut_frame, text="First frame:").grid(row=1, column=1, sticky="w", padx=(8, 4), pady=(2, 0))
+        ttk.Entry(cut_frame, textvariable=self.cut_frame_first_var, width=6).grid(row=1, column=2, sticky="w", pady=(2, 0))
+        ttk.Label(cut_frame, text="Last frame:").grid(row=2, column=1, sticky="w", padx=(8, 4), pady=(2, 0))
+        ttk.Entry(cut_frame, textvariable=self.cut_frame_last_var, width=6).grid(row=2, column=2, sticky="w", pady=(2, 0))
 
         self.video_frame.grid_remove()
 
@@ -1149,12 +1157,17 @@ class ConcatPage(tk.Frame):
             if str(odv) not in [str(v) for v in self.cbo_outro_dur["values"]]:
                 self.cbo_outro_dur["values"] = [odv] + list(self.cbo_outro_dur["values"])
 
-            self.cut_head_var.set(bool(cfg.get("cut_head", False)))
-            self.cut_tail_var.set(bool(cfg.get("cut_tail", False)))
-            frame_first = cfg.get("cut_frame_first", "")
-            frame_last = cfg.get("cut_frame_last", cfg.get("cut_frame_all", ""))
-            self.cut_frame_first_var.set("" if frame_first in (None, "") else str(frame_first))
-            self.cut_frame_last_var.set("" if frame_last in (None, "") else str(frame_last))
+            def _to_int(v):
+                try:
+                    return int(str(v).strip())
+                except Exception:
+                    return 0
+
+            self.cut_scope_var.set(cfg.get("cut_scope", "first"))
+            frame_first = _to_int(cfg.get("cut_frame_first", 0))
+            frame_last = _to_int(cfg.get("cut_frame_last", cfg.get("cut_frame_all", 0)))
+            self.cut_frame_first_var.set(frame_first)
+            self.cut_frame_last_var.set(frame_last)
 
             self._update_mode_visibility()
 
@@ -1193,10 +1206,9 @@ class ConcatPage(tk.Frame):
             "video_volume": self.video_volume_var.get(),
             "outro_mode": self.outro_mode_var.get(),
             "outro_duration": int(self.outro_duration_var.get() or 15),
-            "cut_head": bool(self.cut_head_var.get()),
-            "cut_tail": bool(self.cut_tail_var.get()),
-            "cut_frame_first": self.cut_frame_first_var.get().strip(),
-            "cut_frame_last": self.cut_frame_last_var.get().strip(),
+            "cut_scope": self.cut_scope_var.get(),
+            "cut_frame_first": int(self.cut_frame_first_var.get() or 0),
+            "cut_frame_last": int(self.cut_frame_last_var.get() or 0),
             "video_settings": {
                 "resolution": self.resolution_var.get(),
                 "fps": self.fps_var.get(),
@@ -1430,22 +1442,21 @@ class ConcatPage(tk.Frame):
         draw()
         return frame
 
+    def _on_cut_scope_change(self):
+        if getattr(self, "_loading", False):
+            return
+        self.save_channel_config()
+
     def _get_cut_settings(self):
-        cut_head = bool(self.cut_head_var.get())
-        cut_tail = bool(self.cut_tail_var.get())
-        cut_both = bool(cut_head and cut_tail)
-
-        def _parse_frames(v):
-            v = (v or "").strip()
-            return int(v) if v.isdigit() else 0
-
-        frame_first = _parse_frames(self.cut_frame_first_var.get())
-        frame_last = _parse_frames(self.cut_frame_last_var.get())
-        return cut_head, cut_tail, cut_both, frame_first, frame_last
+        frame_first = int(self.cut_frame_first_var.get() or 0)
+        frame_last = int(self.cut_frame_last_var.get() or 0)
+        scope = self.cut_scope_var.get()
+        has_cut = bool(frame_first > 0 or frame_last > 0)
+        return has_cut, scope, frame_first, frame_last
 
     def _build_trim_specs(self, videos: list[str]):
-        cut_head, cut_tail, cut_both, frame_first, frame_last = self._get_cut_settings()
-        if not (cut_head or cut_tail or cut_both):
+        has_cut, scope, frame_first, frame_last = self._get_cut_settings()
+        if not has_cut:
             return None
 
         fps = int(self.fps_var.get() or 0)
@@ -1453,13 +1464,17 @@ class ConcatPage(tk.Frame):
 
         specs = []
         for i, path in enumerate(videos):
-            frames = frame_first if (i == 0 and frame_first > 0) else frame_last
-            if frames <= 0:
+            if scope == "first" and i != 0:
+                specs.append(None)
+                continue
+            start_frames = frame_first
+            end_frames = frame_last
+            if start_frames <= 0 and end_frames <= 0:
                 specs.append(None)
                 continue
 
-            start_cut = (frames / fps) if cut_head else 0.0
-            end_cut = (frames / fps) if cut_tail else 0.0
+            start_cut = (start_frames / fps) if start_frames > 0 else 0.0
+            end_cut = (end_frames / fps) if end_frames > 0 else 0.0
             if start_cut <= 0 and end_cut <= 0:
                 specs.append(None)
                 continue
