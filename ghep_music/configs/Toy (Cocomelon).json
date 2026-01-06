@@ -2,7 +2,7 @@
   "input_folder": "E:/ghep xong",
   "save_folder": "E:/storage",
   "bgm_folder": "",
-  "group_size": 2,
+  "group_size": 1,
   "bgm_volume": 0.49946865037194477,
   "limit_videos": 1,
   "concat_mode": "Normal concat (no music)",
@@ -11,7 +11,7 @@
   "outro_mode": "By group count",
   "outro_duration": 15,
   "cut_scope": "first",
-  "cut_frame_first": 5,
+  "cut_frame_first": 100,
   "cut_frame_last": 0,
   "video_settings": {
     "resolution": "1080x1920",

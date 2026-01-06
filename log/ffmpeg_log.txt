@@ -8,35 +8,24 @@ ffmpeg version 2025-06-28-git-cfd1f81e7d-full_build-www.gyan.dev Copyright (c) 2
   libavfilter    11.  0.100 / 11.  0.100
   libswscale      9.  0.100 /  9.  0.100
   libswresample   6.  0.100 /  6.  0.100
-[mov,mp4,m4a,3gp,3g2,mj2 @ 000001a6b71504c0] Auto-inserting h264_mp4toannexb bitstream filter
+[mov,mp4,m4a,3gp,3g2,mj2 @ 000002059c870400] Auto-inserting h264_mp4toannexb bitstream filter
 Input #0, concat, from 'temp.txt':
-  Duration: N/A, start: -0.021333, bitrate: 6326 kb/s
-  Stream #0:0(und): Video: h264 (Main) (avc1 / 0x31637661), yuv420p(progressive), 1080x1920 [SAR 1:1 DAR 9:16], 6214 kb/s, 60 fps, 60 tbr, 15360 tbn
+  Duration: N/A, start: 0.000000, bitrate: 8439 kb/s
+  Stream #0:0(und): Video: h264 (Main) (avc1 / 0x31637661), yuv420p(progressive), 1080x1920 [SAR 1:1 DAR 9:16], 8439 kb/s, 60 fps, 60 tbr, 15360 tbn
     Metadata:
       handler_name    : VideoHandler
       vendor_id       : [0][0][0][0]
       encoder         : Lavc62.4.100 h264_nvenc
-  Stream #0:1(und): Audio: aac (LC) (mp4a / 0x6134706D), 48000 Hz, stereo, fltp, 112 kb/s, start -0.021333
-    Metadata:
-      handler_name    : SoundHandler
-      vendor_id       : [0][0][0][0]
 Stream mapping:
   Stream #0:0 -> #0:0 (copy)
-  Stream #0:1 -> #0:1 (copy)
-Output #0, mp4, to 'temp_21888.mp4':
+Output #0, mp4, to 'temp_26036.mp4':
   Metadata:
     encoder         : Lavf62.1.101
-  Stream #0:0(und): Video: h264 (Main) (avc1 / 0x31637661), yuv420p(progressive), 1080x1920 [SAR 1:1 DAR 9:16], q=2-31, 6214 kb/s, 60 fps, 60 tbr, 15360 tbn
+  Stream #0:0(und): Video: h264 (Main) (avc1 / 0x31637661), yuv420p(progressive), 1080x1920 [SAR 1:1 DAR 9:16], q=2-31, 8439 kb/s, 60 fps, 60 tbr, 15360 tbn
     Metadata:
       handler_name    : VideoHandler
       vendor_id       : [0][0][0][0]
       encoder         : Lavc62.4.100 h264_nvenc
-  Stream #0:1(und): Audio: aac (LC) (mp4a / 0x6134706D), 48000 Hz, stereo, fltp, 112 kb/s
-    Metadata:
-      handler_name    : SoundHandler
-      vendor_id       : [0][0][0][0]
 Press [q] to stop, [?] for help
-[mov,mp4,m4a,3gp,3g2,mj2 @ 000001a6b77300c0] Auto-inserting h264_mp4toannexb bitstream filter
-[aost#0:1/copy @ 000001a6b7990240] Non-monotonic DTS; previous: 765952, current: 765024; changing to 765953. This may result in incorrect timestamps in the output file.
-[out#0/mp4 @ 000001a6b714f080] video:24659KiB audio:423KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 0.212475%
-frame= 1916 fps=0.0 q=-1.0 Lsize=   25135KiB time=00:00:31.92 bitrate=6449.7kbits/s speed= 688x elapsed=0:00:00.04    
+[out#0/mp4 @ 000002059c87efc0] video:9306KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 0.084444%
+frame=  542 fps=0.0 q=-1.0 Lsize=    9314KiB time=00:00:08.98 bitrate=8493.4kbits/s speed= 823x elapsed=0:00:00.01    

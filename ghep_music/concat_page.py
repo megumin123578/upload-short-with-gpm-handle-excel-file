@@ -94,8 +94,8 @@ class ConcatPage(tk.Frame):
         self.outro_duration_var = tk.IntVar(value=15)
 
         self.cut_scope_var = tk.StringVar(value="first")
-        self.cut_frame_first_var = tk.IntVar(value=0)
-        self.cut_frame_last_var = tk.IntVar(value=0)
+        self.cut_frame_first_var = tk.StringVar(value="0")
+        self.cut_frame_last_var = tk.StringVar(value="0")
 
         self._tag_id = 0
 
@@ -176,7 +176,7 @@ class ConcatPage(tk.Frame):
         self.lbl_group_size = ttk.Label(param_frame, text="Videos per Group:", font=("Trebuchet MS", 10, "bold"))
         self.lbl_group_size.grid(row=0, column=0, sticky="e", padx=5)
         self.combo_group_size = ttk.Combobox(
-            param_frame, textvariable=self.group_size_var, values=list(range(2, 101)),
+            param_frame, textvariable=self.group_size_var, values=list(range(1, 101)),
             width=6, state="readonly", font=("Trebuchet MS", 10)
         )
         self.combo_group_size.grid(row=0, column=1, sticky="w", padx=5)
@@ -1124,8 +1124,8 @@ class ConcatPage(tk.Frame):
             self.save_folder.set(cfg.get("save_folder", ""))
             self.bgm_folder.set(cfg.get("bgm_folder", ""))
             group_size = cfg.get("group_size")
-            if group_size is None or group_size < 2:
-                group_size = 2
+            if group_size is None or group_size < 1:
+                group_size = 1
             self.group_size_var.set(group_size)
             self.bgm_volume_var.set(cfg.get("bgm_volume", 0.5))
             self.limit_videos_var.set(cfg.get("limit_videos", 0))
@@ -1157,17 +1157,11 @@ class ConcatPage(tk.Frame):
             if str(odv) not in [str(v) for v in self.cbo_outro_dur["values"]]:
                 self.cbo_outro_dur["values"] = [odv] + list(self.cbo_outro_dur["values"])
 
-            def _to_int(v):
-                try:
-                    return int(str(v).strip())
-                except Exception:
-                    return 0
-
             self.cut_scope_var.set(cfg.get("cut_scope", "first"))
-            frame_first = _to_int(cfg.get("cut_frame_first", 0))
-            frame_last = _to_int(cfg.get("cut_frame_last", cfg.get("cut_frame_all", 0)))
-            self.cut_frame_first_var.set(frame_first)
-            self.cut_frame_last_var.set(frame_last)
+            frame_first = self._safe_int(cfg.get("cut_frame_first", 0))
+            frame_last = self._safe_int(cfg.get("cut_frame_last", cfg.get("cut_frame_all", 0)))
+            self.cut_frame_first_var.set(str(frame_first))
+            self.cut_frame_last_var.set(str(frame_last))
 
             self._update_mode_visibility()
 
@@ -1207,8 +1201,8 @@ class ConcatPage(tk.Frame):
             "outro_mode": self.outro_mode_var.get(),
             "outro_duration": int(self.outro_duration_var.get() or 15),
             "cut_scope": self.cut_scope_var.get(),
-            "cut_frame_first": int(self.cut_frame_first_var.get() or 0),
-            "cut_frame_last": int(self.cut_frame_last_var.get() or 0),
+            "cut_frame_first": self._safe_int(self.cut_frame_first_var.get()),
+            "cut_frame_last": self._safe_int(self.cut_frame_last_var.get()),
             "video_settings": {
                 "resolution": self.resolution_var.get(),
                 "fps": self.fps_var.get(),
@@ -1442,14 +1436,21 @@ class ConcatPage(tk.Frame):
         draw()
         return frame
 
+    def _safe_int(self, v, default=0):
+        try:
+            s = str(v).strip()
+            return int(s) if s else default
+        except Exception:
+            return default
+
     def _on_cut_scope_change(self):
         if getattr(self, "_loading", False):
             return
         self.save_channel_config()
 
     def _get_cut_settings(self):
-        frame_first = int(self.cut_frame_first_var.get() or 0)
-        frame_last = int(self.cut_frame_last_var.get() or 0)
+        frame_first = self._safe_int(self.cut_frame_first_var.get())
+        frame_last = self._safe_int(self.cut_frame_last_var.get())
         scope = self.cut_scope_var.get()
         has_cut = bool(frame_first > 0 or frame_last > 0)
         return has_cut, scope, frame_first, frame_last
