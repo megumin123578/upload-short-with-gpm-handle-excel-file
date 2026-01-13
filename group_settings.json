@@ -5,12 +5,12 @@
       "move_folder": "E:\\ghep xong"
     },
     "__meta__": {
-      "mode": "channels",
+      "mode": "titles",
       "last_profile": "a"
     },
     "a": {
       "mode": "channels",
-      "monetization": true,
+      "monetization": false,
       "move_folder": "E:\\ghep xong"
     },
     "b": {

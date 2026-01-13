@@ -142,11 +142,11 @@ class AssignMixin:
             for iid in items:
                 vals = list(self.tree.item(iid, "values"))
                 vals += [""] * max(0, 7 - len(vals))
-                ch, _, title, desc, text_val, pd, pt = vals
+                ch, _, title, desc, pd, pt, text_val = vals
                 new_dir = get_random_unused_mp4(folder, used_paths | session_used)
                 if new_dir:
                     session_used.add(new_dir)
-                    self.tree.item(iid, values=(ch, new_dir, title, desc, text_val, pd, pt))
+                    self.tree.item(iid, values=(ch, new_dir, title, desc, pd, pt, text_val))
 
             # Cập nhật self._last_assignments
             if self._last_assignments:
@@ -206,14 +206,17 @@ class AssignMixin:
         frm = ttk.Frame(parent, padding=10)
         frm.pack(fill=tk.BOTH, expand=True)
 
-        cols = ("channel", "directory", "title", "description", "text", "publish_date", "publish_time")
+        cols = ("channel", "directory", "title", "description", "publish_date", "publish_time", "related_video")
         self.tree = ttk.Treeview(frm, columns=cols, show="headings", height=12)
 
         for col in cols:
-            self.tree.heading(col, text=col.capitalize())
+            if col == "related_video":
+                self.tree.heading(col, text="Related video")
+            else:
+                self.tree.heading(col, text=col.capitalize())
             if col == "description":
                 self.tree.column(col, width=420, anchor="w")
-            elif col == "text":
+            elif col == "related_video":
                 self.tree.column(col, width=220, anchor="w")
             elif col == "title":
                 self.tree.column(col, width=300, anchor="w")

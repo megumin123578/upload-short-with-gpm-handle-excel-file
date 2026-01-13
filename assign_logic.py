@@ -87,8 +87,8 @@ class AssignLogicMixin:
             else:
                 directory = ""
 
-            self.tree.insert("", tk.END, values=(ch, directory, t, d, x, pd, pt))
-            extended.append((ch, directory, t, d, x, pd, pt))
+            self.tree.insert("", tk.END, values=(ch, directory, t, d, pd, pt, x))
+            extended.append((ch, directory, t, d, pd, pt, x))
 
         self._last_assignments = extended
         self._set_status(f"Previewed {len(assignments)} rows")
@@ -121,7 +121,7 @@ class AssignLogicMixin:
 
                     assignments = []
                     for row in self._last_assignments:
-                        ch, directory, title, desc, text_val, date, time = row
+                        ch, directory, title, desc, date, time, text_val = row
                         monet = monet_for_channel(ch)
 
                         # Lấy tên file gốc (nếu có video)
@@ -129,11 +129,19 @@ class AssignLogicMixin:
                         # Gộp thành đường dẫn đầy đủ (nếu có move_folder + file_name)
                         full_path = os.path.join(move_folder, file_name) if move_folder and file_name else move_folder
 
-                        assignments.append((ch, directory, title, desc, text_val, date, time, full_path, monet))
+                        assignments.append((ch, directory, title, desc, date, time, full_path, monet, text_val))
 
-                    save_assignments_to_excel(assignments, out_path, extra_col_names=["move_folder", "monetization"])
+                    save_assignments_to_excel(
+                        assignments,
+                        out_path,
+                        extra_col_names=["move_folder", "monetization", "related_video"],
+                    )
                 else:
-                    save_assignments_to_excel(self._last_assignments, out_path)
+                    save_assignments_to_excel(
+                        self._last_assignments,
+                        out_path,
+                        extra_col_names=["related_video"],
+                    )
 
 
                 self._save_group_settings()
@@ -189,8 +197,8 @@ class AssignLogicMixin:
             time_str = f"{tm.hour:02d}:{tm.minute:02d}"
             vals = list(self.tree.item(iid, "values"))
             vals += [""] * max(0, 7 - len(vals))
-            ch, directory, t, desc, text_val, _, _ = vals
-            new_vals = (ch, directory, t, desc, text_val, date_str, time_str)
+            ch, directory, t, desc, _, _, text_val = vals
+            new_vals = (ch, directory, t, desc, date_str, time_str, text_val)
             self.tree.item(iid, values=new_vals)
             if self._last_assignments:
                 try:
@@ -232,7 +240,7 @@ class AssignLogicMixin:
             messagebox.showwarning("Clipboard", "Dữ liệu rỗng.")
             return
         grid = [r.split("\t") for r in rows]
-        header_map = ["titles", "descs", "texts", "dates", "times"][:len(grid[0])]
+        header_map = ["titles", "descs", "dates", "times", "texts"][:len(grid[0])]
         data_rows = grid
         titles, descs, texts, dates, times = [], [], [], [], []
         for row in data_rows:

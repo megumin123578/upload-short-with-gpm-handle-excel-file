@@ -15,7 +15,7 @@ def save_assignments_to_excel(assignments, out_path, extra_col_names=None):
     ws.title = "Assignments"
 
     # ===== Header mặc định =====
-    base_headers = ["channel", "directory", "title", "description", "text", "publish_date", "publish_time"]
+    base_headers = ["channel", "directory", "title", "description", "publish_date", "publish_time"]
 
     # chuẩn hóa extra_col_names
     if isinstance(extra_col_names, str):
@@ -71,7 +71,7 @@ def combine_excels(input_dir, output_file, move_folder, get_mp4_filename):
         return 0, []
 
     # 2) Định nghĩa thứ tự cột target
-    BASE = ["channel", "directory", "title", "description", "text", "publish_date", "publish_time"]
+    BASE = ["channel", "directory", "title", "description", "publish_date", "publish_time"]
 
     def norm(s):
         return (str(s).strip().lower() if s is not None else "")
@@ -92,7 +92,7 @@ def combine_excels(input_dir, output_file, move_folder, get_mp4_filename):
     # Thứ tự cột GẮN CHẶT khi gộp:
     # - luôn có move_folder
     # - nếu có monetization ở bất kỳ file nào -> đưa monetization ngay sau move_folder
-    ORDERED = BASE + ["move_folder"] + (["monetization"] if has_monet else [])
+    ORDERED = BASE + ["move_folder"] + (["monetization"] if has_monet else []) + ["related_video"]
 
     # 3) Tạo file output
     wb_out = Workbook()
@@ -142,6 +142,13 @@ def combine_excels(input_dir, output_file, move_folder, get_mp4_filename):
                     vals_by_name["monetization"] = ws.cell(row=r, column=src_idx["monetization"]).value
                 else:
                     vals_by_name["monetization"] = ""
+
+            if "related_video" in src_idx:
+                vals_by_name["related_video"] = ws.cell(row=r, column=src_idx["related_video"]).value
+            elif "text" in src_idx:
+                vals_by_name["related_video"] = ws.cell(row=r, column=src_idx["text"]).value
+            else:
+                vals_by_name["related_video"] = ""
 
             # Ghi ra đúng thứ tự ORDERED
             for c_idx, name in enumerate(ORDERED, start=1):

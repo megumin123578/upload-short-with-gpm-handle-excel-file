@@ -225,7 +225,7 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
     def _edit_row_dialog(self, item_id, index):
         vals = list(self.tree.item(item_id, "values"))
         vals += [""] * max(0, 7 - len(vals))
-        ch_cur, dir_cur, title_cur, desc_cur, text_cur, pd_cur, pt_cur = vals
+        ch_cur, dir_cur, title_cur, desc_cur, pd_cur, pt_cur, text_cur = vals
 
         win = tk.Toplevel(self)
         win.title("Edit row")
@@ -255,7 +255,7 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
         txt_desc.grid(row=3, column=1, sticky="we")
         txt_desc.insert("1.0", desc_cur)
 
-        ttk.Label(frm, text="Text:").grid(row=4, column=0, sticky="e", padx=6, pady=4)
+        ttk.Label(frm, text="Related video:").grid(row=4, column=0, sticky="e", padx=6, pady=4)
         ent_text = ttk.Entry(frm, width=60)
         ent_text.grid(row=4, column=1, sticky="we")
         ent_text.insert(0, text_cur)
@@ -304,7 +304,7 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
             if not ch or not t:
                 messagebox.showwarning("Missing", "Channel và Title không được để trống.")
                 return
-            new_vals = (ch, directory, t, d, x, pd, pt)
+            new_vals = (ch, directory, t, d, pd, pt, x)
             self.tree.item(item_id, values=new_vals)
             if 0 <= index < len(self._last_assignments):
                 self._last_assignments[index] = new_vals
