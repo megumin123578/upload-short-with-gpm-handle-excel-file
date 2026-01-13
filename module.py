@@ -104,7 +104,7 @@ def read_channels_from_csv(csv_path: str):
 def normalize_lines(s: str):
     return [ln.strip() for ln in s.splitlines() if ln.strip()]
 
-def assign_pairs(channels, titles, descs, mode="titles"):
+def assign_pairs(channels, titles, descs, texts, mode="titles"):
 
     if not channels:
         raise ValueError("No channels found in selected CSV.")
@@ -116,13 +116,19 @@ def assign_pairs(channels, titles, descs, mode="titles"):
     else:
         desc_cycle = itertools.cycle(descs)
 
+    if len(texts) <= 1:
+        text_cycle = itertools.cycle([texts[0] if texts else ""])
+    else:
+        text_cycle = itertools.cycle(texts)
+
     if mode == "titles":
         ch_cycle = itertools.cycle(channels)
         out = []
         for title in titles:
             ch = next(ch_cycle)
             d = next(desc_cycle)
-            out.append((ch, title, d))
+            x = next(text_cycle)
+            out.append((ch, title, d, x))
         return out
     else:  # mode == "channels"
         title_cycle = itertools.cycle(titles)
@@ -130,7 +136,8 @@ def assign_pairs(channels, titles, descs, mode="titles"):
         for ch in channels:
             t = next(title_cycle)
             d = next(desc_cycle)
-            out.append((ch, t, d))
+            x = next(text_cycle)
+            out.append((ch, t, d, x))
         return out
     
 # module.py

@@ -210,6 +210,7 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
     def _clear_inputs(self):
         self.txt_titles.delete("1.0", tk.END)
         self.txt_descs.delete("1.0", tk.END)
+        self.txt_texts.delete("1.0", tk.END)
         self.txt_dates.delete('1.0', tk.END)
         self.txt_times.delete("1.0", tk.END)
         self.tree.delete(*self.tree.get_children())
@@ -223,8 +224,8 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
 
     def _edit_row_dialog(self, item_id, index):
         vals = list(self.tree.item(item_id, "values"))
-        vals += [""] * max(0, 6 - len(vals))
-        ch_cur, dir_cur, title_cur, desc_cur, pd_cur, pt_cur = vals
+        vals += [""] * max(0, 7 - len(vals))
+        ch_cur, dir_cur, title_cur, desc_cur, text_cur, pd_cur, pt_cur = vals
 
         win = tk.Toplevel(self)
         win.title("Edit row")
@@ -254,6 +255,11 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
         txt_desc.grid(row=3, column=1, sticky="we")
         txt_desc.insert("1.0", desc_cur)
 
+        ttk.Label(frm, text="Text:").grid(row=4, column=0, sticky="e", padx=6, pady=4)
+        ent_text = ttk.Entry(frm, width=60)
+        ent_text.grid(row=4, column=1, sticky="we")
+        ent_text.insert(0, text_cur)
+
         import datetime as _dt
         if pd_cur:
             try:
@@ -263,12 +269,12 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
         else:
             init_date = _dt.date.today()
 
-        ttk.Label(frm, text="Publish date:").grid(row=4, column=0, sticky="e", padx=6, pady=4)
+        ttk.Label(frm, text="Publish date:").grid(row=5, column=0, sticky="e", padx=6, pady=4)
         ent_pd = DateEntry(frm, width=12, date_pattern="mm/dd/yyyy")
-        ent_pd.grid(row=4, column=1, sticky="w")
+        ent_pd.grid(row=5, column=1, sticky="w")
         ent_pd.set_date(init_date)
 
-        ttk.Label(frm, text="Publish time:").grid(row=5, column=0, sticky="e", padx=6, pady=4)
+        ttk.Label(frm, text="Publish time:").grid(row=6, column=0, sticky="e", padx=6, pady=4)
         try:
             h_cur, m_cur = (pt_cur.split(":") if pt_cur else ("", ""))
         except Exception:
@@ -278,11 +284,11 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
         minutes = [f"{i:02d}" for i in range(0, 60, 5)]
 
         cb_h = ttk.Combobox(frm, values=hours, width=3, state="readonly")
-        cb_h.grid(row=5, column=1, sticky="w", padx=(0, 2))
+        cb_h.grid(row=6, column=1, sticky="w", padx=(0, 2))
         cb_h.set(h_cur if h_cur in hours else "00")
-        ttk.Label(frm, text=":").grid(row=5, column=1, padx=(50, 0), sticky="w")
+        ttk.Label(frm, text=":").grid(row=6, column=1, padx=(50, 0), sticky="w")
         cb_m = ttk.Combobox(frm, values=minutes, width=3, state="readonly")
-        cb_m.grid(row=5, column=1, padx=(65, 0), sticky="w")
+        cb_m.grid(row=6, column=1, padx=(65, 0), sticky="w")
         cb_m.set(m_cur if m_cur in minutes else "00")
 
         frm.columnconfigure(1, weight=1)
@@ -292,12 +298,13 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
             directory = ent_dir.get().strip()
             t = ent_title.get().strip()
             d = txt_desc.get("1.0", tk.END).strip()
+            x = ent_text.get().strip()
             pd = ent_pd.get_date().strftime("%m/%d/%Y")
             pt = f"{cb_h.get()}:{cb_m.get()}"
             if not ch or not t:
                 messagebox.showwarning("Missing", "Channel và Title không được để trống.")
                 return
-            new_vals = (ch, directory, t, d, pd, pt)
+            new_vals = (ch, directory, t, d, x, pd, pt)
             self.tree.item(item_id, values=new_vals)
             if 0 <= index < len(self._last_assignments):
                 self._last_assignments[index] = new_vals
@@ -817,13 +824,13 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
         try:
             p.update_idletasks()
             total = p.winfo_width() or p.master.winfo_width() or 800
-            each = max(100, total // 4)
+            pane_count = max(1, len(self._inputs_panes))
+            each = max(100, total // pane_count)
             for fr in self._inputs_panes:
                 p.paneconfig(fr, width=each, minsize=100)
             try:
-                p.sash_place(0, each, 0)
-                p.sash_place(1, each*2, 0)
-                p.sash_place(2, each*3, 0)
+                for idx in range(pane_count - 1):
+                    p.sash_place(idx, each * (idx + 1), 0)
             except Exception:
                 pass
         except Exception:

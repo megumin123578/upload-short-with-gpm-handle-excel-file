@@ -13,6 +13,7 @@ class AssignLogicMixin:
             self._schedule_preview()
         self.txt_titles.bind("<<Modified>>", on_change)
         self.txt_descs.bind("<<Modified>>", on_change)
+        self.txt_texts.bind("<<Modified>>", on_change)
         self.txt_times.bind("<<Modified>>", on_change)
         self.txt_dates.bind("<<Modified>>", on_change)
 
@@ -24,12 +25,13 @@ class AssignLogicMixin:
 
         titles = normalize_lines(self.txt_titles.get("1.0", tk.END))
         descs = normalize_lines(self.txt_descs.get("1.0", tk.END))
+        texts = normalize_lines(self.txt_texts.get("1.0", tk.END))
         times = normalize_lines(self.txt_times.get("1.0", tk.END))
         dates = normalize_lines(self.txt_dates.get('1.0', tk.END))
         channels = self._channels_cache
         mode = self.mode_var.get()
 
-        if not titles and not descs:
+        if not titles and not descs and not texts:
             self.tree.delete(*self.tree.get_children())
             self._last_assignments = None
             self._set_status("Inputs empty → preview cleared.")
@@ -49,12 +51,13 @@ class AssignLogicMixin:
                     for i in range(n):
                         t = titles[i] if i < len(titles) else (titles[0] if titles else "")
                         d = descs[i]  if i < len(descs)  else (descs[0]  if descs  else "")
-                        assignments.append((chosen, t, d))
+                        x = texts[i]  if i < len(texts)  else (texts[0]  if texts  else "")
+                        assignments.append((chosen, t, d, x))
                 else:
                     # Không chọn channel cụ thể -> giữ logic cũ
-                    assignments = assign_pairs(channels, titles, descs, mode=mode)
+                    assignments = assign_pairs(channels, titles, descs, texts, mode=mode)
             else:
-                assignments = assign_pairs(channels, titles, descs, mode=mode)
+                assignments = assign_pairs(channels, titles, descs, texts, mode=mode)
         except Exception as e:
             messagebox.showerror("Error", str(e))
             return
@@ -73,7 +76,7 @@ class AssignLogicMixin:
         except Exception:
             selected_date = datetime.date.today().strftime('%m/%d/%Y')
 
-        for i, (ch, t, d) in enumerate(assignments):
+        for i, (ch, t, d, x) in enumerate(assignments):
             pt = times[i] if i < len(times) else ""
             pd = dates[i] if i < len(dates) and dates [i] else selected_date
 
@@ -84,8 +87,8 @@ class AssignLogicMixin:
             else:
                 directory = ""
 
-            self.tree.insert("", tk.END, values=(ch, directory, t, d, pd, pt))
-            extended.append((ch, directory, t, d, pd, pt))
+            self.tree.insert("", tk.END, values=(ch, directory, t, d, x, pd, pt))
+            extended.append((ch, directory, t, d, x, pd, pt))
 
         self._last_assignments = extended
         self._set_status(f"Previewed {len(assignments)} rows")
@@ -118,7 +121,7 @@ class AssignLogicMixin:
 
                     assignments = []
                     for row in self._last_assignments:
-                        ch, directory, title, desc, date, time = row
+                        ch, directory, title, desc, text_val, date, time = row
                         monet = monet_for_channel(ch)
 
                         # Lấy tên file gốc (nếu có video)
@@ -126,7 +129,7 @@ class AssignLogicMixin:
                         # Gộp thành đường dẫn đầy đủ (nếu có move_folder + file_name)
                         full_path = os.path.join(move_folder, file_name) if move_folder and file_name else move_folder
 
-                        assignments.append((ch, directory, title, desc, date, time, full_path, monet))
+                        assignments.append((ch, directory, title, desc, text_val, date, time, full_path, monet))
 
                     save_assignments_to_excel(assignments, out_path, extra_col_names=["move_folder", "monetization"])
                 else:
@@ -185,9 +188,9 @@ class AssignLogicMixin:
             tm = (base_dt + datetime.timedelta(minutes=step * i)).time()
             time_str = f"{tm.hour:02d}:{tm.minute:02d}"
             vals = list(self.tree.item(iid, "values"))
-            vals += [""] * max(0, 6 - len(vals))
-            ch, directory, t, desc, _, _ = vals
-            new_vals = (ch, directory, t, desc, date_str, time_str)
+            vals += [""] * max(0, 7 - len(vals))
+            ch, directory, t, desc, text_val, _, _ = vals
+            new_vals = (ch, directory, t, desc, text_val, date_str, time_str)
             self.tree.item(iid, values=new_vals)
             if self._last_assignments:
                 try:
@@ -229,12 +232,12 @@ class AssignLogicMixin:
             messagebox.showwarning("Clipboard", "Dữ liệu rỗng.")
             return
         grid = [r.split("\t") for r in rows]
-        header_map = ["titles", "descs", "dates", "times"][:len(grid[0])]
+        header_map = ["titles", "descs", "texts", "dates", "times"][:len(grid[0])]
         data_rows = grid
-        titles, descs, dates, times = [], [], [], []
+        titles, descs, texts, dates, times = [], [], [], [], []
         for row in data_rows:
-            row = row + [""] * 4
-            cur_title = cur_desc = cur_date = cur_time = None
+            row = row + [""] * 5
+            cur_title = cur_desc = cur_text = cur_date = cur_time = None
             for idx, val in enumerate(row):
                 dest = header_map[idx] if idx < len(header_map) else None
                 if not dest:
@@ -242,10 +245,12 @@ class AssignLogicMixin:
                 s = val.strip()
                 if dest == "titles": cur_title = s
                 elif dest == "descs": cur_desc = s
+                elif dest == "texts": cur_text = s
                 elif dest == "dates": cur_date = s
                 elif dest == "times": cur_time = s
             if cur_title is not None: titles.append(cur_title)
             if cur_desc  is not None: descs.append(cur_desc)
+            if cur_text  is not None: texts.append(cur_text)
             if cur_date  is not None: dates.append(cur_date)
             if cur_time  is not None: times.append(cur_time)
 
@@ -259,6 +264,7 @@ class AssignLogicMixin:
         widgets = {
             "txt_titles": getattr(self, "txt_titles", None),
             "txt_descs":  getattr(self, "txt_descs",  None),
+            "txt_texts":  getattr(self, "txt_texts",  None),
             "txt_dates":  getattr(self, "txt_dates",  None),
             "txt_times":  getattr(self, "txt_times",  None),
         }
@@ -291,6 +297,7 @@ class AssignLogicMixin:
         # widget không có selection vẫn append bình thường.
         _write("txt_titles", titles, insert_at=anchors.get("txt_titles"))
         _write("txt_descs",  descs,  insert_at=anchors.get("txt_descs"))
+        _write("txt_texts",  texts,  insert_at=anchors.get("txt_texts"))
         _write("txt_dates",  dates,  insert_at=anchors.get("txt_dates"))
         _write("txt_times",  times,  insert_at=anchors.get("txt_times"))
 

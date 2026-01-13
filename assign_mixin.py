@@ -141,12 +141,12 @@ class AssignMixin:
 
             for iid in items:
                 vals = list(self.tree.item(iid, "values"))
-                vals += [""] * max(0, 6 - len(vals))
-                ch, _, title, desc, pd, pt = vals
+                vals += [""] * max(0, 7 - len(vals))
+                ch, _, title, desc, text_val, pd, pt = vals
                 new_dir = get_random_unused_mp4(folder, used_paths | session_used)
                 if new_dir:
                     session_used.add(new_dir)
-                    self.tree.item(iid, values=(ch, new_dir, title, desc, pd, pt))
+                    self.tree.item(iid, values=(ch, new_dir, title, desc, text_val, pd, pt))
 
             # Cập nhật self._last_assignments
             if self._last_assignments:
@@ -184,13 +184,14 @@ class AssignMixin:
 
         f1, self.txt_titles = make_section("Titles (one per line)")
         f2, self.txt_descs = make_section("Descriptions (1 line all or multi)")
-        f3, self.txt_dates = make_section("Date (MM/DD/YYYY)")
-        f4, self.txt_times = make_section("Time (HH:MM)")
+        f3, self.txt_texts = make_section("Related video")
+        f4, self.txt_dates = make_section("Date (MM/DD/YYYY)")
+        f5, self.txt_times = make_section("Time (HH:MM)")
 
         self._inputs_paned = paned
-        self._inputs_panes = (f1, f2, f3, f4)
+        self._inputs_panes = (f1, f2, f3, f4, f5)
 
-        for w in (self.txt_titles, self.txt_descs, self.txt_dates, self.txt_times):
+        for w in (self.txt_titles, self.txt_descs, self.txt_texts, self.txt_dates, self.txt_times):
             w.bind("<Control-a>", lambda e, widget=w:
                 (widget.tag_add("sel", "1.0", "end-1c"), "break"))
 
@@ -199,18 +200,21 @@ class AssignMixin:
         paned.add(f2)
         paned.add(f3)
         paned.add(f4)
+        paned.add(f5)
 
     def _build_preview(self, parent):
         frm = ttk.Frame(parent, padding=10)
         frm.pack(fill=tk.BOTH, expand=True)
 
-        cols = ("channel", "directory", "title", "description", "publish_date", "publish_time")
+        cols = ("channel", "directory", "title", "description", "text", "publish_date", "publish_time")
         self.tree = ttk.Treeview(frm, columns=cols, show="headings", height=12)
 
         for col in cols:
             self.tree.heading(col, text=col.capitalize())
             if col == "description":
                 self.tree.column(col, width=420, anchor="w")
+            elif col == "text":
+                self.tree.column(col, width=220, anchor="w")
             elif col == "title":
                 self.tree.column(col, width=300, anchor="w")
             elif col == "channel":
