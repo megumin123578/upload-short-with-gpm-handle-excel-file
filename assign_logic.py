@@ -240,7 +240,7 @@ class AssignLogicMixin:
             messagebox.showwarning("Clipboard", "Dữ liệu rỗng.")
             return
         grid = [r.split("\t") for r in rows]
-        header_map = ["titles", "descs", "dates", "times", "texts"][:len(grid[0])]
+        header_map = ["titles", "descs", "texts", "dates", "times"][:len(grid[0])]
         data_rows = grid
         titles, descs, texts, dates, times = [], [], [], [], []
         for row in data_rows:
