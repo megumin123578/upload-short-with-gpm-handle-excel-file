@@ -190,6 +190,14 @@ class ConcatPage(tk.Frame, ConcatPageUIMixin):
             return "pending"
         return "pending"
 
+    def _status_tag(self, status: str) -> tuple[str, ...]:
+        s = (status or "").strip().lower()
+        if s == "done":
+            return ("done",)
+        if s == "pending":
+            return ("pending",)
+        return ()
+
     def _reset_first_video_statuses(self):
         changed = False
         for row in self.first_video_rows:
@@ -213,7 +221,7 @@ class ConcatPage(tk.Frame, ConcatPageUIMixin):
             values[0] = row.get("path", "")
             values[1] = row.get("time_limit", "")
             values[2] = self._status_display(status, bool(values[0].strip()))
-            tree.item(children[idx], values=values)
+            tree.item(children[idx], values=values, tags=self._status_tag(status))
 
     def _set_first_video_status_by_group(self, group_index: int, status: str):
         row_map = getattr(self, "_first_video_row_map", [])
@@ -329,12 +337,16 @@ class ConcatPage(tk.Frame, ConcatPageUIMixin):
         scroll.grid(row=0, column=4, sticky="ns")
         tree.configure(yscrollcommand=scroll.set)
 
+        tree.tag_configure("pending", background="#FFF3CD", foreground="#111111")
+        tree.tag_configure("done", background="#D4EDDA", foreground="#111111")
+
         self._first_videos_snapshot = list(self.first_video_rows)
         for row in self._get_first_video_rows():
             status = row.get("status", "pending") or "pending"
             tree.insert(
                 "", "end",
-                values=(row["path"], row.get("time_limit", ""), self._status_display(status, True))
+                values=(row["path"], row.get("time_limit", ""), self._status_display(status, True)),
+                tags=self._status_tag(status),
             )
 
         def _ensure_empty_rows(min_rows=20):
@@ -351,7 +363,11 @@ class ConcatPage(tk.Frame, ConcatPageUIMixin):
             limit = limit.strip()
             if not path:
                 return
-            tree.insert("", "end", values=(path, limit, self._status_display("pending", True)))
+            tree.insert(
+                "", "end",
+                values=(path, limit, self._status_display("pending", True)),
+                tags=self._status_tag("pending"),
+            )
 
         editor_state = {"widget": None, "row_id": None, "col_index": 0}
 
@@ -382,7 +398,7 @@ class ConcatPage(tk.Frame, ConcatPageUIMixin):
                 values = list(tree.item(row_id, "values"))
                 values += [""] * max(0, 3 - len(values))
                 values[2] = self._status_display(new_status, True)
-                tree.item(row_id, values=values)
+                tree.item(row_id, values=values, tags=self._status_tag(new_status))
                 try:
                     children = list(tree.get_children())
                     row_idx = children.index(row_id)
@@ -411,11 +427,15 @@ class ConcatPage(tk.Frame, ConcatPageUIMixin):
                 if col_index == 2:
                     normalized = self._status_normalize(new_text)
                     values[2] = self._status_display(normalized, has_path) if has_path else ""
+                    tree.item(row_id, values=values, tags=self._status_tag(normalized))
                 elif col_index == 0 and not has_path:
                     values[2] = ""
+                    tree.item(row_id, values=values, tags=())
                 elif col_index in (0, 1) and has_path and not values[2].strip():
                     values[2] = self._status_display("pending", True)
-                tree.item(row_id, values=values)
+                    tree.item(row_id, values=values, tags=self._status_tag("pending"))
+                else:
+                    tree.item(row_id, values=values)
                 # keep edits in table only
 
             editor.bind("<Return>", lambda e: _commit(True))
@@ -476,8 +496,14 @@ class ConcatPage(tk.Frame, ConcatPageUIMixin):
                         break
                     values[target_col] = val.strip()
                 has_path = bool(values[0].strip())
-                values[2] = self._status_display("pending", has_path) if has_path else ""
-                tree.item(item_id, values=values)
+                if has_path and not values[2].strip():
+                    values[2] = self._status_display("pending", True)
+                    tree.item(item_id, values=values, tags=self._status_tag("pending"))
+                elif not has_path:
+                    values[2] = ""
+                    tree.item(item_id, values=values, tags=())
+                else:
+                    tree.item(item_id, values=values)
             return "break"
 
         def _delete_selected():
@@ -489,11 +515,7 @@ class ConcatPage(tk.Frame, ConcatPageUIMixin):
         tree.bind("<Control-v>", _on_paste)
         tree.bind("<Delete>", lambda e: _delete_selected())
 
-        def _browse_add():
-            paths = filedialog.askopenfilenames(
-                title="Select first videos",
-                filetypes=[("MP4 files", "*.mp4"), ("All files", "*.*")],
-            )
+        def _add_paths(paths):
             if not paths:
                 return
             tree.configure(displaycolumns=())
@@ -513,10 +535,35 @@ class ConcatPage(tk.Frame, ConcatPageUIMixin):
                     children = list(tree.get_children())
                 for offset, p in enumerate(paths):
                     item_id = children[start_idx + offset]
-                    tree.item(item_id, values=(p, "", self._status_display("pending", True)))
+                    tree.item(
+                        item_id,
+                        values=(p, "", self._status_display("pending", True)),
+                        tags=self._status_tag("pending"),
+                    )
             finally:
                 tree.configure(displaycolumns=("path", "limit", "status"))
                 tree.update_idletasks()
+
+        def _browse_add():
+            paths = filedialog.askopenfilenames(
+                title="Select first videos",
+                filetypes=[("MP4 files", "*.mp4"), ("All files", "*.*")],
+            )
+            _add_paths(paths)
+
+        def _parse_drop_paths(data: str) -> list[str]:
+            if not data:
+                return []
+            parts = re.findall(r"{[^}]*}|\S+", data)
+            return [p.strip("{}") for p in parts]
+
+        try:
+            from tkinterdnd2 import DND_FILES
+            if hasattr(tree, "drop_target_register"):
+                tree.drop_target_register(DND_FILES)
+                tree.dnd_bind("<<Drop>>", lambda e: _add_paths(_parse_drop_paths(e.data)))
+        except Exception:
+            pass
 
         def on_close():
             prev = getattr(self, "_first_videos_snapshot", [])
@@ -550,6 +597,20 @@ class ConcatPage(tk.Frame, ConcatPageUIMixin):
                 tree.delete(item)
             _ensure_empty_rows()
 
+        def _mark_all(status: str):
+            for item_id in tree.get_children():
+                values = list(tree.item(item_id, "values"))
+                values += [""] * max(0, 3 - len(values))
+                if not str(values[0]).strip():
+                    continue
+                values[2] = self._status_display(status, True)
+                tree.item(item_id, values=values, tags=self._status_tag(status))
+            for row in self.first_video_rows:
+                if row.get("path"):
+                    row["status"] = status
+            self._first_videos_snapshot = list(self.first_video_rows)
+            self.save_channel_config(force=True)
+
         self._first_videos_tree = tree
         btn_row = ttk.Frame(frm)
         btn_row.grid(row=3, column=0, sticky="we", pady=(6, 0))
@@ -561,6 +622,8 @@ class ConcatPage(tk.Frame, ConcatPageUIMixin):
 
         ttk.Button(btn_left, text="Browser", command=_browse_add).pack(side=tk.LEFT, padx=(0, 6))
         ttk.Button(btn_left, text="Clear", command=on_clear).pack(side=tk.LEFT, padx=(0, 6))
+        ttk.Button(btn_left, text="All Pending", command=lambda: _mark_all("pending")).pack(side=tk.LEFT, padx=(0, 6))
+        ttk.Button(btn_left, text="All Done", command=lambda: _mark_all("done")).pack(side=tk.LEFT, padx=(0, 6))
         ttk.Button(btn_right, text="Save", command=on_close).pack(side=tk.RIGHT)
 
         def _on_win_close():
