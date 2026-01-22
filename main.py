@@ -11,13 +11,7 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
         style.theme_use("clam")
         setup_theme(style, self)
 
-        self.withdraw()    
-        self.attributes("-alpha", 0.0) 
-
-        self._init_done = False
-        self._init_error = None
         self._update_restarted = False
-        self._show_splash()
 
         self._active_nav_key = None
 
@@ -85,6 +79,7 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
         self._show_page("assign")
 
         self.after(1, self._start_init_in_bg)
+        self.after(50, self._equalize_inputs)
 
     # Shell: Sidebar + Content
     def _on_hotkey_save(self, event= None):
@@ -697,66 +692,6 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
         # Knob (trắng)
         cv.create_oval(knob_x, 3, knob_x + 18, 21, fill="#FFFFFF", outline="#DDDDDD")
 
-    def _show_splash(self):
-        self._splash_min_ms, self._splash_started, self._splash_prog, self._init_done = 1200, time.perf_counter(), 0, False
-        self._splash = tk.Toplevel(self)
-        self._splash.overrideredirect(True)
-        try:
-            self._splash.wm_attributes("-topmost", True)
-            self._splash.config(bg="#111111")
-            self._splash.wm_attributes("-transparentcolor", "#111111")
-        except Exception as e:
-            print(f"[Splash transparency not supported] {e}")
-
-        tk.Label(
-            self._splash,
-            text="Loading...",
-            bg="#111111",
-            fg="white",
-            font=("Segoe UI", 14),
-        ).pack(padx=20, pady=(20, 10))
-
-        # --- Thanh tiến trình ---
-        self._splash_pb = ttk.Progressbar(self._splash, mode="determinate", length=260, maximum=100)
-        self._splash_pb.pack(pady=(8, 4))
-
-        style = ttk.Style()
-        style.configure(
-            "Transparent.Horizontal.TProgressbar",
-            troughcolor="#111111",   # cùng màu nền gần đen
-            background="#26FF00"
-        )
-        self._splash_pb.configure(style="Transparent.Horizontal.TProgressbar")
-
-        # --- Căn giữa ---
-        self._splash.update_idletasks()
-        w = self._splash.winfo_reqwidth()
-        h = self._splash.winfo_reqheight()
-        sw = self._splash.winfo_screenwidth()
-        sh = self._splash.winfo_screenheight()
-        x = (sw - w) // 2
-        y = (sh - h) // 3
-        self._splash.geometry(f"{w}x{h}+{x}+{y}")
-
-        self.after(30, self._tick_splash)
-
-    def _tick_splash(self):
-        target = 95 if not self._init_done else 100
-        if self._splash_prog < target:
-            self._splash_prog = min(target, self._splash_prog + 7)  # tốc độ progress
-            try:
-                self._splash_pb["value"] = self._splash_prog
-            except Exception:
-                pass
-    
-        if self._init_done and self._splash_prog >= 100:
-            elapsed_ms = (time.perf_counter() - self._splash_started) * 1000
-            wait = max(0, int(self._splash_min_ms - elapsed_ms))
-            self.after(wait, self._close_splash_and_show_main)
-            return
-
-        self.after(30, self._tick_splash)
-    
     def _start_init_in_bg(self):
         threading.Thread(target=self._finish_startup_safe, daemon=True).start()
 
@@ -782,32 +717,9 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
         except Exception as e:
             import traceback
             traceback.print_exc()
-            self._init_error = str(e)
         finally:
-            self._init_done = True
-
-    def _close_splash(self):
-        if hasattr(self, "_splash") and self._splash and self._splash.winfo_exists():
-            self._splash.destroy()
-        self._splash = None
-
-    def _close_splash_and_show_main(self):
-        self._close_splash()
-        self.deiconify()
-        self.lift()
-        try:
-            self.state("zoomed")
-        except Exception:
             pass
-        self.attributes("-alpha", 1.0)  
-        self.after(50, self._equalize_inputs)
-        # nếu có lỗi khi init, báo sau khi hiện app để không kẹt splash
-        if hasattr(self, "_init_error") and self._init_error:
-            try:
-                messagebox.showerror("Startup error", self._init_error)
-            except Exception:
-                pass
-    
+
     def _equalize_inputs(self, *_):
         if not hasattr(self, "_inputs_paned"): 
             return
