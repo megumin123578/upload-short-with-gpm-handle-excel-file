@@ -43,6 +43,7 @@ class ConcatPageUIMixin:
             channel_frame, textvariable=self.concat_mode, state="readonly", width=60,justify='center', font=("Trebuchet MS", 10),
             values=[
                 "Concat with music background",
+                "Concat with first video",
                 "Concat with outro music",
                 "Normal concat (no music)",
                 "Concat and Reverse",
@@ -53,7 +54,7 @@ class ConcatPageUIMixin:
         )
         self.combo_mode.grid(row=0, column=4, sticky="ew", padx=5)
         self.combo_mode.current(0)
-        self.combo_mode.bind("<<ComboboxSelected>>", lambda e: (self.save_channel_config(), self._update_mode_visibility(), self.reload_groups()))
+        self.combo_mode.bind("<<ComboboxSelected>>", lambda e: (self.save_channel_config(force=True), self._update_mode_visibility(), self.reload_groups()))
 
         self.btn_advanced = ttk.Button(
             channel_frame, text="Advanced ƒ-,",style="Advanced.TButton",
@@ -76,8 +77,8 @@ class ConcatPageUIMixin:
         self.combo_group_size.grid(row=0, column=1, sticky="w", padx=5)
         self.combo_group_size.bind("<<ComboboxSelected>>", self._on_group_size_change)
 
-        ttk.Label(param_frame, text="Total Videos to Export:", font=("Trebuchet MS", 10, "bold"))\
-            .grid(row=0, column=2, sticky="e", padx=(10, 4))
+        self.lbl_limit_videos = ttk.Label(param_frame, text="Total Videos to Export:", font=("Trebuchet MS", 10, "bold"))
+        self.lbl_limit_videos.grid(row=0, column=2, sticky="e", padx=(10, 4))
         
         limit_display = ["All"] + [str(i) for i in range(1, 101)]
         self.limit_videos_display = tk.StringVar(value="All")  # StringVar Ž` ¯Ÿ hi ¯Ÿn th ¯<
@@ -114,6 +115,16 @@ class ConcatPageUIMixin:
             width=6, values=list(range(0,60))
         )
         self.combo_time_limit_sec.grid(row=0, column=10, sticky='w', padx=5)
+
+        self.btn_first_videos = ttk.Button(
+            param_frame,
+            text="First video",
+            style="Secondary.TButton",
+            command=self._open_first_videos_table,
+        )
+        self.btn_first_videos.grid(row=2, column=1, sticky="w", padx=5)
+
+        self.btn_first_videos.grid_remove()
 
         def select_all_text(event):
             event.widget.selection_range(0, 'end')

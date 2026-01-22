@@ -186,9 +186,6 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
         mapped_dir = self._get_mapped_folder(name, self.selected_profile_var.get().strip())
         mapped_note = f" | mapped: {mapped_dir or '(none)'}"
         self._set_status(f"Loaded {len(channels)} channels from {name}{mapped_note}")
-
-        mapped_note = f" | mapped: {mapped_dir or '(none)'}"
-        self._set_status(f"Loaded {len(channels)} channels from {name}{mapped_note}")
         
         # --- Khôi phục Save to ---
         profile = self.selected_profile_var.get().strip()
@@ -519,8 +516,6 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
             pass
 
 
-        # cập nhật preview/status theo map mới
-        self._schedule_preview()
 
     def _check_for_updates(self):
         def worker():
@@ -713,17 +708,13 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
         except Exception as e:
             print(f"[Splash transparency not supported] {e}")
 
-        img_path = r'assets\splash.png'
-        self._splash_img = None
-        if os.path.exists(img_path):
-            try:
-                self._splash_img = tk.PhotoImage(file=img_path)
-                tk.Label(self._splash, image=self._splash_img, bg="#111111", bd=0).pack(padx=20, pady=(20, 10))
-            except Exception as e:
-                print(f"Error loading splash image: {e}")
-                tk.Label(self._splash, text="Loading...", bg="#111111", fg="white", font=("Segoe UI", 14)).pack(padx=20, pady=(20, 10))
-        else:
-            tk.Label(self._splash, text="Loading...", bg="#111111", fg="white", font=("Segoe UI", 14)).pack(padx=20, pady=(20, 10))
+        tk.Label(
+            self._splash,
+            text="Loading...",
+            bg="#111111",
+            fg="white",
+            font=("Segoe UI", 14),
+        ).pack(padx=20, pady=(20, 10))
 
         # --- Thanh tiến trình ---
         self._splash_pb = ttk.Progressbar(self._splash, mode="determinate", length=260, maximum=100)

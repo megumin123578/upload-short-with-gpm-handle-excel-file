@@ -2,10 +2,17 @@
   "input_folder": "E:/ghep xong",
   "save_folder": "E:/storage",
   "bgm_folder": "",
-  "group_size": 1,
+  "group_size": 2,
+  "first_video_rows": [
+    {
+      "path": "E:/storage2/904.mp4",
+      "time_limit": "2",
+      "status": "done"
+    }
+  ],
   "bgm_volume": 0.49946865037194477,
   "limit_videos": 1,
-  "concat_mode": "Normal concat (no music)",
+  "concat_mode": "Concat with first video",
   "main_video_volume": 1.0,
   "video_volume": 0.2,
   "outro_mode": "By group count",

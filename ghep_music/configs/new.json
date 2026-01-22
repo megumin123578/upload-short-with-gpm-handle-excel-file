@@ -10,6 +10,9 @@
   "video_volume": 0.2,
   "outro_mode": "By group count",
   "outro_duration": 15,
+  "cut_scope": "first",
+  "cut_frame_first": 0,
+  "cut_frame_last": 0,
   "video_settings": {
     "resolution": "1080x1920",
     "fps": 60,
