@@ -57,7 +57,7 @@ class ConcatPageUIMixin:
         self.combo_mode.bind("<<ComboboxSelected>>", lambda e: (self.save_channel_config(force=True), self._update_mode_visibility(), self.reload_groups()))
 
         self.btn_advanced = ttk.Button(
-            channel_frame, text="Advanced ƒ-,",style="Advanced.TButton",
+            channel_frame, text="Advanced", style="Advanced.TButton",
             command=self._toggle_advanced
         )
         self.btn_advanced.grid(row=0, column=8, sticky="w", padx=8)
