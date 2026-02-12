@@ -49,6 +49,7 @@ class MainUIMixin:
 
         add_btn("Auto Upload", "assign", lambda: self._show_page("assign"))
         add_btn("Concatenation", "concat", lambda: self._show_page("concat"))
+        add_btn("Watch", "watch", lambda: self._show_page("watch"))
 
         # Status bar
         bar = ttk.Frame(self, relief=tk.SUNKEN, padding=6)

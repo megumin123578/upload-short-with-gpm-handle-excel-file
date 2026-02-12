@@ -2,6 +2,7 @@ from imports import *
 from assign_mixin import AssignMixin
 from assign_logic import AssignLogicMixin
 from main_ui import MainUIMixin
+import random
 
 
 class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
@@ -24,6 +25,8 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
         self.status_var = tk.StringVar(value="Ready.")
         self._channels_cache = []
         self._last_assignments = None
+        self._watch_last_assignments = None
+        self._watch_input_pools = None
         self.selected_profile_var = tk.StringVar(value="")
 
         self.date_entry = None
@@ -70,6 +73,7 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
         self.pages = {}
         self._lazy_page_builders = {
             "concat": self._build_concat_page,
+            "watch": self._build_watch_page,
         }
         self._build_assign_page()
 
@@ -105,6 +109,176 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
         # Nhúng UI concat
         self.concat_page = ConcatPage(page) 
         self.concat_page.pack(fill="both", expand=True)
+
+    def _build_watch_page(self):
+        page = ttk.Frame(self._content)
+        self.pages["watch"] = page
+        self.watch_rows_var = tk.IntVar(value=20)
+
+        top = ttk.Frame(page, padding=(10, 10, 10, 0))
+        top.pack(fill=tk.X)
+        ttk.Label(top, text="Watch").pack(side=tk.LEFT)
+        ttk.Label(
+            top,
+            text="(uses current Group/Mode from Auto Upload)",
+        ).pack(side=tk.LEFT, padx=(8, 0))
+        ttk.Label(top, text="Rows:").pack(side=tk.LEFT, padx=(20, 6))
+        tk.Spinbox(top, from_=1, to=10000, width=6, textvariable=self.watch_rows_var).pack(side=tk.LEFT)
+        ttk.Button(top, text="Reroll", command=self._watch_reroll).pack(side=tk.LEFT, padx=(12, 6))
+        ttk.Button(top, text="Clear", command=self._watch_clear).pack(side=tk.LEFT, padx=(0, 6))
+        ttk.Button(top, text="Save", command=self._watch_save_excel).pack(side=tk.LEFT)
+
+        input_wrap = ttk.Frame(page, padding=10)
+        input_wrap.pack(fill=tk.BOTH, expand=True)
+        paned = tk.PanedWindow(input_wrap, orient=tk.HORIZONTAL, sashrelief=tk.RAISED, sashwidth=6)
+        paned.pack(fill=tk.BOTH, expand=True)
+
+        def make_section(label_text):
+            frame = ttk.Frame(paned)
+            ttk.Label(frame, text=label_text).pack(anchor="w")
+            txt = tk.Text(frame, height=8, wrap=tk.WORD)
+            txt.pack(fill=tk.BOTH, expand=True)
+            txt.bind("<Control-a>", lambda e, widget=txt: (widget.tag_add("sel", "1.0", "end-1c"), "break"))
+            return frame, txt
+
+        f1, self.watch_txt_comments = make_section("Comment pool (one per line)")
+        f2, self.watch_txt_likes = make_section("Like pool (one per line)")
+        for fr in (f1, f2):
+            paned.add(fr)
+
+        preview_wrap = ttk.Frame(page, padding=(10, 0, 10, 10))
+        preview_wrap.pack(fill=tk.BOTH, expand=True)
+        cols = ("channel", "comment", "like")
+        self.watch_tree = ttk.Treeview(preview_wrap, columns=cols, show="headings", height=12)
+        for col in cols:
+            self.watch_tree.heading(col, text=col.capitalize())
+            if col == "channel":
+                self.watch_tree.column(col, width=200, anchor="w")
+            elif col == "comment":
+                self.watch_tree.column(col, width=520, anchor="w")
+            elif col == "like":
+                self.watch_tree.column(col, width=120, anchor="w")
+        vsb = ttk.Scrollbar(preview_wrap, orient="vertical", command=self.watch_tree.yview)
+        self.watch_tree.configure(yscroll=vsb.set)
+        self.watch_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        vsb.pack(side=tk.LEFT, fill=tk.Y)
+
+    def _watch_collect_pools(self):
+        comments = normalize_lines(self.watch_txt_comments.get("1.0", tk.END))
+        likes = normalize_lines(self.watch_txt_likes.get("1.0", tk.END))
+
+        if not comments:
+            raise ValueError("Watch: Comment pool is empty.")
+        if not likes:
+            raise ValueError("Watch: Like pool is empty.")
+        return {
+            "comments": comments,
+            "likes": likes,
+        }
+
+    def _watch_generate_assignments(self, row_count, pools):
+        if not self._channels_cache:
+            raise ValueError("No channels found in selected CSV.")
+
+        group = self.group_file_var.get().strip()
+        if not group:
+            raise ValueError("Please select a group in Auto Upload first.")
+
+        mode = self.mode_var.get()
+        chosen_profile = self.selected_profile_var.get().strip() if mode == "channels" else None
+
+        rows = []
+        for i in range(row_count):
+            if mode == "channels" and chosen_profile:
+                channel = chosen_profile
+            else:
+                channel = self._channels_cache[i % len(self._channels_cache)]
+
+            rows.append(
+                (
+                    channel,
+                    random.choice(pools["comments"]),
+                    random.choice(pools["likes"]),
+                )
+            )
+        return rows
+
+    def _watch_preview(self):
+        try:
+            row_count = int(self.watch_rows_var.get())
+            if row_count <= 0:
+                raise ValueError("Rows must be > 0.")
+            pools = self._watch_collect_pools()
+            rows = self._watch_generate_assignments(row_count, pools)
+        except Exception as e:
+            messagebox.showerror("Watch", str(e))
+            return
+
+        self.watch_tree.delete(*self.watch_tree.get_children())
+        for row in rows:
+            self.watch_tree.insert("", tk.END, values=row)
+
+        self._watch_input_pools = pools
+        self._watch_last_assignments = rows
+        self._set_status(f"Watch previewed {len(rows)} rows.")
+
+    def _watch_reroll(self):
+        try:
+            row_count = len(self._watch_last_assignments or [])
+            if row_count <= 0:
+                row_count = int(self.watch_rows_var.get())
+            pools = self._watch_input_pools or self._watch_collect_pools()
+            rows = self._watch_generate_assignments(row_count, pools)
+        except Exception as e:
+            messagebox.showerror("Watch", str(e))
+            return
+
+        self.watch_tree.delete(*self.watch_tree.get_children())
+        for row in rows:
+            self.watch_tree.insert("", tk.END, values=row)
+
+        self._watch_last_assignments = rows
+        self._set_status(f"Watch rerolled {len(rows)} rows.")
+
+    def _watch_clear(self):
+        for w in (
+            self.watch_txt_comments,
+            self.watch_txt_likes,
+        ):
+            w.delete("1.0", tk.END)
+        self.watch_tree.delete(*self.watch_tree.get_children())
+        self._watch_last_assignments = None
+        self._watch_input_pools = None
+        self._set_status("Cleared Watch inputs and preview.")
+
+    def _watch_save_excel(self):
+        if not self._watch_last_assignments:
+            self._set_status("Watch: nothing to save.")
+            return
+
+        def worker():
+            try:
+                out_name = "auto_watch.xlsx"
+                out_path = os.path.join(OUTPUT_DIR, out_name)
+                from openpyxl import Workbook
+                from openpyxl.styles import Font
+                wb = Workbook()
+                ws = wb.active
+                ws.title = "Watch"
+                ws.append(["channel", "comment", "like"])
+                for c_idx in range(1, 4):
+                    ws.cell(row=1, column=c_idx).font = Font(bold=True)
+                for row in self._watch_last_assignments:
+                    ws.append(list(row))
+                if os.path.exists(out_path):
+                    os.remove(out_path)
+                wb.save(out_path)
+
+                self._set_status(f"Watch saved Excel: {out_path}")
+            except Exception as e:
+                messagebox.showerror("Watch", f"Failed to save Excel:\n{e}")
+
+        threading.Thread(target=worker, daemon=True).start()
 
 
 
