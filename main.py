@@ -173,7 +173,9 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
         vsb = ttk.Scrollbar(preview_wrap, orient="vertical", command=self.watch_tree.yview)
         self.watch_tree.configure(yscroll=vsb.set)
         self.watch_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        vsb.pack(side=tk.LEFT, fill=tk.Y)        # Load saved data first to avoid trace callbacks overwriting file with empty defaults.
+        vsb.pack(side=tk.LEFT, fill=tk.Y)
+
+        # Load saved data first to avoid trace callbacks overwriting file with empty defaults.
         self._watch_load_state()
 
         self.watch_rows_var.trace_add("write", lambda *_: self._watch_save_state())
@@ -256,19 +258,16 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
         }
 
     def _watch_generate_assignments(self, row_count, pools):
-        true_count = min(row_count, pools["true_count"])
-        comment_true_idx = set(random.sample(range(row_count), true_count)) if true_count > 0 else set()
-        like_true_idx = set(random.sample(range(row_count), true_count)) if true_count > 0 else set()
+        value_count = max(0, int(pools["true_count"]))
+        channel_csv = ",".join(pools["channels"])
 
         rows = []
-        for idx in range(row_count):
-            rows.append(
-                (
-                    random.choice(pools["channels"]),
-                    "true" if idx in comment_true_idx else "false",
-                    "true" if idx in like_true_idx else "false",
-                )
-            )
+        for _ in range(max(1, row_count)):
+            comment_values = [random.choice(("true", "false")) for _ in range(value_count)]
+            like_values = [random.choice(("true", "false")) for _ in range(value_count)]
+            comment_csv = ",".join(comment_values)
+            like_csv = ",".join(like_values)
+            rows.append((channel_csv, comment_csv, like_csv))
         return rows
 
     def _watch_preview(self):
@@ -292,9 +291,7 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
 
     def _watch_reroll(self):
         try:
-            row_count = len(self._watch_last_assignments or [])
-            if row_count <= 0:
-                row_count = int(self.watch_rows_var.get())
+            row_count = int(self.watch_rows_var.get())
             pools = self._watch_input_pools or self._watch_collect_pools()
             rows = self._watch_generate_assignments(row_count, pools)
         except Exception as e:
@@ -1121,3 +1118,6 @@ if __name__ == "__main__":
     rearrange_and_delete_junk_files() # rearrange files first
     app = App()
     app.mainloop()
+
+
+
