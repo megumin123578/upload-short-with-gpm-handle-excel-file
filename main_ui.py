@@ -47,8 +47,8 @@ class MainUIMixin:
             b.bind("<Enter>", on_enter)
             b.bind("<Leave>", on_leave)
 
-        add_btn("Auto Upload", "assign", lambda: self._show_page("assign"))
         add_btn("Concatenation", "concat", lambda: self._show_page("concat"))
+        add_btn("Auto Upload", "assign", lambda: self._show_page("assign"))
         add_btn("Watch", "watch", lambda: self._show_page("watch"))
 
         # Status bar
@@ -78,3 +78,4 @@ class MainUIMixin:
         if key in self.pages:
             self.pages[key].pack(fill="both", expand=True)
         self._highlight_nav(key)
+
