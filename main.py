@@ -424,8 +424,8 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
                 wb = Workbook()
                 ws = wb.active
                 ws.title = "Watch"
-                ws.append(["channel", "comment", "like", "search", "like_comment_count"])
-                for c_idx in range(1, 6):
+                ws.append(["channel", "channel_count", "comment", "like", "search", "like_comment_count"])
+                for c_idx in range(1, 7):
                     ws.cell(row=1, column=c_idx).font = Font(bold=True)
 
                 try:
@@ -433,11 +433,13 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
                 except Exception:
                     like_comment_count = 0
 
+                channel_count = len(normalize_lines(self.watch_txt_channels.get("1.0", tk.END)))
+
                 for row in self._watch_last_assignments:
                     vals = list(row)
                     if len(vals) < 4:
                         vals += [""] * (4 - len(vals))
-                    ws.append(vals[:4] + [like_comment_count])
+                    ws.append([vals[0], channel_count, vals[1], vals[2], vals[3], like_comment_count])
 
                 if os.path.exists(out_path):
                     os.remove(out_path)
@@ -1195,6 +1197,7 @@ if __name__ == "__main__":
     rearrange_and_delete_junk_files() # rearrange files first
     app = App()
     app.mainloop()
+
 
 
 
