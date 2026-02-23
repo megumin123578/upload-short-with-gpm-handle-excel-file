@@ -37,7 +37,7 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
         self.step_min_var = tk.IntVar(value=0)
 
         self._monetization_vars = {}
-        self.monetization_var = tk.BooleanVar(value=False)  # giá»¯ biáº¿n táº¡m thá»i cho UI
+        self.monetization_var = tk.BooleanVar(value=False) 
 
         self._group_settings = load_group_settings()
         self._restoring = False
@@ -97,7 +97,7 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
     # Shell: Sidebar + Content
     def _on_hotkey_save(self, event= None):
         self._save_excel()
-        return "break" #trÃ¡nh hÃ nh vi máº·c Ä‘á»‹nh
+        return "break" 
     def _on_hotkey_paste(self, event=None):
         self._paste_from_clipboard()
         return "break"  
@@ -354,11 +354,17 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
                 wb = Workbook()
                 ws = wb.active
                 ws.title = "Watch"
-                ws.append(["channel", "comment", "like"])
-                for c_idx in range(1, 4):
+                ws.append(["channel", "comment", "like", "like_comment_count"])
+                for c_idx in range(1, 5):
                     ws.cell(row=1, column=c_idx).font = Font(bold=True)
+
+                try:
+                    like_comment_count = int((self.watch_true_count_var.get() or "0").strip())
+                except Exception:
+                    like_comment_count = 0
+
                 for row in self._watch_last_assignments:
-                    ws.append(list(row))
+                    ws.append(list(row) + [like_comment_count])
                 if os.path.exists(out_path):
                     os.remove(out_path)
                 wb.save(out_path)
@@ -368,12 +374,6 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
                 messagebox.showerror("Watch", f"Failed to save Excel:\n{e}")
 
         threading.Thread(target=worker, daemon=True).start()
-
-
-
-
-
-
 
     def _refresh_group_files(self, load_channels: bool = True):
         files = list_group_csvs(GROUPS_DIR)
@@ -399,7 +399,7 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
         if not name:
             return
 
-        self._restoring = True  # Báº®T Äáº¦U náº¡p
+        self._restoring = True  
 
         csv_path = os.path.join(GROUPS_DIR, name + ".csv")
         channels = read_channels_from_csv(csv_path)
@@ -409,12 +409,12 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
         settings_all = self._group_settings.get(name, {})
         meta = settings_all.get("__meta__", {}) if isinstance(settings_all, dict) else {}
 
-        # 1) KhÃ´i phá»¥c mode
+       
         loaded_mode = meta.get("mode")
         if loaded_mode in ("titles", "channels"):
             self.mode_var.set(loaded_mode)
 
-        # 2) KhÃ´i phá»¥c last profile
+     
         last_profile = meta.get("last_profile", "")
         if last_profile and (last_profile in self._channels_cache):
             self.selected_profile_var.set(last_profile)
@@ -427,7 +427,6 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
                 else:
                     self.selected_profile_var.set(self._channels_cache[0])
 
-        # 3) Náº P monetization CHO PROFILE ÄÃƒ CHá»ŒN (TRÆ¯á»šC khi gá»i _on_mode_change)
         profile = self.selected_profile_var.get().strip()
         if profile:
             monet = settings_all.get(profile, {}).get("monetization", False)
@@ -436,7 +435,6 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
         else:
             self.monetization_var.set(False)
 
-        # 4) Render UI theo mode/profile (khÃ´ng cho phÃ©p lÆ°u trong lÃºc restoring)
         self._on_mode_change()
 
         self._refresh_channel_stats_label()
@@ -445,7 +443,6 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
         mapped_note = f" | mapped: {mapped_dir or '(none)'}"
         self._set_status(f"Loaded {len(channels)} channels from {name}{mapped_note}")
         
-        # --- KhÃ´i phá»¥c Save to ---
         profile = self.selected_profile_var.get().strip()
         settings_all = self._group_settings.get(name, {})
 
@@ -454,13 +451,12 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
         else:
             last_folder = settings_all.get("__group__", {}).get("move_folder", "")
 
-        # fallback: file file config cÅ©
         if not last_folder:
             last_folder = load_group_config(name) or load_group_config(name + ".csv") or ""
 
         self.move_folder_var.set(last_folder)
         # --- end Save to ---
-        self._restoring = False  # Káº¾T THÃšC náº¡p
+        self._restoring = False  
 
     def _clear_inputs(self):
         self.txt_titles.delete("1.0", tk.END)
@@ -710,7 +706,6 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
             return
         folder = os.path.abspath(folder)
 
-        # Quyáº¿t Ä‘á»‹nh key ghi vÃ o file config
         active_profile = self.selected_profile_var.get().strip()
         use_profile_key = (self.mode_var.get() == "channels" and bool(active_profile))
 
@@ -729,7 +724,6 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
             keys_to_remove = {key_plain, key_csv}
             status_target = name
 
-        # Äá»c & ghi láº¡i file config, thay key tÆ°Æ¡ng á»©ng
         lines = []
         if os.path.exists(CONFIG_PATH):
             with open(CONFIG_PATH, "r", encoding="utf-8") as f:
@@ -753,11 +747,9 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
             messagebox.showerror("Error", f"Error when write:\n{e}")
             return
 
-        # cáº­p nháº­t preview/status theo map má»›i
         self._schedule_preview()
         self._refresh_channel_stats_label()
 
-        # --- Cáº­p nháº­t láº¡i label sá»‘ lÆ°á»£ng channel + path map ---
         try:
             group_name = self.group_file_var.get().strip()
             if group_name:
@@ -770,7 +762,6 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
                     text = f"{count} channels | (no folder)"
                 self.channel_count_lbl.config(text=text)
         except Exception:
-            # náº¿u lá»—i thÃ¬ thÃ´i, khÃ´ng lÃ m crash app
             pass
 
 
@@ -793,7 +784,7 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
 
     def _restart_app(self):
         if self._update_restarted:
-            return  # trÃ¡nh restart láº§n 2
+            return  
         self._update_restarted = True
 
         python = sys.executable
@@ -828,7 +819,6 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
     def _on_mode_change(self):
         if self.mode_var.get() == 'channels':
             self.profile_slot.pack(side=tk.LEFT, padx=(8,0))
-            # báº£o Ä‘áº£m toggle hiá»‡n
             if hasattr(self, "_mon_label"):
                 self._mon_label.grid(row=0, column=2, padx=(16, 6))
             if hasattr(self, "_mon_container"):
@@ -836,13 +826,11 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
             self._render_monetize_toggle()
         else:
             self.profile_slot.pack_forget()
-            # áº©n toggle khi khÃ´ng á»Ÿ channel mode
             if hasattr(self, "_mon_label"):
                 self._mon_label.grid_forget()
             if hasattr(self, "_mon_container"):
                 self._mon_container.grid_forget()
 
-        # chá»‰ save khi Ä‘Ã£ cÃ³ profile
         if self.selected_profile_var.get().strip() and not getattr(self, "_restoring", False):
             self._save_group_settings()
                 
@@ -851,12 +839,10 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
         cur = self.selected_profile_var.get().strip()
 
         if self.mode_var.get() == 'channels':
-            # á»ž channel mode: luÃ´n cá»‘ gáº¯ng cÃ³ 1 profile há»£p lá»‡
             if (not cur) or (cur not in self._channels_cache):
                 if self._channels_cache:
                     self.selected_profile_var.set(self._channels_cache[0])
         else:
-            # á»ž profile mode: náº¿u selection cÅ© khÃ´ng cÃ²n há»£p lá»‡ thÃ¬ clear
             if cur and cur not in self._channels_cache:
                 self.selected_profile_var.set('')
 
@@ -879,7 +865,6 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
                 "move_folder": move_folder
             }
         else:
-            # LÆ°u chung cho group
             self._group_settings[group]["__group__"] = {
                 "mode": "titles",
                 "move_folder": move_folder
@@ -952,7 +937,6 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
         cv.create_oval(23, 1, 45, 23, fill=track, outline=track)
         cv.create_rectangle(12, 1, 34, 23, fill=track, outline=track)
 
-        # Knob (tráº¯ng)
         cv.create_oval(knob_x, 3, knob_x + 18, 21, fill="#FFFFFF", outline="#DDDDDD")
 
     def _start_init_in_bg(self):
@@ -1028,8 +1012,6 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
 
         old_values = list(self.tree.item(item_id, "values"))
         old_text = old_values[col_index] if col_index < len(old_values) else ""
-
-        # Náº¿u Ä‘Ã£ cÃ³ editor thÃ¬ destroy trÆ°á»›c
         self._destroy_cell_editor()
 
         editor = tk.Entry(self.tree)
@@ -1123,7 +1105,6 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
                 return
 
             count = len(self._channels_cache)
-            # á»ž channel mode thÃ¬ dÃ¹ng mapping theo profile, cÃ²n láº¡i dÃ¹ng theo group
             profile = self.selected_profile_var.get().strip() if self.mode_var.get() == "channels" else None
             mapped_dir = self._get_mapped_folder(group_name, profile)
 
@@ -1140,6 +1121,8 @@ if __name__ == "__main__":
     rearrange_and_delete_junk_files() # rearrange files first
     app = App()
     app.mainloop()
+
+
 
 
 
