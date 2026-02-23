@@ -18,6 +18,7 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
 
         self.title(APP_TITLE)
         self.minsize(1000, 600)
+        self.after(0, self._maximize_window)
 
         # ====== STATE ======
         self.group_file_var = tk.StringVar(value="")
@@ -86,6 +87,24 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
         self.after(1, self._start_init_in_bg)
         self.after(50, self._equalize_inputs)
 
+
+    def _maximize_window(self):
+        try:
+            self.state("zoomed")
+            return
+        except Exception:
+            pass
+        try:
+            self.wm_state("zoomed")
+            return
+        except Exception:
+            pass
+        try:
+            sw = self.winfo_screenwidth()
+            sh = self.winfo_screenheight()
+            self.geometry(f"{sw}x{sh}+0+0")
+        except Exception:
+            pass
 
     def _on_app_close(self):
         try:
@@ -1155,6 +1174,8 @@ if __name__ == "__main__":
     rearrange_and_delete_junk_files() # rearrange files first
     app = App()
     app.mainloop()
+
+
 
 
 

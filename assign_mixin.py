@@ -219,19 +219,19 @@ class AssignMixin:
             else:
                 self.tree.heading(col, text=col.capitalize())
             if col == "description":
-                self.tree.column(col, width=420, anchor="w", stretch=False)
+                self.tree.column(col, width=420, anchor="w")
             elif col == "related_video":
-                self.tree.column(col, width=220, anchor="w", stretch=False)
+                self.tree.column(col, width=220, anchor="w")
             elif col == "title":
-                self.tree.column(col, width=300, anchor="w", stretch=False)
+                self.tree.column(col, width=300, anchor="w")
             elif col == "channel":
-                self.tree.column(col, width=200, anchor="w", stretch=False)
+                self.tree.column(col, width=200, anchor="w")
             elif col == "publish_date":
-                self.tree.column(col, width=120, anchor="w", stretch=False)
+                self.tree.column(col, width=120, anchor="w")
             elif col == "publish_time":
-                self.tree.column(col, width=100, anchor="w", stretch=False)
+                self.tree.column(col, width=100, anchor="w")
             elif col == "directory":
-                self.tree.column(col, width=240, anchor="w", stretch=False)
+                self.tree.column(col, width=240, anchor="w")
 
         vsb = ttk.Scrollbar(frm, orient="vertical", command=self.tree.yview)
         self.tree.configure(yscroll=vsb.set)
@@ -300,5 +300,6 @@ class AssignMixin:
         
 
     
+
 
 
