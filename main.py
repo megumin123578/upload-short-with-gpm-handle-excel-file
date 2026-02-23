@@ -289,6 +289,9 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
 
     def _watch_collect_pools(self):
         channels = normalize_lines(self.watch_txt_channels.get("1.0", tk.END))
+        comment_pool = normalize_lines(self.watch_txt_comments.get("1.0", tk.END))
+        search_pool = normalize_lines(self.watch_txt_searches.get("1.0", tk.END))
+
         count_raw = self.watch_true_count_var.get().strip()
         comment_rate_raw = self.watch_comment_rate_var.get().strip()
         like_rate_raw = self.watch_like_rate_var.get().strip()
@@ -315,6 +318,8 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
 
         return {
             "channels": channels,
+            "comment_pool": comment_pool,
+            "search_pool": search_pool,
             "true_count": true_count,
             "comment_rate": comment_rate,
             "like_rate": like_rate,
@@ -323,19 +328,40 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
 
     def _watch_generate_assignments(self, row_count, pools):
         value_count = max(0, int(pools["true_count"]))
-        channel_csv = ",".join(pools["channels"])
+        channel_csv = ";".join(pools["channels"])
         comment_rate = float(pools["comment_rate"]) / 100.0
         like_rate = float(pools["like_rate"]) / 100.0
         search_rate = float(pools["search_rate"]) / 100.0
 
+        comment_pool = pools.get("comment_pool", [])
+        search_pool = pools.get("search_pool", [])
+
         rows = []
         for _ in range(max(1, row_count)):
-            comment_values = [("true" if random.random() < comment_rate else "false") for _ in range(value_count)]
-            like_values = [("true" if random.random() < like_rate else "false") for _ in range(value_count)]
-            search_values = [("true" if random.random() < search_rate else "false") for _ in range(value_count)]
-            comment_csv = ",".join(comment_values)
-            like_csv = ",".join(like_values)
-            search_csv = ",".join(search_values)
+            comment_values = []
+            like_values = []
+            search_values = []
+
+            for _i in range(value_count):
+                c_true = (random.random() < comment_rate)
+                l_true = (random.random() < like_rate)
+                s_true = (random.random() < search_rate)
+
+                if c_true and comment_pool:
+                    comment_values.append(random.choice(comment_pool))
+                else:
+                    comment_values.append("false" if not c_true else "true")
+
+                like_values.append("true" if l_true else "false")
+
+                if s_true and search_pool:
+                    search_values.append(random.choice(search_pool))
+                else:
+                    search_values.append("false" if not s_true else "true")
+
+            comment_csv = ";".join(comment_values)
+            like_csv = ";".join(like_values)
+            search_csv = ";".join(search_values)
             rows.append((channel_csv, comment_csv, like_csv, search_csv))
         return rows
 
@@ -376,17 +402,11 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
         self._set_status(f"Watch rerolled {len(rows)} rows.")
 
     def _watch_clear(self):
-        for w in (
-            self.watch_txt_comments,
-            self.watch_txt_channels,
-            self.watch_txt_searches,
-        ):
-            w.delete("1.0", tk.END)
         self.watch_tree.delete(*self.watch_tree.get_children())
         self._watch_last_assignments = None
         self._watch_input_pools = None
         self._watch_save_state()
-        self._set_status("Cleared Watch inputs and preview.")
+        self._set_status("Cleared Watch preview.")
 
     def _watch_save_excel(self):
         if not self._watch_last_assignments:
@@ -1174,6 +1194,9 @@ if __name__ == "__main__":
     rearrange_and_delete_junk_files() # rearrange files first
     app = App()
     app.mainloop()
+
+
+
 
 
 

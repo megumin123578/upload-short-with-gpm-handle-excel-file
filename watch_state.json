@@ -3,18 +3,22 @@
   "true_count": "5",
   "comment_rate": "30",
   "like_rate": "10",
-  "comments_text": "It performs a pixel-by-pixel scan in the area around the bottom-right corner of the window, hammering it with simulated mouse clicks to detect exactly where it responds to those clicks (red), where it’s about to resize (green), where it’s about to resize vertically or horizontally only (yellow), and where it doesn’t receive any mouse events at all (blue).\n\nAnd indeed, the window resize areas now follow the corner radius instead of using square regions:",
-  "channels_text": "a\nb\nc\nd\ne\nf\ng\nh\ni",
+  "search_rate": "50",
+  "comments_text": "This took most of the day and required multiple approaches and many failed attempts, but I did eventually get it installed via the very cool stable-diffusion-webui project. Excited, I immediately start generating a picture of a litter of kittens cuddling and sleeping together, because what else could I possibly generate?\n\nSuddenly the microwave timer goes off. Food is done I guess. I didn't realize my partner was heating up dinner already, it is a little early for that. Microwave's tone sounds a bit off too, I hope it isn't broken or something.\n\nBut more importantly, I now have a cute (if a little creepy) picture of kittens!",
+  "channels_text": "a\nb\nc\nd\ne\nf\ng\nh\nj\n",
+  "searches_text": "123\ndef\nsiuu",
   "assignments": [
     [
-      "a,b,c,d,e,f,g,h,i",
-      "false,false,false,false,true",
-      "false,false,false,false,false"
+      "a;b;c;d;e;f;g;h;j",
+      "false;false;false;false;Suddenly the microwave timer goes off. Food is done I guess. I didn't realize my partner was heating up dinner already, it is a little early for that. Microwave's tone sounds a bit off too, I hope it isn't broken or something.",
+      "false;false;false;false;false",
+      "def;false;def;siuu;false"
     ],
     [
-      "a,b,c,d,e,f,g,h,i",
-      "true,false,false,false,false",
-      "false,true,false,false,false"
+      "a;b;c;d;e;f;g;h;j",
+      "Suddenly the microwave timer goes off. Food is done I guess. I didn't realize my partner was heating up dinner already, it is a little early for that. Microwave's tone sounds a bit off too, I hope it isn't broken or something.;false;This took most of the day and required multiple approaches and many failed attempts, but I did eventually get it installed via the very cool stable-diffusion-webui project. Excited, I immediately start generating a picture of a litter of kittens cuddling and sleeping together, because what else could I possibly generate?;false;Suddenly the microwave timer goes off. Food is done I guess. I didn't realize my partner was heating up dinner already, it is a little early for that. Microwave's tone sounds a bit off too, I hope it isn't broken or something.",
+      "false;false;false;false;false",
+      "false;false;false;false;siuu"
     ]
   ]
 }
