@@ -194,6 +194,8 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
             data = {
                 "rows": int(self.watch_rows_var.get() or 0),
                 "true_count": str(self.watch_true_count_var.get() or "0"),
+                "comment_rate": str(self.watch_comment_rate_var.get() or "50"),
+                "like_rate": str(self.watch_like_rate_var.get() or "50"),
                 "comments_text": self.watch_txt_comments.get("1.0", "end-1c"),
                 "channels_text": self.watch_txt_channels.get("1.0", "end-1c"),
                 "assignments": [list(r) for r in (self._watch_last_assignments or [])],
@@ -219,6 +221,8 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
         except Exception:
             self.watch_rows_var.set(20)
         self.watch_true_count_var.set(str(data.get("true_count", "0")))
+        self.watch_comment_rate_var.set(str(data.get("comment_rate", "50")))
+        self.watch_like_rate_var.set(str(data.get("like_rate", "50")))
 
         self.watch_txt_comments.delete("1.0", tk.END)
         self.watch_txt_comments.insert("1.0", data.get("comments_text", ""))
@@ -260,11 +264,13 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
     def _watch_generate_assignments(self, row_count, pools):
         value_count = max(0, int(pools["true_count"]))
         channel_csv = ",".join(pools["channels"])
+        comment_rate = float(pools["comment_rate"]) / 100.0
+        like_rate = float(pools["like_rate"]) / 100.0
 
         rows = []
         for _ in range(max(1, row_count)):
-            comment_values = [random.choice(("true", "false")) for _ in range(value_count)]
-            like_values = [random.choice(("true", "false")) for _ in range(value_count)]
+            comment_values = [("true" if random.random() < comment_rate else "false") for _ in range(value_count)]
+            like_values = [("true" if random.random() < like_rate else "false") for _ in range(value_count)]
             comment_csv = ",".join(comment_values)
             like_csv = ",".join(like_values)
             rows.append((channel_csv, comment_csv, like_csv))
@@ -1118,6 +1124,7 @@ if __name__ == "__main__":
     rearrange_and_delete_junk_files() # rearrange files first
     app = App()
     app.mainloop()
+
 
 
 
