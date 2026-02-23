@@ -134,8 +134,14 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
         ttk.Label(top, text="Rows:").pack(side=tk.LEFT, padx=(20, 6))
         tk.Spinbox(top, from_=1, to=10000, width=6, textvariable=self.watch_rows_var).pack(side=tk.LEFT)
         self.watch_true_count_var = tk.StringVar(value="0")
+        self.watch_comment_rate_var = tk.StringVar(value="50")
+        self.watch_like_rate_var = tk.StringVar(value="50")
         ttk.Label(top, text="Comment/Like:").pack(side=tk.LEFT, padx=(12, 6))
         ttk.Entry(top, textvariable=self.watch_true_count_var, width=8).pack(side=tk.LEFT)
+        ttk.Label(top, text="Comment %:").pack(side=tk.LEFT, padx=(12, 6))
+        ttk.Entry(top, textvariable=self.watch_comment_rate_var, width=5).pack(side=tk.LEFT)
+        ttk.Label(top, text="Like %:").pack(side=tk.LEFT, padx=(12, 6))
+        ttk.Entry(top, textvariable=self.watch_like_rate_var, width=5).pack(side=tk.LEFT)
         ttk.Button(top, text="Reroll", command=self._watch_reroll).pack(side=tk.LEFT, padx=(12, 6))
         ttk.Button(top, text="Clear", command=self._watch_clear).pack(side=tk.LEFT, padx=(0, 6))
         ttk.Button(top, text="Save", command=self._watch_save_excel).pack(side=tk.LEFT)
@@ -180,6 +186,8 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
 
         self.watch_rows_var.trace_add("write", lambda *_: self._watch_save_state())
         self.watch_true_count_var.trace_add("write", lambda *_: self._watch_save_state())
+        self.watch_comment_rate_var.trace_add("write", lambda *_: self._watch_save_state())
+        self.watch_like_rate_var.trace_add("write", lambda *_: self._watch_save_state())
         for w in (self.watch_txt_comments, self.watch_txt_channels):
             w.bind("<KeyRelease>", lambda e: self._watch_save_state())
             w.bind("<FocusOut>", lambda e: self._watch_save_state())
@@ -239,26 +247,34 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
                 safe_rows.append(vals)
         self._watch_last_assignments = safe_rows or None
     def _watch_collect_pools(self):
-        comments = normalize_lines(self.watch_txt_comments.get("1.0", tk.END))
         channels = normalize_lines(self.watch_txt_channels.get("1.0", tk.END))
         count_raw = self.watch_true_count_var.get().strip()
+        comment_rate_raw = self.watch_comment_rate_var.get().strip()
+        like_rate_raw = self.watch_like_rate_var.get().strip()
 
         if not channels:
             raise ValueError("Watch: Channel list is empty.")
+
         try:
-            if not count_raw:
-                true_count = 0
-            else:
-                true_count = int(count_raw)
-                if true_count < 0:
-                    raise ValueError
+            true_count = int(count_raw) if count_raw else 0
+            if true_count < 0:
+                raise ValueError
         except Exception:
             raise ValueError("Watch: Comment/Like must be a non-negative integer.")
+
+        try:
+            comment_rate = float(comment_rate_raw) if comment_rate_raw else 50.0
+            like_rate = float(like_rate_raw) if like_rate_raw else 50.0
+            if comment_rate < 0 or comment_rate > 100 or like_rate < 0 or like_rate > 100:
+                raise ValueError
+        except Exception:
+            raise ValueError("Watch: Comment % and Like % must be between 0 and 100.")
+
         return {
-            "comments": comments or [""],
             "channels": channels,
             "true_count": true_count,
-
+            "comment_rate": comment_rate,
+            "like_rate": like_rate,
         }
 
     def _watch_generate_assignments(self, row_count, pools):
@@ -1124,6 +1140,8 @@ if __name__ == "__main__":
     rearrange_and_delete_junk_files() # rearrange files first
     app = App()
     app.mainloop()
+
+
 
 
 

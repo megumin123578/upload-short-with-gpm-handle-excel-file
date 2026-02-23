@@ -1,108 +1,20 @@
 {
-  "rows": 20,
+  "rows": 2,
   "true_count": "5",
+  "comment_rate": "30",
+  "like_rate": "10",
   "comments_text": "It performs a pixel-by-pixel scan in the area around the bottom-right corner of the window, hammering it with simulated mouse clicks to detect exactly where it responds to those clicks (red), where it’s about to resize (green), where it’s about to resize vertically or horizontally only (yellow), and where it doesn’t receive any mouse events at all (blue).\n\nAnd indeed, the window resize areas now follow the corner radius instead of using square regions:",
   "channels_text": "a\nb\nc\nd\ne\nf\ng\nh\ni",
   "assignments": [
     [
       "a,b,c,d,e,f,g,h,i",
-      "true,false,true,true,false",
-      "true,true,false,true,true"
-    ],
-    [
-      "a,b,c,d,e,f,g,h,i",
-      "false,false,true,false,true",
-      "true,true,true,false,true"
-    ],
-    [
-      "a,b,c,d,e,f,g,h,i",
-      "true,true,false,false,false",
+      "false,false,false,false,true",
       "false,false,false,false,false"
     ],
     [
       "a,b,c,d,e,f,g,h,i",
-      "true,false,false,true,false",
-      "true,true,true,false,true"
-    ],
-    [
-      "a,b,c,d,e,f,g,h,i",
-      "true,true,true,true,true",
-      "false,true,false,false,true"
-    ],
-    [
-      "a,b,c,d,e,f,g,h,i",
-      "true,true,false,false,false",
-      "true,true,false,true,false"
-    ],
-    [
-      "a,b,c,d,e,f,g,h,i",
       "true,false,false,false,false",
-      "true,false,false,false,false"
-    ],
-    [
-      "a,b,c,d,e,f,g,h,i",
-      "false,false,true,false,true",
-      "false,false,true,true,false"
-    ],
-    [
-      "a,b,c,d,e,f,g,h,i",
-      "false,true,false,false,true",
-      "false,false,true,false,true"
-    ],
-    [
-      "a,b,c,d,e,f,g,h,i",
-      "false,false,true,false,false",
-      "false,false,true,true,false"
-    ],
-    [
-      "a,b,c,d,e,f,g,h,i",
-      "false,false,false,false,false",
-      "false,false,true,false,false"
-    ],
-    [
-      "a,b,c,d,e,f,g,h,i",
-      "true,false,true,false,false",
-      "true,false,true,true,false"
-    ],
-    [
-      "a,b,c,d,e,f,g,h,i",
-      "true,true,true,true,false",
-      "false,false,true,true,false"
-    ],
-    [
-      "a,b,c,d,e,f,g,h,i",
-      "true,true,false,false,false",
-      "true,true,true,true,false"
-    ],
-    [
-      "a,b,c,d,e,f,g,h,i",
-      "false,false,true,false,false",
-      "true,false,false,true,false"
-    ],
-    [
-      "a,b,c,d,e,f,g,h,i",
-      "true,true,false,false,false",
-      "true,true,false,false,true"
-    ],
-    [
-      "a,b,c,d,e,f,g,h,i",
-      "true,false,true,false,false",
-      "false,true,true,true,false"
-    ],
-    [
-      "a,b,c,d,e,f,g,h,i",
-      "true,true,false,true,true",
-      "false,true,true,false,false"
-    ],
-    [
-      "a,b,c,d,e,f,g,h,i",
-      "true,true,true,false,true",
-      "true,false,true,true,true"
-    ],
-    [
-      "a,b,c,d,e,f,g,h,i",
-      "false,false,true,false,false",
-      "true,false,false,true,true"
+      "false,true,false,false,false"
     ]
   ]
 }
