@@ -10,15 +10,15 @@
   "assignments": [
     [
       "a;b;c;d;e;f;g;h;j",
-      "false;false;false;false;Suddenly the microwave timer goes off. Food is done I guess. I didn't realize my partner was heating up dinner already, it is a little early for that. Microwave's tone sounds a bit off too, I hope it isn't broken or something.",
+      "false;This took most of the day and required multiple approaches and many failed attempts, but I did eventually get it installed via the very cool stable-diffusion-webui project. Excited, I immediately start generating a picture of a litter of kittens cuddling and sleeping together, because what else could I possibly generate?;Suddenly the microwave timer goes off. Food is done I guess. I didn't realize my partner was heating up dinner already, it is a little early for that. Microwave's tone sounds a bit off too, I hope it isn't broken or something.;false;This took most of the day and required multiple approaches and many failed attempts, but I did eventually get it installed via the very cool stable-diffusion-webui project. Excited, I immediately start generating a picture of a litter of kittens cuddling and sleeping together, because what else could I possibly generate?",
       "false;false;false;false;false",
-      "def;false;def;siuu;false"
+      "def;false;123;123;123"
     ],
     [
       "a;b;c;d;e;f;g;h;j",
-      "Suddenly the microwave timer goes off. Food is done I guess. I didn't realize my partner was heating up dinner already, it is a little early for that. Microwave's tone sounds a bit off too, I hope it isn't broken or something.;false;This took most of the day and required multiple approaches and many failed attempts, but I did eventually get it installed via the very cool stable-diffusion-webui project. Excited, I immediately start generating a picture of a litter of kittens cuddling and sleeping together, because what else could I possibly generate?;false;Suddenly the microwave timer goes off. Food is done I guess. I didn't realize my partner was heating up dinner already, it is a little early for that. Microwave's tone sounds a bit off too, I hope it isn't broken or something.",
+      "But more importantly, I now have a cute (if a little creepy) picture of kittens!;false;But more importantly, I now have a cute (if a little creepy) picture of kittens!;false;This took most of the day and required multiple approaches and many failed attempts, but I did eventually get it installed via the very cool stable-diffusion-webui project. Excited, I immediately start generating a picture of a litter of kittens cuddling and sleeping together, because what else could I possibly generate?",
       "false;false;false;false;false",
-      "false;false;false;false;siuu"
+      "def;false;false;123;def"
     ]
   ]
 }

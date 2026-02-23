@@ -416,7 +416,8 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
         def worker():
             try:
                 out_name = "auto_watch.xlsx"
-                out_path = os.path.join(OUTPUT_DIR, out_name)
+                excel_dir = os.path.dirname(EXCEL_DIR) or "."
+                out_path = os.path.join(excel_dir, out_name)
                 from openpyxl import Workbook
                 from openpyxl.styles import Font
 
@@ -1194,6 +1195,7 @@ if __name__ == "__main__":
     rearrange_and_delete_junk_files() # rearrange files first
     app = App()
     app.mainloop()
+
 
 
 
