@@ -202,6 +202,10 @@ class AssignMixin:
         paned.add(f4)
         paned.add(f5)
 
+        # Keep all input panes equal width when window/layout resizes.
+        paned.bind("<Configure>", lambda e: self.after_idle(self._equalize_inputs))
+        self.after_idle(self._equalize_inputs)
+
     def _build_preview(self, parent):
         frm = ttk.Frame(parent, padding=10)
         frm.pack(fill=tk.BOTH, expand=True)
@@ -215,19 +219,19 @@ class AssignMixin:
             else:
                 self.tree.heading(col, text=col.capitalize())
             if col == "description":
-                self.tree.column(col, width=420, anchor="w")
+                self.tree.column(col, width=420, anchor="w", stretch=False)
             elif col == "related_video":
-                self.tree.column(col, width=220, anchor="w")
+                self.tree.column(col, width=220, anchor="w", stretch=False)
             elif col == "title":
-                self.tree.column(col, width=300, anchor="w")
+                self.tree.column(col, width=300, anchor="w", stretch=False)
             elif col == "channel":
-                self.tree.column(col, width=200, anchor="w")
+                self.tree.column(col, width=200, anchor="w", stretch=False)
             elif col == "publish_date":
-                self.tree.column(col, width=120, anchor="w")
+                self.tree.column(col, width=120, anchor="w", stretch=False)
             elif col == "publish_time":
-                self.tree.column(col, width=100, anchor="w")
+                self.tree.column(col, width=100, anchor="w", stretch=False)
             elif col == "directory":
-                self.tree.column(col, width=240, anchor="w")
+                self.tree.column(col, width=240, anchor="w", stretch=False)
 
         vsb = ttk.Scrollbar(frm, orient="vertical", command=self.tree.yview)
         self.tree.configure(yscroll=vsb.set)
@@ -296,3 +300,5 @@ class AssignMixin:
         
 
     
+
+

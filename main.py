@@ -118,7 +118,6 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
         # NhÃºng UI concat
         self.concat_page = ConcatPage(page) 
         self.concat_page.pack(fill="both", expand=True)
-
     def _build_watch_page(self):
         page = ttk.Frame(self._content)
         self.pages["watch"] = page
@@ -133,15 +132,21 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
         ).pack(side=tk.LEFT, padx=(8, 0))
         ttk.Label(top, text="Rows:").pack(side=tk.LEFT, padx=(20, 6))
         tk.Spinbox(top, from_=1, to=10000, width=6, textvariable=self.watch_rows_var).pack(side=tk.LEFT)
+
         self.watch_true_count_var = tk.StringVar(value="0")
         self.watch_comment_rate_var = tk.StringVar(value="50")
         self.watch_like_rate_var = tk.StringVar(value="50")
+        self.watch_search_rate_var = tk.StringVar(value="50")
+
         ttk.Label(top, text="Comment/Like:").pack(side=tk.LEFT, padx=(12, 6))
         ttk.Entry(top, textvariable=self.watch_true_count_var, width=8).pack(side=tk.LEFT)
         ttk.Label(top, text="Comment %:").pack(side=tk.LEFT, padx=(12, 6))
         ttk.Entry(top, textvariable=self.watch_comment_rate_var, width=5).pack(side=tk.LEFT)
         ttk.Label(top, text="Like %:").pack(side=tk.LEFT, padx=(12, 6))
         ttk.Entry(top, textvariable=self.watch_like_rate_var, width=5).pack(side=tk.LEFT)
+        ttk.Label(top, text="Search %:").pack(side=tk.LEFT, padx=(12, 6))
+        ttk.Entry(top, textvariable=self.watch_search_rate_var, width=5).pack(side=tk.LEFT)
+
         ttk.Button(top, text="Reroll", command=self._watch_reroll).pack(side=tk.LEFT, padx=(12, 6))
         ttk.Button(top, text="Clear", command=self._watch_clear).pack(side=tk.LEFT, padx=(0, 6))
         ttk.Button(top, text="Save", command=self._watch_save_excel).pack(side=tk.LEFT)
@@ -161,21 +166,25 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
 
         f1, self.watch_txt_comments = make_section("Comment pool (optional, one per line)")
         f2, self.watch_txt_channels = make_section("Channel list (one per line)")
-        for fr in (f1, f2):
+        f3, self.watch_txt_searches = make_section("Search pool (optional, one per line)")
+        for fr in (f1, f2, f3):
             paned.add(fr)
 
         preview_wrap = ttk.Frame(page, padding=(10, 0, 10, 10))
         preview_wrap.pack(fill=tk.BOTH, expand=True)
-        cols = ("channel", "comment", "like")
+        cols = ("channel", "comment", "like", "search")
         self.watch_tree = ttk.Treeview(preview_wrap, columns=cols, show="headings", height=12)
         for col in cols:
             self.watch_tree.heading(col, text=col.capitalize())
             if col == "channel":
                 self.watch_tree.column(col, width=200, anchor="w")
             elif col == "comment":
-                self.watch_tree.column(col, width=520, anchor="w")
+                self.watch_tree.column(col, width=420, anchor="w")
             elif col == "like":
-                self.watch_tree.column(col, width=120, anchor="w")
+                self.watch_tree.column(col, width=220, anchor="w")
+            elif col == "search":
+                self.watch_tree.column(col, width=220, anchor="w")
+
         vsb = ttk.Scrollbar(preview_wrap, orient="vertical", command=self.watch_tree.yview)
         self.watch_tree.configure(yscroll=vsb.set)
         self.watch_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
@@ -188,7 +197,8 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
         self.watch_true_count_var.trace_add("write", lambda *_: self._watch_save_state())
         self.watch_comment_rate_var.trace_add("write", lambda *_: self._watch_save_state())
         self.watch_like_rate_var.trace_add("write", lambda *_: self._watch_save_state())
-        for w in (self.watch_txt_comments, self.watch_txt_channels):
+        self.watch_search_rate_var.trace_add("write", lambda *_: self._watch_save_state())
+        for w in (self.watch_txt_comments, self.watch_txt_channels, self.watch_txt_searches):
             w.bind("<KeyRelease>", lambda e: self._watch_save_state())
             w.bind("<FocusOut>", lambda e: self._watch_save_state())
 
@@ -204,8 +214,10 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
                 "true_count": str(self.watch_true_count_var.get() or "0"),
                 "comment_rate": str(self.watch_comment_rate_var.get() or "50"),
                 "like_rate": str(self.watch_like_rate_var.get() or "50"),
+                "search_rate": str(self.watch_search_rate_var.get() or "50"),
                 "comments_text": self.watch_txt_comments.get("1.0", "end-1c"),
                 "channels_text": self.watch_txt_channels.get("1.0", "end-1c"),
+                "searches_text": self.watch_txt_searches.get("1.0", "end-1c"),
                 "assignments": [list(r) for r in (self._watch_last_assignments or [])],
             }
             with open(self._watch_get_state_path(), "w", encoding="utf-8") as f:
@@ -228,29 +240,40 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
             self.watch_rows_var.set(max(1, int(rows_val)))
         except Exception:
             self.watch_rows_var.set(20)
+
         self.watch_true_count_var.set(str(data.get("true_count", "0")))
         self.watch_comment_rate_var.set(str(data.get("comment_rate", "50")))
         self.watch_like_rate_var.set(str(data.get("like_rate", "50")))
+        self.watch_search_rate_var.set(str(data.get("search_rate", "50")))
 
         self.watch_txt_comments.delete("1.0", tk.END)
         self.watch_txt_comments.insert("1.0", data.get("comments_text", ""))
         self.watch_txt_channels.delete("1.0", tk.END)
         self.watch_txt_channels.insert("1.0", data.get("channels_text", ""))
+        self.watch_txt_searches.delete("1.0", tk.END)
+        self.watch_txt_searches.insert("1.0", data.get("searches_text", ""))
 
         assignments = data.get("assignments") or []
         self.watch_tree.delete(*self.watch_tree.get_children())
         safe_rows = []
         for row in assignments:
             if isinstance(row, (list, tuple)) and len(row) >= 3:
-                vals = (str(row[0]), str(row[1]), str(row[2]))
+                vals = (
+                    str(row[0]),
+                    str(row[1]),
+                    str(row[2]),
+                    str(row[3]) if len(row) > 3 else "",
+                )
                 self.watch_tree.insert("", tk.END, values=vals)
                 safe_rows.append(vals)
         self._watch_last_assignments = safe_rows or None
+
     def _watch_collect_pools(self):
         channels = normalize_lines(self.watch_txt_channels.get("1.0", tk.END))
         count_raw = self.watch_true_count_var.get().strip()
         comment_rate_raw = self.watch_comment_rate_var.get().strip()
         like_rate_raw = self.watch_like_rate_var.get().strip()
+        search_rate_raw = self.watch_search_rate_var.get().strip()
 
         if not channels:
             raise ValueError("Watch: Channel list is empty.")
@@ -265,16 +288,18 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
         try:
             comment_rate = float(comment_rate_raw) if comment_rate_raw else 50.0
             like_rate = float(like_rate_raw) if like_rate_raw else 50.0
-            if comment_rate < 0 or comment_rate > 100 or like_rate < 0 or like_rate > 100:
+            search_rate = float(search_rate_raw) if search_rate_raw else 50.0
+            if comment_rate < 0 or comment_rate > 100 or like_rate < 0 or like_rate > 100 or search_rate < 0 or search_rate > 100:
                 raise ValueError
         except Exception:
-            raise ValueError("Watch: Comment % and Like % must be between 0 and 100.")
+            raise ValueError("Watch: Comment %, Like %, Search % must be between 0 and 100.")
 
         return {
             "channels": channels,
             "true_count": true_count,
             "comment_rate": comment_rate,
             "like_rate": like_rate,
+            "search_rate": search_rate,
         }
 
     def _watch_generate_assignments(self, row_count, pools):
@@ -282,14 +307,17 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
         channel_csv = ",".join(pools["channels"])
         comment_rate = float(pools["comment_rate"]) / 100.0
         like_rate = float(pools["like_rate"]) / 100.0
+        search_rate = float(pools["search_rate"]) / 100.0
 
         rows = []
         for _ in range(max(1, row_count)):
             comment_values = [("true" if random.random() < comment_rate else "false") for _ in range(value_count)]
             like_values = [("true" if random.random() < like_rate else "false") for _ in range(value_count)]
+            search_values = [("true" if random.random() < search_rate else "false") for _ in range(value_count)]
             comment_csv = ",".join(comment_values)
             like_csv = ",".join(like_values)
-            rows.append((channel_csv, comment_csv, like_csv))
+            search_csv = ",".join(search_values)
+            rows.append((channel_csv, comment_csv, like_csv, search_csv))
         return rows
 
     def _watch_preview(self):
@@ -332,6 +360,7 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
         for w in (
             self.watch_txt_comments,
             self.watch_txt_channels,
+            self.watch_txt_searches,
         ):
             w.delete("1.0", tk.END)
         self.watch_tree.delete(*self.watch_tree.get_children())
@@ -351,11 +380,12 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
                 out_path = os.path.join(OUTPUT_DIR, out_name)
                 from openpyxl import Workbook
                 from openpyxl.styles import Font
+
                 wb = Workbook()
                 ws = wb.active
                 ws.title = "Watch"
-                ws.append(["channel", "comment", "like", "like_comment_count"])
-                for c_idx in range(1, 5):
+                ws.append(["channel", "comment", "like", "search", "like_comment_count"])
+                for c_idx in range(1, 6):
                     ws.cell(row=1, column=c_idx).font = Font(bold=True)
 
                 try:
@@ -364,7 +394,11 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
                     like_comment_count = 0
 
                 for row in self._watch_last_assignments:
-                    ws.append(list(row) + [like_comment_count])
+                    vals = list(row)
+                    if len(vals) < 4:
+                        vals += [""] * (4 - len(vals))
+                    ws.append(vals[:4] + [like_comment_count])
+
                 if os.path.exists(out_path):
                     os.remove(out_path)
                 wb.save(out_path)
@@ -1121,6 +1155,9 @@ if __name__ == "__main__":
     rearrange_and_delete_junk_files() # rearrange files first
     app = App()
     app.mainloop()
+
+
+
 
 
 
