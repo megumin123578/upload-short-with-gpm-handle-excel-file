@@ -34,6 +34,7 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
         self.date_entry = None
         now = datetime.datetime.now()
         self.time_h_var = tk.StringVar(value=f"{now.hour:02d}")
+        
         self.time_m_var = tk.StringVar(value=f"{now.minute:02d}")
         self.step_min_var = tk.IntVar(value=0)
 
@@ -288,9 +289,9 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
         self._watch_last_assignments = safe_rows or None
 
     def _watch_collect_pools(self):
-        channels = normalize_lines(self.watch_txt_channels.get("1.0", tk.END))
-        comment_pool = normalize_lines(self.watch_txt_comments.get("1.0", tk.END))
-        search_pool = normalize_lines(self.watch_txt_searches.get("1.0", tk.END))
+        channels = list(dict.fromkeys(normalize_lines(self.watch_txt_channels.get("1.0", tk.END))))
+        comment_pool = list(dict.fromkeys(normalize_lines(self.watch_txt_comments.get("1.0", tk.END))))
+        search_pool = list(dict.fromkeys(normalize_lines(self.watch_txt_searches.get("1.0", tk.END))))
 
         count_raw = self.watch_true_count_var.get().strip()
         comment_rate_raw = self.watch_comment_rate_var.get().strip()
@@ -433,7 +434,7 @@ class App(tk.Tk, AssignMixin, AssignLogicMixin, MainUIMixin):
                 except Exception:
                     like_comment_count = 0
 
-                channel_count = len(normalize_lines(self.watch_txt_channels.get("1.0", tk.END)))
+                channel_count = len(list(dict.fromkeys(normalize_lines(self.watch_txt_channels.get("1.0", tk.END)))))
 
                 for row in self._watch_last_assignments:
                     vals = list(row)
@@ -1197,6 +1198,7 @@ if __name__ == "__main__":
     rearrange_and_delete_junk_files() # rearrange files first
     app = App()
     app.mainloop()
+
 
 
 
