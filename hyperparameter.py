@@ -1,4 +1,4 @@
-APP_VERSION = "1.0.81"
+APP_VERSION = "1.0.82"
 UPDATE_MANIFEST = "https://raw.githubusercontent.com/megumin123578/upload-short-with-gpm-handle-excel-file/main/manifest.json"
 APP_TITLE = f"AUTOMATION APP - {APP_VERSION}"
 
